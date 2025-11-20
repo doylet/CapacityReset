@@ -4,7 +4,7 @@ FROM python:3.11-slim
 # Set working directory
 WORKDIR /app
 
-# Copy application code
+# Copy application code (rebuild: 2025-11-21)
 COPY . .
 
 # Install dependencies if requirements.txt exists
