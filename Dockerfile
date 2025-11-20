@@ -16,5 +16,5 @@ ENV PYTHONUNBUFFERED=1
 # Expose port (adjust as needed)
 EXPOSE 8080
 
-# Command to run the application using gunicorn for production
-CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 0 main:app
+# Command to run the functions-framework
+CMD exec functions-framework --target=main --port=$PORT

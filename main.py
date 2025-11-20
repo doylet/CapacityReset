@@ -1,23 +1,8 @@
-import os
-from flask import Flask, request
+import functions_framework
 from api import call_brightdata
 
-app = Flask(__name__)
-
-@app.route('/')
-def hello():
-    return 'CapacityReset - LinkedIn Jobs BrightData Webscraper'
-
-@app.route('/health')
-def health():
-    return {'status': 'healthy'}, 200
-
-@app.route('/trigger', methods=['POST', 'GET'])
-def trigger():
-    """Endpoint to trigger the BrightData job"""
+@functions_framework.http
+def main(request):
+    """HTTP Cloud Function entry point"""
     body, status = call_brightdata()
     return body, status, {"Content-Type": "application/json"}
-
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 8080))
-    app.run(host='0.0.0.0', port=port)
