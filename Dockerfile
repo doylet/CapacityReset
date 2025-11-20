@@ -4,14 +4,11 @@ FROM python:3.11-slim
 # Set working directory
 WORKDIR /app
 
-# Copy requirements file if it exists
-COPY requirements.txt* ./
+# Copy application code
+COPY . .
 
 # Install dependencies if requirements.txt exists
 RUN if [ -f requirements.txt ]; then pip install --no-cache-dir -r requirements.txt; fi
-
-# Copy application code
-COPY . .
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
