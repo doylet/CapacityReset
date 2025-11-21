@@ -10,16 +10,29 @@ from lib.gcloud_env_client import (
 bq = bigquery.Client()
 
 def log_request_to_bigquery(response_body, status):
-    table = "sylvan-replica-478802-p4.brightdata_jobs.scrape_requests"
-    
-    row = {
-        "request_id": str(uuid.uuid4()),
-        "timestamp": datetime.utcnow().isoformat(),
-        "dataset_id": BRIGHTDATA_DATASET_ID,
-        "cities": ["brisbane", "sydney", "melbourne"],
-        "keyword": "product management",
-        "brightdata_response": json.loads(response_body),
-        "status": status
-    }
-    
-    bq.insert_rows_json(table, [row])
+    try:
+        table_id = "sylvan-replica-478802-p4.brightdata_jobs.scrape_requests"
+        
+        # Parse response body if it's a string
+        if isinstance(response_body, str):
+            response_data = json.loads(response_body)
+        else:
+            response_data = response_body
+        
+        row = {
+            "request_id": str(uuid.uuid4()),
+            "timestamp": datetime.utcnow().isoformat(),
+            "dataset_id": BRIGHTDATA_DATASET_ID,
+            "cities": ["brisbane", "sydney", "melbourne"],
+            "keyword": "product management",
+            "brightdata_response": response_data,
+            "status": status
+        }
+        
+        errors = bq.insert_rows_json(table_id, [row])
+        if errors:
+            print(f"BigQuery insert errors: {errors}")
+        else:
+            print(f"Successfully logged request to BigQuery: {row['request_id']}")
+    except Exception as e:
+        print(f"Failed to log to BigQuery: {e}")
