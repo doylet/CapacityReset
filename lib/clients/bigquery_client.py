@@ -13,11 +13,12 @@ def log_request_to_bigquery(response_body, status):
     try:
         table_id = "sylvan-replica-478802-p4.brightdata_jobs.scrape_requests"
         
-        # Parse response body if it's a string
+        # Keep response_body as JSON string for the JSON column type
+        # If it's not a string, convert it to JSON string
         if isinstance(response_body, str):
-            response_data = json.loads(response_body)
+            response_json = response_body
         else:
-            response_data = response_body
+            response_json = json.dumps(response_body)
         
         row = {
             "request_id": str(uuid.uuid4()),
@@ -25,8 +26,8 @@ def log_request_to_bigquery(response_body, status):
             "dataset_id": BRIGHTDATA_DATASET_ID,
             "cities": ["brisbane", "sydney", "melbourne"],
             "keyword": "product management",
-            "brightdata_response": response_data,
-            "status": status
+            "brightdata_response": response_json,
+            "status": str(status)  # Convert status to string
         }
         
         errors = bq.insert_rows_json(table_id, [row])
