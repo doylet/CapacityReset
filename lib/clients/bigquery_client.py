@@ -27,7 +27,8 @@ def log_request_to_bigquery(response_body, status, request_id):
             "cities": ["brisbane", "sydney", "melbourne"],
             "keyword": "product management",
             "brightdata_response": response_json,
-            "status": str(status)  # Convert status to string
+            "status": str(status),  # Convert status to string
+            "gcs_prefix": f"raw/{request_id}/",
         }
         
         errors = bq.insert_rows_json(table_id, [row])
