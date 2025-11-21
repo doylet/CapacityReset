@@ -1,6 +1,7 @@
 import json
 import urllib.request
 import urllib.error
+import uuid
 from lib.gcloud_env_client import (
     BRIGHTDATA_API_TOKEN,
     BRIGHTDATA_DATASET_ID,
@@ -15,6 +16,9 @@ def build_request():
         "Authorization": f"Bearer {BRIGHTDATA_API_TOKEN}",
         "Content-Type": "application/json",
     }
+
+    request_id = str(uuid.uuid4())
+    gcs_prefix = f"raw/{request_id}/"
 
     payload = {
         "input": [
@@ -62,7 +66,7 @@ def build_request():
                 "client_email": GCS_SA_CLIENT_EMAIL,
                 "private_key": GCS_SA_PRIVATE_KEY,
             },
-            "directory": "raw/",
+            "directory": gcs_prefix,
         },
     }
 
@@ -75,11 +79,11 @@ def build_request():
         "&type=discover_new&discover_by=keyword"
     )
 
-    return urllib.request.Request(url, headers=headers, data=data)
+    return urllib.request.Request(url, headers=headers, data=data), request_id
 
 
 def call_brightdata():
-    request = build_request()
+    request, request_id = build_request()
     try:
         with urllib.request.urlopen(request, timeout=60) as response:
             body = response.read().decode("utf-8")
@@ -89,11 +93,11 @@ def call_brightdata():
                 print(parsed)
             except json.JSONDecodeError:
                 print("Non-JSON response:", body)
-            return body, 200
+            return body, 200, request_id
     except urllib.error.HTTPError as e:
         error_body = e.read().decode("utf-8")
         print(f"Bright Data HTTPError {e.code}: {error_body}")
-        return json.dumps({"error": error_body, "status": e.code}), 500
+        return json.dumps({"error": error_body, "status": e.code}), 500, request_id
     except Exception as e:
         print(f"Unexpected error: {e}")
-        return json.dumps({"error": str(e)}), 500
+        return json.dumps({"error": str(e)}), 500, request_id

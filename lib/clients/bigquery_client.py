@@ -9,7 +9,7 @@ from lib.gcloud_env_client import (
 
 bq = bigquery.Client()
 
-def log_request_to_bigquery(response_body, status):
+def log_request_to_bigquery(response_body, status, request_id):
     try:
         table_id = "sylvan-replica-478802-p4.brightdata_jobs.scrape_requests"
         
@@ -21,7 +21,7 @@ def log_request_to_bigquery(response_body, status):
             response_json = json.dumps(response_body)
         
         row = {
-            "request_id": str(uuid.uuid4()),
+            "request_id": request_id,
             "timestamp": datetime.utcnow().isoformat(),
             "dataset_id": BRIGHTDATA_DATASET_ID,
             "cities": ["brisbane", "sydney", "melbourne"],
