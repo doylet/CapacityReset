@@ -56,7 +56,7 @@ def build_request():
             "type": "gcs",
             "filename": {
                 "extension": "json",
-                "template":"{[datetime]}-{[job-id]}"},
+                "template":"{[datetime]}"},
             "bucket": GCS_BUCKET,
             "credentials": {
                 "client_email": GCS_SA_CLIENT_EMAIL,

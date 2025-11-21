@@ -1,6 +1,5 @@
 import functions_framework
-from lib.brightdata_api import call_brightdata
-from lib.bigquery_client import log_request_to_bigquery
+from lib import call_brightdata, log_request_to_bigquery
 
 
 @functions_framework.http
