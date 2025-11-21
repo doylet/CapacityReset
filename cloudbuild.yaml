@@ -3,6 +3,7 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'build'
+      - '--no-cache'
       - '-t'
       - 'australia-southeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/capacityreset/post-linkedin-jobs-brightdata-webscraper:$COMMIT_SHA'
       - '-t'
