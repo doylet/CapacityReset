@@ -1,0 +1,41 @@
+steps:
+  # Build the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '--no-cache'
+      - '-t'
+      - 'australia-southeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/linkedin-scraper:$COMMIT_SHA'
+      - '-t'
+      - 'australia-southeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/linkedin-scraper:latest'
+      - '.'
+    dir: 'services/linkedin-scraper'
+
+  # Push the container image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - '--all-tags'
+      - 'australia-southeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/linkedin-scraper'
+
+  # Deploy container image to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'post-linkedin-jobs-brightdata-webscraper'
+      - '--image'
+      - 'australia-southeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/linkedin-scraper:$COMMIT_SHA'
+      - '--region'
+      - 'australia-southeast1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+
+images:
+  - 'australia-southeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/linkedin-scraper:$COMMIT_SHA'
+  - 'australia-southeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/linkedin-scraper:latest'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
