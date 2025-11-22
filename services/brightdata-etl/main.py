@@ -229,7 +229,7 @@ def main(request):
         FROM `{project_id}.brightdata_jobs.scrape_requests`
         WHERE status = '200'
           AND gcs_prefix IS NOT NULL
-          AND (processed IS NULL OR processed = 'false')
+          AND (processed IS NULL OR CAST(processed AS STRING) = 'false')
         ORDER BY timestamp ASC
         """
         
