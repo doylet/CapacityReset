@@ -2,6 +2,7 @@ import json
 import uuid
 from datetime import datetime
 from google.cloud import bigquery
+from google.cloud.bigquery import write_disposition
 from lib.gcloud_env_client import (
     BRIGHTDATA_DATASET_ID,
 )
@@ -29,12 +30,18 @@ def log_request_to_bigquery(response_body, status, request_id):
             "brightdata_response": response_json,
             "status": str(status),  # Convert status to string
             "gcs_prefix": f"raw/{request_id}/",
+            "processed": False,  # Explicitly set as boolean
         }
         
-        errors = bq.insert_rows_json(table_id, [row])
-        if errors:
-            print(f"BigQuery insert errors: {errors}")
-        else:
-            print(f"Successfully logged request to BigQuery: {row['request_id']}")
+        # Use load_table_from_json with WRITE_APPEND for immediate queryability
+        # This bypasses the streaming buffer
+        job_config = bigquery.LoadJobConfig(
+            write_disposition=bigquery.WriteDisposition.WRITE_APPEND,
+        )
+        
+        load_job = bq.load_table_from_json([row], table_id, job_config=job_config)
+        load_job.result()  # Wait for job to complete
+        
+        print(f"Successfully logged request to BigQuery (immediately queryable): {row['request_id']}")
     except Exception as e:
         print(f"Failed to log to BigQuery: {e}")
