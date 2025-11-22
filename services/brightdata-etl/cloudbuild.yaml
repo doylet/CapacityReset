@@ -1,0 +1,36 @@
+steps:
+  # Build the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: [
+      'build',
+      '--no-cache',
+      '-t', 'australia-southeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/brightdata-etl:$COMMIT_SHA',
+      '-t', 'australia-southeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/brightdata-etl:latest',
+      '.'
+    ]
+    dir: 'services/brightdata-etl'
+  
+  # Push the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: [
+      'push',
+      'australia-southeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/brightdata-etl:$COMMIT_SHA'
+    ]
+  
+  # Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    args: [
+      'gcloud', 'run', 'deploy', 'brightdata-etl',
+      '--image', 'australia-southeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/brightdata-etl:$COMMIT_SHA',
+      '--region', 'australia-southeast1',
+      '--platform', 'managed',
+      '--allow-unauthenticated',
+      '--set-env-vars', 'GCP_PROJECT=$PROJECT_ID'
+    ]
+
+images:
+  - 'australia-southeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/brightdata-etl:$COMMIT_SHA'
+  - 'australia-southeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/brightdata-etl:latest'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
