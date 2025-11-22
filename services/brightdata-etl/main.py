@@ -49,7 +49,7 @@ def transform_and_load_jobs(bigquery_client, jobs, scrape_request_id, project_id
             
         row = {
             'scrape_request_id': scrape_request_id,
-            'job_posting_id': job.get('job_posting_id'),
+            'job_posting_id': str(job.get('job_posting_id')) if job.get('job_posting_id') else None,
             'url': job.get('url'),
             'job_title': job.get('job_title'),
             'job_summary': job.get('job_summary'),
@@ -59,7 +59,7 @@ def transform_and_load_jobs(bigquery_client, jobs, scrape_request_id, project_id
             'job_function': job.get('job_function'),
             'job_employment_type': job.get('job_employment_type'),
             'job_industries': job.get('job_industries'),
-            'company_id': job.get('company_id'),
+            'company_id': str(job.get('company_id')) if job.get('company_id') else None,
             'company_name': job.get('company_name'),
             'company_url': job.get('company_url'),
             'company_logo': job.get('company_logo'),
@@ -70,7 +70,7 @@ def transform_and_load_jobs(bigquery_client, jobs, scrape_request_id, project_id
             'application_availability': job.get('application_availability'),
             'is_easy_apply': job.get('is_easy_apply'),
             'country_code': job.get('country_code'),
-            'title_id': job.get('title_id'),
+            'title_id': str(job.get('title_id')) if job.get('title_id') else None,
             'salary_standards': job.get('salary_standards'),
         }
         
