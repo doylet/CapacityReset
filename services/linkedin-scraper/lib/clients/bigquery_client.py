@@ -2,7 +2,6 @@ import json
 import uuid
 from datetime import datetime
 from google.cloud import bigquery
-from google.cloud.bigquery import write_disposition
 from lib.gcloud_env_client import (
     BRIGHTDATA_DATASET_ID,
 )
