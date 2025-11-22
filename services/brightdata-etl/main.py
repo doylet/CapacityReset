@@ -10,9 +10,15 @@ HTTP endpoint that:
 import functions_framework
 from google.cloud import bigquery
 from google.cloud import storage
+from google.cloud import logging as cloud_logging
+import logging
 import json
 import os
 
+client = cloud_logging.Client(
+    project="sylvan-replica-478802-p4",
+)
+client.setup_logging()
 
 def load_json_from_gcs(bucket_name, gcs_prefix):
     """Load JSON files from GCS directory."""
@@ -281,6 +287,7 @@ def main(request):
                 
             except Exception as e:
                 print(f"Error processing request {request_id}: {str(e)}")
+                logging.error(f"Error processing request {request_id}: {str(e)}")
                 continue
         
         print(f"ETL completed. Processed {len(processed_request_ids)} requests, {total_jobs_affected} jobs affected")
