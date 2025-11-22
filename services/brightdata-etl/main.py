@@ -124,7 +124,7 @@ def transform_and_load_jobs(bigquery_client, jobs, scrape_request_id, project_id
     merge_query = f"""
     MERGE `{table_id}` AS target
     USING `{temp_table_id}` AS source
-    ON target.job_posting_id = source.job_posting_id
+    ON target.job_posting_id = CAST(source.job_posting_id AS STRING)
     WHEN MATCHED THEN
       UPDATE SET
         url = source.url,
