@@ -65,7 +65,7 @@ def transform_and_load_jobs(bigquery_client, jobs, scrape_request_id, project_id
             'company_logo': job.get('company_logo'),
             'job_posted_time': job.get('job_posted_time'),
             'job_posted_date': job.get('job_posted_date'),
-            'job_num_applicants': job.get('job_num_applicants'),
+            'job_num_applicants': int(job.get('job_num_applicants')) if job.get('job_num_applicants') else None,
             'apply_link': job.get('apply_link'),
             'application_availability': job.get('application_availability'),
             'is_easy_apply': job.get('is_easy_apply'),
@@ -74,10 +74,12 @@ def transform_and_load_jobs(bigquery_client, jobs, scrape_request_id, project_id
             'salary_standards': job.get('salary_standards'),
         }
         
-        # Handle nested objects
+        # Handle nested objects with type conversion
         if 'base_salary' in job and job['base_salary']:
-            row['base_salary_min_amount'] = job['base_salary'].get('min_amount')
-            row['base_salary_max_amount'] = job['base_salary'].get('max_amount')
+            min_amt = job['base_salary'].get('min_amount')
+            max_amt = job['base_salary'].get('max_amount')
+            row['base_salary_min_amount'] = float(min_amt) if min_amt else None
+            row['base_salary_max_amount'] = float(max_amt) if max_amt else None
             row['base_salary_currency'] = job['base_salary'].get('currency')
             row['base_salary_payment_period'] = job['base_salary'].get('payment_period')
         
