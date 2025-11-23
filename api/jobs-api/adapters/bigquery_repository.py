@@ -45,6 +45,13 @@ class BigQueryJobRepository(JobRepository):
         where_sql = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
         
         query = f"""
+        WITH job_skill_counts AS (
+            SELECT 
+                job_posting_id,
+                COUNT(*) as skills_count
+            FROM `{DATASET_ID}.job_skills`
+            GROUP BY job_posting_id
+        )
         SELECT DISTINCT
             jp.job_posting_id,
             jp.job_title,
@@ -52,10 +59,12 @@ class BigQueryJobRepository(JobRepository):
             jp.job_location,
             jp.job_summary,
             jp.job_description_formatted,
-            jp.job_posted_date
+            jp.job_posted_date,
+            COALESCE(jsc.skills_count, 0) as skills_count
         FROM `{DATASET_ID}.job_postings` jp
         LEFT JOIN `{DATASET_ID}.job_clusters` jc ON jp.job_posting_id = jc.job_posting_id
         LEFT JOIN `{DATASET_ID}.job_skills` js ON jp.job_posting_id = js.job_posting_id
+        LEFT JOIN job_skill_counts jsc ON jp.job_posting_id = jsc.job_posting_id
         {where_sql}
         ORDER BY jp.job_posted_date DESC
         LIMIT {limit}
@@ -74,7 +83,8 @@ class BigQueryJobRepository(JobRepository):
                 job_location=row['job_location'],
                 job_summary=row['job_summary'],
                 job_description_formatted=row['job_description_formatted'],
-                job_posted_date=row['job_posted_date']
+                job_posted_date=row['job_posted_date'],
+                skills_count=row['skills_count']
             )
             jobs.append(job)
         

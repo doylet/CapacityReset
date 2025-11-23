@@ -60,6 +60,7 @@ class Job:
     job_posted_date: datetime
     skills: List[Skill] = field(default_factory=list)
     cluster: Optional[Cluster] = None
+    skills_count: int = 0  # Precomputed count from database
     
     def add_skill(self, skill: Skill) -> None:
         """Add a skill to this job."""

@@ -153,7 +153,7 @@ async def list_jobs(
             job_location=job.job_location,
             job_summary=job.job_summary,
             job_posted_date=job.job_posted_date.date() if hasattr(job.job_posted_date, 'date') else job.job_posted_date,
-            skills_count=len(job.skills),
+            skills_count=job.skills_count,
             cluster=cluster_resp
         ))
     
