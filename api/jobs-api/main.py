@@ -124,19 +124,15 @@ async def list_jobs(
     skill_name: Optional[str] = None
 ):
     """List jobs with filters."""
-    filters = {}
-    if date_from:
-        filters['date_from'] = date_from
-    if date_to:
-        filters['date_to'] = date_to
-    if location:
-        filters['location'] = location
-    if cluster_id:
-        filters['cluster_id'] = cluster_id
-    if skill_name:
-        filters['skill_name'] = skill_name
-    
-    result = await list_jobs_uc.execute(limit=limit, offset=offset, filters=filters)
+    result = await list_jobs_uc.execute(
+        limit=limit,
+        offset=offset,
+        date_from=date_from,
+        date_to=date_to,
+        location=location,
+        cluster_id=cluster_id,
+        skill_name=skill_name
+    )
     
     # Convert to response models
     response = []
