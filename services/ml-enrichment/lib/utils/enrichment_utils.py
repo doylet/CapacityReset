@@ -19,17 +19,22 @@ PROJECT_ID = "sylvan-replica-478802-p4"
 DATASET_ID = f"{PROJECT_ID}.brightdata_jobs"
 
 
-def get_jobs_needing_enrichment(enrichment_type: str, limit: int = 50) -> List[Dict[str, Any]]:
+def get_jobs_needing_enrichment(enrichment_type: str, limit: int = 50, enrichment_version: str = None) -> List[Dict[str, Any]]:
     """
-    Query jobs that need enrichment of specified type.
+    Query jobs that need enrichment of specified type and version.
     
     Args:
-        enrichment_type: 'skills_extraction' or 'embeddings'
+        enrichment_type: 'skills_extraction', 'embeddings', or 'job_clustering'
         limit: Maximum number of jobs to process
+        enrichment_version: Optional version to check (e.g., 'v2.0-unsupervised-ner-lexicon')
+                          If None, checks for any successful enrichment of that type
         
     Returns:
         List of job records with job_posting_id, job_title, job_summary, job_description_formatted
     """
+    # Build version filter if specified
+    version_filter = f"AND je.enrichment_version = '{enrichment_version}'" if enrichment_version else ""
+    
     query = f"""
     SELECT 
         jp.job_posting_id,
@@ -44,6 +49,7 @@ def get_jobs_needing_enrichment(enrichment_type: str, limit: int = 50) -> List[D
         ON jp.job_posting_id = je.job_posting_id
         AND je.enrichment_type = '{enrichment_type}'
         AND je.status = 'success'
+        {version_filter}
     WHERE je.enrichment_id IS NULL
         AND jp.job_summary IS NOT NULL
         AND jp.job_description_formatted IS NOT NULL

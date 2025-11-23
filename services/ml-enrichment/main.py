@@ -97,13 +97,18 @@ def main(request):
         
         # Process skills extraction
         if 'skills_extraction' in enrichment_types:
-            jobs = get_jobs_needing_enrichment('skills_extraction', batch_size)
-            logger.log_text(f"Found {len(jobs)} jobs needing skills extraction", severity="INFO")
+            extractor = get_skills_extractor()
+            jobs = get_jobs_needing_enrichment(
+                'skills_extraction', 
+                batch_size,
+                enrichment_version=extractor.get_version()
+            )
+            logger.log_text(f"Found {len(jobs)} jobs needing skills extraction v{extractor.get_version()}", severity="INFO")
             
             if jobs:
                 skills_stats = process_skills_extraction(
                     jobs=jobs,
-                    extractor=get_skills_extractor()
+                    extractor=extractor
                 )
                 results['skills_extraction'] = skills_stats
                 logger.log_text(f"Skills extraction complete: {skills_stats}", severity="INFO")
@@ -112,13 +117,18 @@ def main(request):
         
         # Process embeddings
         if 'embeddings' in enrichment_types:
-            jobs = get_jobs_needing_enrichment('embeddings', batch_size)
-            logger.log_text(f"Found {len(jobs)} jobs needing embeddings", severity="INFO")
+            generator = get_embeddings_generator()
+            jobs = get_jobs_needing_enrichment(
+                'embeddings', 
+                batch_size,
+                enrichment_version=generator.get_version()
+            )
+            logger.log_text(f"Found {len(jobs)} jobs needing embeddings v{generator.get_version()}", severity="INFO")
             
             if jobs:
                 embeddings_stats = process_embeddings(
                     jobs=jobs,
-                    generator=get_embeddings_generator()
+                    generator=generator
                 )
                 results['embeddings'] = embeddings_stats
                 logger.log_text(f"Embeddings generation complete: {embeddings_stats}", severity="INFO")
