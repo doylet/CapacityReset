@@ -279,7 +279,7 @@ class BigQueryClusterRepository(ClusterRepository):
             ANY_VALUE(cluster_size) as cluster_size
         FROM `{DATASET_ID}.job_clusters`
         GROUP BY cluster_id
-        ORDER BY cluster_size DESC
+        ORDER BY ANY_VALUE(cluster_size) DESC
         """
         
         query_job = self.client.query(query)
