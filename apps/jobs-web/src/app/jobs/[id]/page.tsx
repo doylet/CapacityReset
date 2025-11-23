@@ -222,9 +222,6 @@ export default function JobDetailPage() {
                   </span>
                 </div>
               )}
-
-              <h2 className="text-lg font-semibold text-gray-900 mb-2">Summary</h2>
-              <p className="text-gray-700">{job.job_summary}</p>
             </div>
 
             {/* Job Description with Highlighted Skills */}
