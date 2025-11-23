@@ -28,6 +28,10 @@ steps:
       - '--platform'
       - 'managed'
       - '--allow-unauthenticated'
+      - '--memory'
+      - '1Gi'
+      - '--cpu'
+      - '1'
       - '--set-env-vars'
       - 'GCP_PROJECT=$PROJECT_ID'
 
