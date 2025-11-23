@@ -48,7 +48,7 @@ cluster_repo = BigQueryClusterRepository()
 lexicon_repo = InMemorySkillLexiconRepository()
 
 # Instantiate use cases
-list_jobs_uc = ListJobsUseCase(job_repo, skill_repo, cluster_repo)
+list_jobs_uc = ListJobsUseCase(job_repo, cluster_repo)
 get_job_detail_uc = GetJobDetailUseCase(job_repo, skill_repo, cluster_repo)
 update_skill_uc = UpdateSkillUseCase(skill_repo)
 add_skill_uc = AddSkillToJobUseCase(skill_repo, lexicon_repo)
