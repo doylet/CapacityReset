@@ -168,7 +168,7 @@ class SkillsExtractor:
     """Extract skills from job descriptions using unsupervised NLP."""
     
     def __init__(self):
-        self.version = "v2.2-unsupervised-ner-lexicon-entities-decoded"
+        self.version = "v2.3-normalized-lemmatized"
         self.bigquery_client = bigquery.Client()
         self.project_id = "sylvan-replica-478802-p4"
         self.dataset_id = f"{self.project_id}.brightdata_jobs"
@@ -247,6 +247,11 @@ class SkillsExtractor:
             category = doc.vocab.strings[match_id]
             skill_text = span.text
             
+            # Normalize and clean the skill text
+            normalized_skill = self._normalize_skill_text(skill_text, span)
+            if not normalized_skill:
+                continue
+            
             # Extract context
             context = self._extract_context(text, skill_text)
             
@@ -254,7 +259,7 @@ class SkillsExtractor:
             confidence = self._calculate_confidence(text, skill_text, context)
             
             skills.append({
-                'skill_name': skill_text.title(),
+                'skill_name': normalized_skill,
                 'skill_category': category,
                 'source_field': source_field,
                 'confidence_score': confidence,
@@ -278,11 +283,16 @@ class SkillsExtractor:
                 
                 # Filter out obviously non-skill entities
                 if self._is_likely_skill(skill_text):
+                    # Normalize and clean
+                    normalized_skill = self._normalize_skill_text(skill_text, ent)
+                    if not normalized_skill:
+                        continue
+                    
                     context = self._extract_context(text, skill_text)
                     confidence = self._calculate_confidence(text, skill_text, context) * 0.7
                     
                     skills.append({
-                        'skill_name': skill_text.title(),
+                        'skill_name': normalized_skill,
                         'skill_category': 'technical_skills',
                         'source_field': source_field,
                         'confidence_score': confidence,
@@ -302,6 +312,12 @@ class SkillsExtractor:
             # Look for chunks with skill-like patterns
             if self._is_skill_chunk(chunk):
                 skill_text = chunk.text
+                
+                # Normalize and clean
+                normalized_skill = self._normalize_skill_text(skill_text, chunk)
+                if not normalized_skill:
+                    continue
+                
                 context = self._extract_context(text, skill_text)
                 confidence = self._calculate_confidence(text, skill_text, context) * 0.6
                 
@@ -309,7 +325,7 @@ class SkillsExtractor:
                 category = self._categorize_chunk(chunk)
                 
                 skills.append({
-                    'skill_name': skill_text.title(),
+                    'skill_name': normalized_skill,
                     'skill_category': category,
                     'source_field': source_field,
                     'confidence_score': confidence,
@@ -335,6 +351,79 @@ class SkillsExtractor:
                 return False
         
         return len(text) > 2
+    
+    def _normalize_skill_text(self, text: str, span) -> str:
+        """
+        Normalize skill text with proper preprocessing:
+        - Remove stop words and determiners
+        - Lemmatize tokens
+        - Fix concatenated words
+        - Title case the result
+        - Remove HTML entities and special chars
+        """
+        # Fix common concatenation issues (add space before capitals)
+        text = re.sub(r'([a-z])([A-Z])', r'\1 \2', text)
+        
+        # Remove leading/trailing punctuation and whitespace
+        text = text.strip().strip('/:,.-')
+        
+        # Skip if too short or just punctuation
+        if len(text) < 2 or text.isspace() or not any(c.isalnum() for c in text):
+            return ""
+        
+        # Get stop words from spaCy
+        nlp = get_nlp()
+        
+        # Process the text
+        doc = nlp(text)
+        
+        # Lemmatize and filter tokens
+        cleaned_tokens = []
+        for token in doc:
+            # Skip stop words, punctuation, spaces
+            if token.is_stop or token.is_punct or token.is_space:
+                continue
+            
+            # Skip determiners (a, an, the)
+            if token.pos_ == 'DET':
+                continue
+            
+            # Use lemma for nouns and verbs, original for others (preserves acronyms)
+            if token.pos_ in ['NOUN', 'VERB']:
+                cleaned_tokens.append(token.lemma_)
+            else:
+                cleaned_tokens.append(token.text)
+        
+        if not cleaned_tokens:
+            return ""
+        
+        # Join and title case
+        normalized = ' '.join(cleaned_tokens)
+        
+        # Title case, preserving acronyms
+        result = self._smart_title_case(normalized)
+        
+        return result
+    
+    def _smart_title_case(self, text: str) -> str:
+        """
+        Smart title case that preserves acronyms and special formatting.
+        """
+        words = text.split()
+        result = []
+        
+        for word in words:
+            # Preserve all-caps acronyms (AWS, API, ML, etc.)
+            if word.isupper() and len(word) > 1:
+                result.append(word)
+            # Preserve mixed case words (JavaScript, PowerPoint, etc.)
+            elif any(c.isupper() for c in word[1:]):
+                result.append(word)
+            # Otherwise title case
+            else:
+                result.append(word.capitalize())
+        
+        return ' '.join(result)
     
     def _is_skill_chunk(self, chunk) -> bool:
         """Check if noun chunk looks like a skill."""
