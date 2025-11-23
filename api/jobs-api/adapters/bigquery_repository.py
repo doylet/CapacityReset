@@ -93,16 +93,25 @@ class BigQueryJobRepository(JobRepository):
     async def get_job_by_id(self, job_id: str) -> Optional[Job]:
         """Get single job by ID."""
         query = f"""
+        WITH job_skill_counts AS (
+            SELECT 
+                job_posting_id,
+                COUNT(*) as skills_count
+            FROM `{DATASET_ID}.job_skills`
+            GROUP BY job_posting_id
+        )
         SELECT
-            job_posting_id,
-            job_title,
-            company_name,
-            job_location,
-            job_summary,
-            job_description_formatted,
-            job_posted_date
-        FROM `{DATASET_ID}.job_postings`
-        WHERE job_posting_id = '{job_id}'
+            jp.job_posting_id,
+            jp.job_title,
+            jp.company_name,
+            jp.job_location,
+            jp.job_summary,
+            jp.job_description_formatted,
+            jp.job_posted_date,
+            COALESCE(jsc.skills_count, 0) as skills_count
+        FROM `{DATASET_ID}.job_postings` jp
+        LEFT JOIN job_skill_counts jsc ON jp.job_posting_id = jsc.job_posting_id
+        WHERE jp.job_posting_id = '{job_id}'
         """
         
         query_job = self.client.query(query)
@@ -119,23 +128,33 @@ class BigQueryJobRepository(JobRepository):
             job_location=row['job_location'],
             job_summary=row['job_summary'],
             job_description_formatted=row['job_description_formatted'],
-            job_posted_date=row['job_posted_date']
+            job_posted_date=row['job_posted_date'],
+            skills_count=row['skills_count']
         )
     
     async def get_jobs_by_ids(self, job_ids: List[str]) -> List[Job]:
         """Get multiple jobs for report generation."""
         ids_str = "', '".join(job_ids)
         query = f"""
+        WITH job_skill_counts AS (
+            SELECT 
+                job_posting_id,
+                COUNT(*) as skills_count
+            FROM `{DATASET_ID}.job_skills`
+            GROUP BY job_posting_id
+        )
         SELECT
-            job_posting_id,
-            job_title,
-            company_name,
-            job_location,
-            job_summary,
-            job_description_formatted,
-            job_posted_date
-        FROM `{DATASET_ID}.job_postings`
-        WHERE job_posting_id IN ('{ids_str}')
+            jp.job_posting_id,
+            jp.job_title,
+            jp.company_name,
+            jp.job_location,
+            jp.job_summary,
+            jp.job_description_formatted,
+            jp.job_posted_date,
+            COALESCE(jsc.skills_count, 0) as skills_count
+        FROM `{DATASET_ID}.job_postings` jp
+        LEFT JOIN job_skill_counts jsc ON jp.job_posting_id = jsc.job_posting_id
+        WHERE jp.job_posting_id IN ('{ids_str}')
         """
         
         query_job = self.client.query(query)
@@ -150,7 +169,8 @@ class BigQueryJobRepository(JobRepository):
                 job_location=row['job_location'],
                 job_summary=row['job_summary'],
                 job_description_formatted=row['job_description_formatted'],
-                job_posted_date=row['job_posted_date']
+                job_posted_date=row['job_posted_date'],
+                skills_count=row['skills_count']
             )
             jobs.append(job)
         
@@ -252,12 +272,13 @@ class BigQueryClusterRepository(ClusterRepository):
     async def list_all_clusters(self) -> List[Cluster]:
         """Get all clusters."""
         query = f"""
-        SELECT DISTINCT
+        SELECT
             cluster_id,
-            cluster_name,
-            cluster_keywords,
-            cluster_size
+            ANY_VALUE(cluster_name) as cluster_name,
+            ANY_VALUE(cluster_keywords) as cluster_keywords,
+            ANY_VALUE(cluster_size) as cluster_size
         FROM `{DATASET_ID}.job_clusters`
+        GROUP BY cluster_id
         ORDER BY cluster_size DESC
         """
         
