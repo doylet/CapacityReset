@@ -7,7 +7,7 @@ steps:
       - 'gcr.io/$PROJECT_ID/jobs-api:$SHORT_SHA'
       - '-t'
       - 'gcr.io/$PROJECT_ID/jobs-api:latest'
-      - '.'
+      - 'api/jobs-api'
 
   # Push the container image to Container Registry
   - name: 'gcr.io/cloud-builders/docker'
