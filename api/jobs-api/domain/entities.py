@@ -44,7 +44,7 @@ class Cluster:
     """Job cluster assignment."""
     cluster_id: int
     cluster_name: str
-    cluster_keywords: List[str]
+    cluster_keywords: List[Dict[str, Any]]  # List of {"score": float, "term": str}
     cluster_size: int
 
 

@@ -6,7 +6,7 @@ Exposes domain use cases as HTTP endpoints.
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Any
 from datetime import date
 from pydantic import BaseModel
 
@@ -71,7 +71,7 @@ class SkillResponse(BaseModel):
 class ClusterResponse(BaseModel):
     cluster_id: int
     cluster_name: str
-    cluster_keywords: List[str]
+    cluster_keywords: List[Dict[str, Any]]  # List of {"score": float, "term": str}
     cluster_size: int
 
 
