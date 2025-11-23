@@ -50,3 +50,7 @@ body {
 .skill-highlight.transferrable {
   background-color: #86efac;
 }
+
+input {
+    color: fieldtext;
+}
