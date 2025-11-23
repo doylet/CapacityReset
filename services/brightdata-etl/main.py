@@ -140,7 +140,7 @@ def transform_and_load_jobs(bigquery_client, jobs, scrape_request_id, project_id
         bigquery.SchemaField("job_num_applicants", "INT64"),
         bigquery.SchemaField("apply_link", "STRING"),
         bigquery.SchemaField("application_availability", "STRING"),
-        bigquery.SchemaField("is_easy_apply", "STRING"),
+        bigquery.SchemaField("is_easy_apply", "BOOLEAN"),
         bigquery.SchemaField("job_poster_name", "STRING"),
         bigquery.SchemaField("job_poster_title", "STRING"),
         bigquery.SchemaField("job_poster_url", "STRING"),
