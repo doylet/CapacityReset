@@ -11,7 +11,7 @@ bq = bigquery.Client()
 
 def log_request_to_bigquery(response_body, status, request_id):
     try:
-        table_id = "sylvan-replica-478802-p4.brightdata_jobs.scrape_requests"
+        table_id = "sylvan-replica-478802-p4.brightdata_jobs.scraper_execution_logs"
         
         # Keep response_body as JSON string for the JSON column type
         # If it's not a string, convert it to JSON string

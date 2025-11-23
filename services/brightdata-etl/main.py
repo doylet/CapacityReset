@@ -285,7 +285,7 @@ def main(request):
         # Get unprocessed requests with gcs_prefix
         query = f"""
         SELECT request_id, gcs_prefix
-        FROM `{project_id}.brightdata_jobs.scrape_requests`
+        FROM `{project_id}.brightdata_jobs.scraper_execution_logs`
         WHERE status = '200'
           AND gcs_prefix IS NOT NULL
           AND (processed IS NULL OR CAST(processed AS STRING) = 'false')
@@ -329,7 +329,7 @@ def main(request):
                 
                 # Mark as processed
                 update_query = f"""
-                UPDATE `{project_id}.brightdata_jobs.scrape_requests`
+                UPDATE `{project_id}.brightdata_jobs.scraper_execution_logs`
                 SET processed = TRUE, processed_at = CURRENT_TIMESTAMP()
                 WHERE request_id = '{request_id}'
                 """
