@@ -114,8 +114,51 @@ def transform_and_load_jobs(bigquery_client, jobs, scrape_request_id, project_id
     # Create temp table with data
     temp_table_id = f"{project_id}.brightdata_jobs._temp_etl_{scrape_request_id.replace('-', '_')}"
     
-    # Insert into temp table
+    # Define schema to prevent type inference issues
+    schema = [
+        bigquery.SchemaField("scrape_request_id", "STRING"),
+        bigquery.SchemaField("job_posting_id", "STRING"),
+        bigquery.SchemaField("url", "STRING"),
+        bigquery.SchemaField("job_title", "STRING"),
+        bigquery.SchemaField("job_summary", "STRING"),
+        bigquery.SchemaField("job_description_formatted", "STRING"),
+        bigquery.SchemaField("job_location", "STRING"),
+        bigquery.SchemaField("job_seniority_level", "STRING"),
+        bigquery.SchemaField("job_function", "STRING"),
+        bigquery.SchemaField("job_employment_type", "STRING"),
+        bigquery.SchemaField("job_industries", "STRING"),
+        bigquery.SchemaField("base_salary_min_amount", "FLOAT64"),
+        bigquery.SchemaField("base_salary_max_amount", "FLOAT64"),
+        bigquery.SchemaField("base_salary_currency", "STRING"),
+        bigquery.SchemaField("base_salary_payment_period", "STRING"),
+        bigquery.SchemaField("company_id", "STRING"),
+        bigquery.SchemaField("company_name", "STRING"),
+        bigquery.SchemaField("company_url", "STRING"),
+        bigquery.SchemaField("company_logo", "STRING"),
+        bigquery.SchemaField("job_posted_time", "STRING"),
+        bigquery.SchemaField("job_posted_date", "STRING"),
+        bigquery.SchemaField("job_num_applicants", "INT64"),
+        bigquery.SchemaField("apply_link", "STRING"),
+        bigquery.SchemaField("application_availability", "STRING"),
+        bigquery.SchemaField("is_easy_apply", "STRING"),
+        bigquery.SchemaField("job_poster_name", "STRING"),
+        bigquery.SchemaField("job_poster_title", "STRING"),
+        bigquery.SchemaField("job_poster_url", "STRING"),
+        bigquery.SchemaField("discovery_location", "STRING"),
+        bigquery.SchemaField("discovery_keyword", "STRING"),
+        bigquery.SchemaField("discovery_country", "STRING"),
+        bigquery.SchemaField("discovery_time_range", "STRING"),
+        bigquery.SchemaField("discovery_job_type", "STRING"),
+        bigquery.SchemaField("discovery_remote", "STRING"),
+        bigquery.SchemaField("discovery_experience_level", "STRING"),
+        bigquery.SchemaField("country_code", "STRING"),
+        bigquery.SchemaField("title_id", "STRING"),
+        bigquery.SchemaField("salary_standards", "STRING"),
+    ]
+    
+    # Insert into temp table with explicit schema
     job_config = bigquery.LoadJobConfig(
+        schema=schema,
         write_disposition=bigquery.WriteDisposition.WRITE_TRUNCATE,
     )
     
@@ -130,7 +173,7 @@ def transform_and_load_jobs(bigquery_client, jobs, scrape_request_id, project_id
     merge_query = f"""
     MERGE `{table_id}` AS target
     USING `{temp_table_id}` AS source
-    ON target.job_posting_id = CAST(source.job_posting_id AS STRING)
+    ON target.job_posting_id = source.job_posting_id
     WHEN MATCHED THEN
       UPDATE SET
         url = source.url,
