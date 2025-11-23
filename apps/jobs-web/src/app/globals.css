@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Skill highlighting styles */
+.skill-highlight {
+  background-color: #fef08a;
+  padding: 0 2px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.skill-highlight:hover {
+  background-color: #fde047;
+}
+
+.skill-highlight.general {
+  background-color: #bfdbfe;
+}
+
+.skill-highlight.specialised {
+  background-color: #fbbf24;
+}
+
+.skill-highlight.transferrable {
+  background-color: #86efac;
+}

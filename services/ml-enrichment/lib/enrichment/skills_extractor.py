@@ -17,10 +17,57 @@ from typing import List, Dict, Any, Optional, Set, Tuple
 from datetime import datetime
 from google.cloud import bigquery
 from spacy.matcher import PhraseMatcher
+from html.parser import HTMLParser
 
 # Don't load model at module level - lazy load instead
 _nlp = None
 _phrase_matcher = None
+
+
+class HTMLStripper(HTMLParser):
+    """Simple HTML tag stripper."""
+    def __init__(self):
+        super().__init__()
+        self.reset()
+        self.strict = False
+        self.convert_charrefs = True
+        self.text = []
+    
+    def handle_data(self, data):
+        self.text.append(data)
+    
+    def get_text(self):
+        return ''.join(self.text)
+
+
+def strip_html(html_text: str) -> str:
+    """
+    Strip HTML tags from text, keeping only the content.
+    
+    Args:
+        html_text: HTML-formatted text
+        
+    Returns:
+        Plain text with HTML tags removed
+    """
+    if not html_text:
+        return ""
+    
+    # Use HTMLParser to strip tags
+    stripper = HTMLStripper()
+    try:
+        stripper.feed(html_text)
+        text = stripper.get_text()
+    except Exception:
+        # Fallback to regex if parser fails
+        text = re.sub(r'<[^>]+>', ' ', html_text)
+    
+    # Clean up whitespace
+    text = re.sub(r'\s+', ' ', text)
+    text = text.strip()
+    
+    return text
+
 
 def get_nlp():
     """Lazy load spaCy model."""
@@ -116,7 +163,7 @@ class SkillsExtractor:
     """Extract skills from job descriptions using unsupervised NLP."""
     
     def __init__(self):
-        self.version = "v2.0-unsupervised-ner-lexicon"
+        self.version = "v2.1-unsupervised-ner-lexicon-html-stripped"
         self.bigquery_client = bigquery.Client()
         self.project_id = "sylvan-replica-478802-p4"
         self.dataset_id = f"{self.project_id}.brightdata_jobs"
@@ -145,10 +192,13 @@ class SkillsExtractor:
         
         skills = []
         
+        # Strip HTML from job description before processing
+        job_description_clean = strip_html(job_description) if job_description else ''
+        
         # Combine texts for analysis
         texts = {
             'job_summary': job_summary or '',
-            'job_description_formatted': job_description or ''
+            'job_description_formatted': job_description_clean
         }
         
         for source_field, text in texts.items():
