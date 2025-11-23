@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Calendar, MapPin, Tag } from 'lucide-react';
+import { Calendar, MapPin, Tag, Star, EyeOff } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface Cluster {
@@ -25,15 +25,27 @@ interface Job {
 interface JobCardProps {
   job: Job;
   isSelected: boolean;
+  isFavorite: boolean;
+  isHidden: boolean;
   onToggleSelection: (jobId: string) => void;
+  onToggleFavorite: (jobId: string) => void;
+  onToggleHidden: (jobId: string) => void;
 }
 
-export default function JobCard({ job, isSelected, onToggleSelection }: JobCardProps) {
+export default function JobCard({
+  job,
+  isSelected,
+  isFavorite,
+  isHidden,
+  onToggleSelection,
+  onToggleFavorite,
+  onToggleHidden,
+}: JobCardProps) {
   return (
     <div
       className={`bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-6 ${
         isSelected ? 'ring-2 ring-blue-500' : ''
-      }`}
+      } ${isHidden ? 'opacity-50' : ''}`}
     >
       <div className="flex items-start justify-between">
         <div className="flex items-start gap-4 flex-1">
@@ -45,11 +57,34 @@ export default function JobCard({ job, isSelected, onToggleSelection }: JobCardP
           />
           
           <div className="flex-1">
-            <Link href={`/jobs/${job.job_posting_id}`}>
-              <h3 className="text-lg font-semibold text-gray-900 hover:text-blue-600 cursor-pointer">
-                {job.job_title}
-              </h3>
-            </Link>
+            <div className="flex items-start justify-between">
+              <Link href={`/jobs/${job.job_posting_id}`}>
+                <h3 className="text-lg font-semibold text-gray-900 hover:text-blue-600 cursor-pointer">
+                  {job.job_title}
+                </h3>
+              </Link>
+              
+              <div className="flex items-center gap-2 ml-4">
+                <button
+                  onClick={() => onToggleFavorite(job.job_posting_id)}
+                  className={`p-1.5 rounded hover:bg-gray-100 ${
+                    isFavorite ? 'text-yellow-500' : 'text-gray-400'
+                  }`}
+                  title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                >
+                  <Star className={`w-5 h-5 ${isFavorite ? 'fill-current' : ''}`} />
+                </button>
+                <button
+                  onClick={() => onToggleHidden(job.job_posting_id)}
+                  className={`p-1.5 rounded hover:bg-gray-100 ${
+                    isHidden ? 'text-gray-600' : 'text-gray-400'
+                  }`}
+                  title={isHidden ? 'Show job' : 'Hide job'}
+                >
+                  <EyeOff className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
             <p className="text-sm text-gray-600 mt-1">{job.company_name}</p>
             
             <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">

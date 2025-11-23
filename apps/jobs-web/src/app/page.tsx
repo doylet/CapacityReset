@@ -5,6 +5,8 @@ import PageHeader from '@/components/PageHeader';
 import JobFilters from '@/components/JobFilters';
 import SelectionActionBar from '@/components/SelectionActionBar';
 import JobCard from '@/components/JobCard';
+import JobGridCard from '@/components/JobGridCard';
+import JobListControls, { SortField, SortOrder, ViewMode } from '@/components/JobListControls';
 import { Job, Cluster, JobFilters as JobFiltersType } from '@/types';
 
 export default function Home() {
@@ -17,8 +19,39 @@ export default function Home() {
   });
   const [clusters, setClusters] = useState<Cluster[]>([]);
   const [selectedJobs, setSelectedJobs] = useState<Set<string>>(new Set());
+  const [favoriteJobs, setFavoriteJobs] = useState<Set<string>>(new Set());
+  const [hiddenJobs, setHiddenJobs] = useState<Set<string>>(new Set());
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [sortField, setSortField] = useState<SortField>('date');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 20;
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+
+  // Load preferences from localStorage
+  useEffect(() => {
+    const savedFavorites = localStorage.getItem('favoriteJobs');
+    const savedHidden = localStorage.getItem('hiddenJobs');
+    const savedViewMode = localStorage.getItem('viewMode');
+    
+    if (savedFavorites) setFavoriteJobs(new Set(JSON.parse(savedFavorites)));
+    if (savedHidden) setHiddenJobs(new Set(JSON.parse(savedHidden)));
+    if (savedViewMode) setViewMode(savedViewMode as ViewMode);
+  }, []);
+
+  // Save preferences to localStorage
+  useEffect(() => {
+    localStorage.setItem('favoriteJobs', JSON.stringify(Array.from(favoriteJobs)));
+  }, [favoriteJobs]);
+
+  useEffect(() => {
+    localStorage.setItem('hiddenJobs', JSON.stringify(Array.from(hiddenJobs)));
+  }, [hiddenJobs]);
+
+  useEffect(() => {
+    localStorage.setItem('viewMode', viewMode);
+  }, [viewMode]);
 
   useEffect(() => {
     fetchClusters();
@@ -74,6 +107,87 @@ export default function Home() {
     });
   };
 
+  const toggleFavorite = (jobId: string) => {
+    setFavoriteJobs(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(jobId)) {
+        newSet.delete(jobId);
+      } else {
+        newSet.add(jobId);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleHidden = (jobId: string) => {
+    setHiddenJobs(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(jobId)) {
+        newSet.delete(jobId);
+      } else {
+        newSet.add(jobId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSortChange = (field: SortField, order: SortOrder) => {
+    setSortField(field);
+    setSortOrder(order);
+    setCurrentPage(1);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Sort and filter jobs
+  const getSortedAndFilteredJobs = () => {
+    let filtered = [...jobs];
+
+    // Sort
+    filtered.sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortField) {
+        case 'date':
+          comparison = new Date(a.job_posted_date).getTime() - new Date(b.job_posted_date).getTime();
+          break;
+        case 'title':
+          comparison = a.job_title.localeCompare(b.job_title);
+          break;
+        case 'skills':
+          comparison = (a.skills_count || 0) - (b.skills_count || 0);
+          break;
+        case 'company':
+          comparison = a.company_name.localeCompare(b.company_name);
+          break;
+      }
+      
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+
+    // Prioritize favorites, then regular, then hidden
+    filtered.sort((a, b) => {
+      const aFavorite = favoriteJobs.has(a.job_posting_id);
+      const bFavorite = favoriteJobs.has(b.job_posting_id);
+      const aHidden = hiddenJobs.has(a.job_posting_id);
+      const bHidden = hiddenJobs.has(b.job_posting_id);
+
+      if (aFavorite && !bFavorite) return -1;
+      if (!aFavorite && bFavorite) return 1;
+      if (aHidden && !bHidden) return 1;
+      if (!aHidden && bHidden) return -1;
+      return 0;
+    });
+
+    return filtered;
+  };
+
+  const sortedJobs = getSortedAndFilteredJobs();
+  const paginatedJobs = sortedJobs.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   const generateReport = async () => {
     if (selectedJobs.size === 0) {
       alert('Please select at least one job');
@@ -108,6 +222,18 @@ export default function Home() {
           onClearFilters={handleClearFilters}
         />
 
+        <JobListControls
+          viewMode={viewMode}
+          sortField={sortField}
+          sortOrder={sortOrder}
+          totalJobs={sortedJobs.length}
+          currentPage={currentPage}
+          pageSize={pageSize}
+          onViewModeChange={setViewMode}
+          onSortChange={handleSortChange}
+          onPageChange={handlePageChange}
+        />
+
         <SelectionActionBar
           selectedCount={selectedJobs.size}
           onGenerateReport={generateReport}
@@ -119,22 +245,43 @@ export default function Home() {
             <p className="mt-2 text-gray-600">Loading jobs...</p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {jobs.length === 0 ? (
+          <>
+            {sortedJobs.length === 0 ? (
               <div className="bg-white rounded-lg shadow-sm p-12 text-center">
                 <p className="text-gray-500">No jobs found. Try adjusting your filters.</p>
               </div>
+            ) : viewMode === 'grid' ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {paginatedJobs.map(job => (
+                  <JobGridCard
+                    key={job.job_posting_id}
+                    job={job}
+                    isSelected={selectedJobs.has(job.job_posting_id)}
+                    isFavorite={favoriteJobs.has(job.job_posting_id)}
+                    isHidden={hiddenJobs.has(job.job_posting_id)}
+                    onToggleSelection={toggleJobSelection}
+                    onToggleFavorite={toggleFavorite}
+                    onToggleHidden={toggleHidden}
+                  />
+                ))}
+              </div>
             ) : (
-              jobs.map(job => (
-                <JobCard
-                  key={job.job_posting_id}
-                  job={job}
-                  isSelected={selectedJobs.has(job.job_posting_id)}
-                  onToggleSelection={toggleJobSelection}
-                />
-              ))
+              <div className="space-y-4">
+                {paginatedJobs.map(job => (
+                  <JobCard
+                    key={job.job_posting_id}
+                    job={job}
+                    isSelected={selectedJobs.has(job.job_posting_id)}
+                    isFavorite={favoriteJobs.has(job.job_posting_id)}
+                    isHidden={hiddenJobs.has(job.job_posting_id)}
+                    onToggleSelection={toggleJobSelection}
+                    onToggleFavorite={toggleFavorite}
+                    onToggleHidden={toggleHidden}
+                  />
+                ))}
+              </div>
             )}
-          </div>
+          </>
         )}
       </main>
     </div>
