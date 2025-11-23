@@ -11,13 +11,13 @@ from lib.utils.enrichment_utils import log_enrichment, get_logger
 logger = get_logger()
 
 
-def process_skills_extraction(jobs: List[Dict[str, Any]], skills_extractor) -> Dict[str, Any]:
+def process_skills_extraction(jobs: List[Dict[str, Any]], extractor) -> Dict[str, Any]:
     """
     Extract skills from job postings.
     
     Args:
         jobs: List of job records
-        skills_extractor: SkillsExtractor instance
+        extractor: SkillsExtractor instance
         
     Returns:
         Statistics: processed, failed, total_skills
@@ -29,7 +29,7 @@ def process_skills_extraction(jobs: List[Dict[str, Any]], skills_extractor) -> D
     for job in jobs:
         try:
             # Extract skills from both job_summary and job_description_formatted
-            skills = skills_extractor.extract_skills(
+            skills = extractor.extract_skills(
                 job_summary=job['job_summary'],
                 job_description=job['job_description_formatted']
             )
@@ -39,7 +39,7 @@ def process_skills_extraction(jobs: List[Dict[str, Any]], skills_extractor) -> D
                 enrichment_id = log_enrichment(
                     job_posting_id=job['job_posting_id'],
                     enrichment_type='skills_extraction',
-                    enrichment_version=skills_extractor.get_version(),
+                    enrichment_version=extractor.get_version(),
                     status='success',
                     metadata={
                         'skills_count': len(skills),
@@ -48,7 +48,7 @@ def process_skills_extraction(jobs: List[Dict[str, Any]], skills_extractor) -> D
                 )
                 
                 # Store skills in job_skills table
-                skills_extractor.store_skills(
+                extractor.store_skills(
                     job_posting_id=job['job_posting_id'],
                     enrichment_id=enrichment_id,
                     skills=skills
@@ -61,7 +61,7 @@ def process_skills_extraction(jobs: List[Dict[str, Any]], skills_extractor) -> D
                 log_enrichment(
                     job_posting_id=job['job_posting_id'],
                     enrichment_type='skills_extraction',
-                    enrichment_version=skills_extractor.get_version(),
+                    enrichment_version=extractor.get_version(),
                     status='partial',
                     metadata={'skills_count': 0, 'reason': 'no_skills_found'}
                 )
@@ -75,7 +75,7 @@ def process_skills_extraction(jobs: List[Dict[str, Any]], skills_extractor) -> D
             log_enrichment(
                 job_posting_id=job['job_posting_id'],
                 enrichment_type='skills_extraction',
-                enrichment_version=skills_extractor.get_version(),
+                enrichment_version=extractor.get_version(),
                 status='failed',
                 error_message=str(e)
             )
