@@ -6,7 +6,7 @@ Exposes domain use cases as HTTP endpoints.
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from typing import Optional, List
+from typing import Optional, List, Dict
 from datetime import date
 from pydantic import BaseModel
 
