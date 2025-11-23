@@ -14,6 +14,9 @@ from google.cloud import logging as cloud_logging
 import logging
 import json
 import os
+import uuid
+from datetime import datetime
+import time
 
 client = cloud_logging.Client(
     project="sylvan-replica-478802-p4",
@@ -269,6 +272,11 @@ def main(request):
     Returns:
         JSON response with transformation results
     """
+    start_time = time.time()
+    log_id = str(uuid.uuid4())
+    execution_status = "success"
+    error_message = None
+    
     try:
         bigquery_client = bigquery.Client()
         project_id = os.environ.get('GCP_PROJECT', 'sylvan-replica-478802-p4')
@@ -301,6 +309,7 @@ def main(request):
         
         total_jobs_affected = 0
         processed_request_ids = []
+        failed_request_ids = []
         
         for row in requests:
             request_id = row['request_id']
@@ -331,21 +340,73 @@ def main(request):
             except Exception as e:
                 print(f"Error processing request {request_id}: {str(e)}")
                 logging.error(f"Error processing request {request_id}: {str(e)}")
+                failed_request_ids.append(request_id)
+                if not error_message:
+                    error_message = str(e)
                 continue
+        
+        # Determine execution status
+        if failed_request_ids:
+            execution_status = "partial" if processed_request_ids else "error"
+        
+        # Log execution
+        duration = time.time() - start_time
+        log_row = {
+            "log_id": log_id,
+            "execution_timestamp": datetime.utcnow().isoformat(),
+            "status": execution_status,
+            "requests_processed": len(processed_request_ids),
+            "requests_failed": len(failed_request_ids),
+            "jobs_affected": total_jobs_affected,
+            "duration_seconds": duration,
+            "error_message": error_message,
+            "processed_request_ids": processed_request_ids,
+            "failed_request_ids": failed_request_ids,
+        }
+        
+        log_table_id = f"{project_id}.brightdata_jobs.etl_execution_logs"
+        bigquery_client.insert_rows_json(log_table_id, [log_row])
         
         print(f"ETL completed. Processed {len(processed_request_ids)} requests, {total_jobs_affected} jobs affected")
         
         return {
             "status": "success",
+            "log_id": log_id,
             "requests_processed": len(processed_request_ids),
+            "requests_failed": len(failed_request_ids),
             "jobs_affected": total_jobs_affected,
+            "duration_seconds": round(duration, 2),
             "message": f"Successfully processed {len(processed_request_ids)} requests and transformed {total_jobs_affected} job postings"
         }, 200
         
     except Exception as e:
         error_msg = f"ETL transformation failed: {str(e)}"
         print(error_msg)
+        
+        # Log fatal error
+        duration = time.time() - start_time
+        try:
+            bigquery_client = bigquery.Client()
+            project_id = os.environ.get('GCP_PROJECT', 'sylvan-replica-478802-p4')
+            log_row = {
+                "log_id": log_id,
+                "execution_timestamp": datetime.utcnow().isoformat(),
+                "status": "error",
+                "requests_processed": 0,
+                "requests_failed": 0,
+                "jobs_affected": 0,
+                "duration_seconds": duration,
+                "error_message": error_msg,
+                "processed_request_ids": [],
+                "failed_request_ids": [],
+            }
+            log_table_id = f"{project_id}.brightdata_jobs.etl_execution_logs"
+            bigquery_client.insert_rows_json(log_table_id, [log_row])
+        except:
+            pass
+            
         return {
             "status": "error",
+            "log_id": log_id,
             "message": error_msg
         }, 500
