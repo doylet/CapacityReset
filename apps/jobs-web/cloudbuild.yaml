@@ -9,7 +9,9 @@ steps:
       - 'gcr.io/$PROJECT_ID/jobs-web:latest'
       - '--build-arg'
       - 'NEXT_PUBLIC_API_URL=${_API_URL}'
-      - '.'
+      - '-f'
+      - 'apps/jobs-web/Dockerfile'
+      - 'apps/jobs-web'
 
   # Push the container image to Container Registry
   - name: 'gcr.io/cloud-builders/docker'
