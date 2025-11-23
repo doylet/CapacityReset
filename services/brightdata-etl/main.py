@@ -321,7 +321,7 @@ def main(request):
                 # Mark as processed
                 update_query = f"""
                 UPDATE `{project_id}.brightdata_jobs.scrape_requests`
-                SET processed = 'true', processed_at = CURRENT_TIMESTAMP()
+                SET processed = TRUE, processed_at = CURRENT_TIMESTAMP()
                 WHERE request_id = '{request_id}'
                 """
                 bigquery_client.query(update_query).result()
