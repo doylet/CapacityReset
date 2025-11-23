@@ -272,14 +272,22 @@ class BigQueryClusterRepository(ClusterRepository):
     async def list_all_clusters(self) -> List[Cluster]:
         """Get all clusters."""
         query = f"""
+        WITH unique_clusters AS (
+            SELECT
+                cluster_id,
+                ANY_VALUE(cluster_name) as cluster_name,
+                ANY_VALUE(cluster_keywords) as cluster_keywords,
+                ANY_VALUE(cluster_size) as cluster_size
+            FROM `{DATASET_ID}.job_clusters`
+            GROUP BY cluster_id
+        )
         SELECT
             cluster_id,
-            ANY_VALUE(cluster_name) as cluster_name,
-            ANY_VALUE(cluster_keywords) as cluster_keywords,
-            ANY_VALUE(cluster_size) as cluster_size
-        FROM `{DATASET_ID}.job_clusters`
-        GROUP BY cluster_id
-        ORDER BY ANY_VALUE(cluster_size) DESC
+            cluster_name,
+            cluster_keywords,
+            cluster_size
+        FROM unique_clusters
+        ORDER BY cluster_size DESC
         """
         
         query_job = self.client.query(query)
