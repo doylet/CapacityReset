@@ -4,7 +4,8 @@ Next.js frontend for viewing and editing job skills with ML enrichment.
 
 ## Features
 
-- Browse jobs with advanced filtering (location, skills, clusters, dates)
+- Browse jobs with sorting (date, title, skills, company), pagination, and grid/list views
+- Favorite and hide/deprioritize jobs with localStorage persistence
 - Multi-select jobs for ML report generation
 - View job details with highlighted skills
 - Edit skill metadata (general/specialised/transferrable)
