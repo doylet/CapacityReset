@@ -13,6 +13,7 @@ import spacy
 import uuid
 import json
 import re
+import html
 from typing import List, Dict, Any, Optional, Set, Tuple
 from datetime import datetime
 from google.cloud import bigquery
@@ -43,12 +44,13 @@ class HTMLStripper(HTMLParser):
 def strip_html(html_text: str) -> str:
     """
     Strip HTML tags from text, keeping only the content.
+    Also decodes HTML entities like &lt; &gt; &amp; etc.
     
     Args:
         html_text: HTML-formatted text
         
     Returns:
-        Plain text with HTML tags removed
+        Plain text with HTML tags removed and entities decoded
     """
     if not html_text:
         return ""
@@ -61,6 +63,9 @@ def strip_html(html_text: str) -> str:
     except Exception:
         # Fallback to regex if parser fails
         text = re.sub(r'<[^>]+>', ' ', html_text)
+    
+    # Decode HTML entities (&lt; &gt; &amp; &nbsp; etc.)
+    text = html.unescape(text)
     
     # Clean up whitespace
     text = re.sub(r'\s+', ' ', text)
@@ -163,7 +168,7 @@ class SkillsExtractor:
     """Extract skills from job descriptions using unsupervised NLP."""
     
     def __init__(self):
-        self.version = "v2.1-unsupervised-ner-lexicon-html-stripped"
+        self.version = "v2.2-unsupervised-ner-lexicon-entities-decoded"
         self.bigquery_client = bigquery.Client()
         self.project_id = "sylvan-replica-478802-p4"
         self.dataset_id = f"{self.project_id}.brightdata_jobs"
