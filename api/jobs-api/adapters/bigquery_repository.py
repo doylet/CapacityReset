@@ -6,6 +6,7 @@ Implements repository ports using BigQuery as the data source.
 
 from typing import List, Optional, Dict, Any
 from datetime import datetime
+import json
 from google.cloud import bigquery
 from domain.entities import Job, Skill, Cluster, SkillLexiconEntry, SkillType
 from domain.repositories import JobRepository, SkillRepository, ClusterRepository, SkillLexiconRepository
@@ -262,10 +263,13 @@ class BigQueryClusterRepository(ClusterRepository):
             return None
         
         row = results[0]
+        cluster_keywords = row['cluster_keywords']
+        if isinstance(cluster_keywords, str):
+            cluster_keywords = json.loads(cluster_keywords)
         return Cluster(
             cluster_id=row['cluster_id'],
             cluster_name=row['cluster_name'],
-            cluster_keywords=row['cluster_keywords'],  # Already JSON
+            cluster_keywords=cluster_keywords,
             cluster_size=row['cluster_size']
         )
     
@@ -295,10 +299,13 @@ class BigQueryClusterRepository(ClusterRepository):
         
         clusters = []
         for row in results:
+            cluster_keywords = row['cluster_keywords']
+            if isinstance(cluster_keywords, str):
+                cluster_keywords = json.loads(cluster_keywords)
             cluster = Cluster(
                 cluster_id=row['cluster_id'],
                 cluster_name=row['cluster_name'],
-                cluster_keywords=row['cluster_keywords'],
+                cluster_keywords=cluster_keywords,
                 cluster_size=row['cluster_size']
             )
             clusters.append(cluster)
