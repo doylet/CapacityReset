@@ -1,0 +1,38 @@
+steps:
+  # Build the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: 
+      - 'build'
+      - '-t'
+      - 'australia-southeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/ml-enrichment:$COMMIT_SHA'
+      - '.'
+      - '--platform=linux/amd64'
+
+  # Push the container image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'australia-southeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/ml-enrichment:$COMMIT_SHA'
+
+  # Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'ml-enrichment'
+      - '--image'
+      - 'australia-southeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/ml-enrichment:$COMMIT_SHA'
+      - '--region'
+      - 'australia-southeast1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--set-env-vars'
+      - 'GCP_PROJECT=$PROJECT_ID'
+
+images:
+  - 'australia-southeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/ml-enrichment:$COMMIT_SHA'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
