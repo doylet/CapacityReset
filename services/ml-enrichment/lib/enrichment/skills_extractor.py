@@ -1,18 +1,26 @@
 """
 Skills Extractor Module
 
-Extracts skills, technologies, tools, and certifications from job postings
-using spaCy NLP and pattern matching.
+Extracts skills from job postings using unsupervised NLP approach:
+- Named Entity Recognition (NER) with spaCy
+- Phrase matching against a skills lexicon (175 general skills)
+- Context-aware confidence scoring
+
+No hardcoded supervised keywords - discovers skills from job text.
 """
 
 import spacy
 import uuid
-from typing import List, Dict, Any, Optional
+import json
+import re
+from typing import List, Dict, Any, Optional, Set, Tuple
 from datetime import datetime
 from google.cloud import bigquery
+from spacy.matcher import PhraseMatcher
 
 # Don't load model at module level - lazy load instead
 _nlp = None
+_phrase_matcher = None
 
 def get_nlp():
     """Lazy load spaCy model."""
@@ -21,44 +29,94 @@ def get_nlp():
         _nlp = spacy.load("en_core_web_sm")
     return _nlp
 
-# Technology keywords and categories
-TECH_KEYWORDS = {
-    'programming_language': [
-        'python', 'java', 'javascript', 'typescript', 'c++', 'c#', 'ruby', 'go', 'rust',
-        'php', 'swift', 'kotlin', 'scala', 'r', 'matlab', 'sql', 'html', 'css'
+def get_phrase_matcher(nlp):
+    """Lazy load phrase matcher with skills lexicon."""
+    global _phrase_matcher
+    if _phrase_matcher is None:
+        _phrase_matcher = PhraseMatcher(nlp.vocab, attr="LOWER")
+        
+        # Load skills lexicon from embedded data
+        skills_lexicon = SKILLS_LEXICON
+        
+        # Add patterns for each skill
+        for category, skills in skills_lexicon.items():
+            patterns = [nlp.make_doc(skill) for skill in skills]
+            _phrase_matcher.add(category, patterns)
+    
+    return _phrase_matcher
+
+# Skills Lexicon - 175 general skills across 11 categories
+# Source: User-provided skills CSV (unsupervised reference)
+SKILLS_LEXICON = {
+    'communicating': [
+        'corresponding', 'editing', 'facilitating', 'interviewing', 'listening',
+        'negotiating', 'persuading', 'presenting', 'public speaking', 'reporting',
+        'translating', 'writing'
     ],
-    'framework': [
-        'react', 'angular', 'vue', 'django', 'flask', 'spring', 'node.js', 'express',
-        'fastapi', 'rails', 'laravel', '.net', 'asp.net', 'next.js', 'nuxt', 'svelte'
+    'creative_skills': [
+        'composing', 'conceiving', 'conceptualising', 'creating', 'devising',
+        'designing', 'drawing', 'illustrating', 'innovating', 'painting',
+        'performing', 'photographing', 'sculpting', 'styling'
     ],
-    'database': [
-        'postgresql', 'mysql', 'mongodb', 'redis', 'elasticsearch', 'dynamodb',
-        'cassandra', 'oracle', 'sql server', 'sqlite', 'neo4j', 'bigquery'
+    'developing_people': [
+        'advising', 'assessing performance', 'coaching', 'collaborating', 'building teams',
+        'consulting', 'counselling', 'demonstrating', 'facilitating', 'group dynamics',
+        'instructing', 'mediating', 'motivating', 'teaching'
     ],
-    'cloud': [
-        'aws', 'azure', 'gcp', 'google cloud', 'amazon web services', 'kubernetes',
-        'docker', 'terraform', 'cloudformation', 'cloud run', 'lambda', 'ec2', 's3'
+    'financial_skills': [
+        'analysing', 'appraising', 'estimating', 'assessing', 'auditing',
+        'budgeting', 'calculating', 'costing', 'evaluating', 'forecasting',
+        'investing'
     ],
-    'tool': [
-        'git', 'github', 'gitlab', 'jira', 'confluence', 'jenkins', 'circleci',
-        'travis ci', 'ansible', 'puppet', 'chef', 'grafana', 'prometheus', 'datadog'
+    'interpersonal_skills': [
+        'advising skills', 'facilitating', 'formulating', 'group participation', 'working autonomously',
+        'influencing', 'leading', 'liaising', 'motivating', 'negotiating skills',
+        'networking', 'relationship building', 'teamwork', 'trust building'
     ],
-    'data_science': [
-        'pandas', 'numpy', 'scikit-learn', 'tensorflow', 'pytorch', 'keras',
-        'spark', 'hadoop', 'airflow', 'dbt', 'tableau', 'power bi', 'looker'
+    'managing_directing': [
+        'appraising', 'approving', 'coaching', 'coordinating', 'delegating',
+        'developing others', 'executing', 'facilitating', 'formulating', 'influencing',
+        'interviewing', 'hiring', 'leading meetings', 'making decisions', 'managing',
+        'managing projects', 'mentoring', 'planning', 'team building'
     ],
-    'soft_skill': [
-        'leadership', 'communication', 'problem solving', 'teamwork', 'agile',
-        'scrum', 'project management', 'stakeholder management', 'mentoring'
+    'organising': [
+        'general administration', 'quality control', 'time management', 'filing', 'categorising',
+        'classifying', 'compiling', 'coordinating', 'distributing', 'documenting',
+        'expediting', 'implementing', 'maintaining', 'monitoring', 'office management',
+        'planning', 'scheduling', 'systematising'
+    ],
+    'planning': [
+        'analysing', 'conceptualising', 'designing', 'developing policy', 'developing strategy',
+        'establishing goals', 'identifying problems', 'strategic thinking'
+    ],
+    'researching_analysing': [
+        'assessing', 'calculating', 'classifying', 'critiquing', 'developing',
+        'diagnosing', 'evaluating', 'examining', 'experimenting', 'extracting',
+        'interpreting', 'interrogating', 'investigating', 'measuring', 'organising',
+        'researching', 'reviewing', 'solving problems', 'summarising', 'surveying',
+        'synthesising', 'testing', 'troubleshooting'
+    ],
+    'selling_marketing': [
+        'advertising', 'analysing markets', 'building rapport', 'building relationships', 'delivering',
+        'demonstrating', 'developing', 'editing', 'identifying', 'influencing',
+        'marketing', 'merchandising', 'promoting', 'prospecting', 'publicising',
+        'sales', 'selling', 'servicing', 'social media', 'writing copy'
+    ],
+    'technical_skills': [
+        'assembling', 'building', 'calibrating', 'configuring', 'constructing',
+        'designing', 'developing', 'diagnosing', 'engineering', 'fabricating',
+        'installing', 'maintaining', 'manufacturing', 'operating', 'programming',
+        'repairing', 'setting up', 'technical writing', 'testing', 'training',
+        'troubleshooting', 'upgrading', 'using technology'
     ]
 }
 
 
 class SkillsExtractor:
-    """Extract skills from job descriptions using NLP and pattern matching."""
+    """Extract skills from job descriptions using unsupervised NLP."""
     
     def __init__(self):
-        self.version = "v1.0-spacy-en_core_web_sm"
+        self.version = "v2.0-unsupervised-ner-lexicon"
         self.bigquery_client = bigquery.Client()
         self.project_id = "sylvan-replica-478802-p4"
         self.dataset_id = f"{self.project_id}.brightdata_jobs"
@@ -69,7 +127,11 @@ class SkillsExtractor:
     
     def extract_skills(self, job_summary: str, job_description: str) -> List[Dict[str, Any]]:
         """
-        Extract skills from job text.
+        Extract skills using unsupervised NLP approach:
+        1. Use spaCy NER to identify entities (organizations, products, skills)
+        2. Use phrase matcher against skills lexicon (175 general skills)
+        3. Extract noun chunks that look skill-like
+        4. Calculate confidence based on context, frequency, and source
         
         Args:
             job_summary: Brief job summary
@@ -78,6 +140,9 @@ class SkillsExtractor:
         Returns:
             List of skill dictionaries with name, category, confidence, context
         """
+        nlp = get_nlp()
+        phrase_matcher = get_phrase_matcher(nlp)
+        
         skills = []
         
         # Combine texts for analysis
@@ -90,31 +155,20 @@ class SkillsExtractor:
             if not text:
                 continue
             
-            # Convert to lowercase for matching
-            text_lower = text.lower()
-            
             # Process with spaCy
-            nlp = get_nlp()
             doc = nlp(text)
             
-            # Extract skills by category
-            for category, keywords in TECH_KEYWORDS.items():
-                for keyword in keywords:
-                    if keyword in text_lower:
-                        # Find context snippet
-                        context = self._extract_context(text, keyword)
-                        
-                        # Calculate confidence based on mentions
-                        mentions = text_lower.count(keyword)
-                        confidence = min(0.5 + (mentions * 0.1), 1.0)
-                        
-                        skills.append({
-                            'skill_name': keyword.title(),
-                            'skill_category': category,
-                            'source_field': source_field,
-                            'confidence_score': confidence,
-                            'context_snippet': context
-                        })
+            # 1. Extract skills from lexicon using phrase matcher
+            lexicon_skills = self._extract_lexicon_skills(doc, phrase_matcher, text, source_field)
+            skills.extend(lexicon_skills)
+            
+            # 2. Extract named entities (PRODUCT, ORG, SKILL)
+            entity_skills = self._extract_entity_skills(doc, text, source_field)
+            skills.extend(entity_skills)
+            
+            # 3. Extract skill-like noun chunks (verbs + -ing forms)
+            chunk_skills = self._extract_noun_chunk_skills(doc, text, source_field)
+            skills.extend(chunk_skills)
         
         # Deduplicate skills (keep highest confidence)
         unique_skills = {}
@@ -124,6 +178,172 @@ class SkillsExtractor:
                 unique_skills[key] = skill
         
         return list(unique_skills.values())
+    
+    def _extract_lexicon_skills(
+        self, doc, phrase_matcher, text: str, source_field: str
+    ) -> List[Dict[str, Any]]:
+        """Extract skills that match the skills lexicon."""
+        skills = []
+        matches = phrase_matcher(doc)
+        
+        for match_id, start, end in matches:
+            # Get the matched span
+            span = doc[start:end]
+            category = doc.vocab.strings[match_id]
+            skill_text = span.text
+            
+            # Extract context
+            context = self._extract_context(text, skill_text)
+            
+            # Calculate confidence
+            confidence = self._calculate_confidence(text, skill_text, context)
+            
+            skills.append({
+                'skill_name': skill_text.title(),
+                'skill_category': category,
+                'source_field': source_field,
+                'confidence_score': confidence,
+                'context_snippet': context,
+                'extraction_method': 'lexicon_match'
+            })
+        
+        return skills
+    
+    def _extract_entity_skills(
+        self, doc, text: str, source_field: str
+    ) -> List[Dict[str, Any]]:
+        """Extract skills from named entities (PRODUCT, ORG, SKILL-like)."""
+        skills = []
+        
+        # Look for entities that might be skills/tools/technologies
+        for ent in doc.ents:
+            # Focus on PRODUCT, ORG entities that are likely tools/tech
+            if ent.label_ in ['PRODUCT', 'ORG', 'GPE']:
+                skill_text = ent.text
+                
+                # Filter out obviously non-skill entities
+                if self._is_likely_skill(skill_text):
+                    context = self._extract_context(text, skill_text)
+                    confidence = self._calculate_confidence(text, skill_text, context) * 0.7
+                    
+                    skills.append({
+                        'skill_name': skill_text.title(),
+                        'skill_category': 'technical_skills',
+                        'source_field': source_field,
+                        'confidence_score': confidence,
+                        'context_snippet': context,
+                        'extraction_method': 'ner'
+                    })
+        
+        return skills
+    
+    def _extract_noun_chunk_skills(
+        self, doc, text: str, source_field: str
+    ) -> List[Dict[str, Any]]:
+        """Extract skill-like noun chunks (e.g., 'project management', 'data analysis')."""
+        skills = []
+        
+        for chunk in doc.noun_chunks:
+            # Look for chunks with skill-like patterns
+            if self._is_skill_chunk(chunk):
+                skill_text = chunk.text
+                context = self._extract_context(text, skill_text)
+                confidence = self._calculate_confidence(text, skill_text, context) * 0.6
+                
+                # Try to categorize based on verbs
+                category = self._categorize_chunk(chunk)
+                
+                skills.append({
+                    'skill_name': skill_text.title(),
+                    'skill_category': category,
+                    'source_field': source_field,
+                    'confidence_score': confidence,
+                    'context_snippet': context,
+                    'extraction_method': 'noun_chunk'
+                })
+        
+        return skills
+    
+    def _is_likely_skill(self, text: str) -> bool:
+        """Check if entity is likely a skill/tool/technology."""
+        text_lower = text.lower()
+        
+        # Filter out common non-skill entities
+        exclude_patterns = [
+            r'^(the|a|an)\s',
+            r'^\d+$',
+            r'^[A-Z]{2}$',
+        ]
+        
+        for pattern in exclude_patterns:
+            if re.match(pattern, text_lower):
+                return False
+        
+        return len(text) > 2
+    
+    def _is_skill_chunk(self, chunk) -> bool:
+        """Check if noun chunk looks like a skill."""
+        # Look for verb-like words (especially -ing forms)
+        has_verb = any(token.pos_ == 'VERB' or token.tag_ == 'VBG' for token in chunk)
+        
+        # Look for skill-related nouns
+        skill_nouns = {'management', 'analysis', 'development', 'design', 'engineering', 
+                       'leadership', 'communication', 'planning', 'strategy'}
+        has_skill_noun = any(token.lemma_ in skill_nouns for token in chunk)
+        
+        # Must be 2-4 words long
+        is_reasonable_length = 2 <= len(chunk) <= 4
+        
+        return (has_verb or has_skill_noun) and is_reasonable_length
+    
+    def _categorize_chunk(self, chunk) -> str:
+        """Categorize a noun chunk based on its lemmas."""
+        text = chunk.text.lower()
+        
+        if any(word in text for word in ['manage', 'lead', 'direct', 'coordinate']):
+            return 'managing_directing'
+        elif any(word in text for word in ['plan', 'strategy', 'design']):
+            return 'planning'
+        elif any(word in text for word in ['research', 'analyse', 'analyze', 'investigate']):
+            return 'researching_analysing'
+        elif any(word in text for word in ['communicate', 'present', 'write', 'speak']):
+            return 'communicating'
+        elif any(word in text for word in ['technical', 'program', 'engineer', 'build']):
+            return 'technical_skills'
+        elif any(word in text for word in ['sell', 'market', 'promote']):
+            return 'selling_marketing'
+        else:
+            return 'general_skills'
+    
+    def _calculate_confidence(self, text: str, skill: str, context: str) -> float:
+        """Calculate confidence score based on context and frequency."""
+        text_lower = text.lower()
+        skill_lower = skill.lower()
+        context_lower = context.lower()
+        
+        # Base confidence
+        confidence = 0.5
+        
+        # Boost for frequency
+        mentions = text_lower.count(skill_lower)
+        confidence += min(mentions * 0.1, 0.3)
+        
+        # Boost for context indicators
+        strong_indicators = ['required', 'must have', 'essential', 'proficient', 'expert']
+        medium_indicators = ['experience', 'knowledge', 'familiar', 'understanding', 'ability']
+        
+        for indicator in strong_indicators:
+            if indicator in context_lower:
+                confidence += 0.2
+                break
+        
+        for indicator in medium_indicators:
+            if indicator in context_lower:
+                confidence += 0.1
+                break
+        
+        # Cap at 1.0
+        return min(confidence, 1.0)
     
     def _extract_context(self, text: str, keyword: str, window: int = 50) -> str:
         """Extract surrounding context for a keyword."""
