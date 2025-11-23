@@ -5,7 +5,7 @@ steps:
       - 'build'
       - '-t'
       - 'australia-southeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/ml-enrichment:$COMMIT_SHA'
-      - '.'
+      - 'services/ml-enrichment'
       - '--platform=linux/amd64'
 
   # Push the container image to Artifact Registry
