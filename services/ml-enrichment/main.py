@@ -26,9 +26,23 @@ bigquery_client = bigquery.Client()
 logging_client = cloud_logging.Client()
 logger = logging_client.logger("ml-enrichment")
 
-# Initialize enrichment modules
-skills_extractor = SkillsExtractor()
-embeddings_generator = EmbeddingsGenerator()
+# Lazy-load enrichment modules to speed up cold start
+_skills_extractor = None
+_embeddings_generator = None
+
+def get_skills_extractor():
+    """Lazy load skills extractor."""
+    global _skills_extractor
+    if _skills_extractor is None:
+        _skills_extractor = SkillsExtractor()
+    return _skills_extractor
+
+def get_embeddings_generator():
+    """Lazy load embeddings generator."""
+    global _embeddings_generator
+    if _embeddings_generator is None:
+        _embeddings_generator = EmbeddingsGenerator()
+    return _embeddings_generator
 
 PROJECT_ID = "sylvan-replica-478802-p4"
 DATASET_ID = f"{PROJECT_ID}.brightdata_jobs"
@@ -146,7 +160,8 @@ def process_skills_extraction(jobs: List[Dict[str, Any]]) -> Dict[str, Any]:
     for job in jobs:
         try:
             # Extract skills from both job_summary and job_description_formatted
-            skills = skills_extractor.extract_skills(
+            extractor = get_skills_extractor()
+            skills = extractor.extract_skills(
                 job_summary=job['job_summary'],
                 job_description=job['job_description_formatted']
             )
@@ -156,7 +171,7 @@ def process_skills_extraction(jobs: List[Dict[str, Any]]) -> Dict[str, Any]:
                 enrichment_id = log_enrichment(
                     job_posting_id=job['job_posting_id'],
                     enrichment_type='skills_extraction',
-                    enrichment_version=skills_extractor.get_version(),
+                    enrichment_version=extractor.get_version(),
                     status='success',
                     metadata={
                         'skills_count': len(skills),
@@ -165,7 +180,7 @@ def process_skills_extraction(jobs: List[Dict[str, Any]]) -> Dict[str, Any]:
                 )
                 
                 # Store skills in job_skills table
-                skills_extractor.store_skills(
+                extractor.store_skills(
                     job_posting_id=job['job_posting_id'],
                     enrichment_id=enrichment_id,
                     skills=skills
@@ -178,7 +193,7 @@ def process_skills_extraction(jobs: List[Dict[str, Any]]) -> Dict[str, Any]:
                 log_enrichment(
                     job_posting_id=job['job_posting_id'],
                     enrichment_type='skills_extraction',
-                    enrichment_version=skills_extractor.get_version(),
+                    enrichment_version=extractor.get_version(),
                     status='partial',
                     metadata={'skills_count': 0, 'reason': 'no_skills_found'}
                 )
@@ -192,7 +207,7 @@ def process_skills_extraction(jobs: List[Dict[str, Any]]) -> Dict[str, Any]:
             log_enrichment(
                 job_posting_id=job['job_posting_id'],
                 enrichment_type='skills_extraction',
-                enrichment_version=skills_extractor.get_version(),
+                enrichment_version=extractor.get_version(),
                 status='failed',
                 error_message=str(e)
             )
@@ -222,7 +237,8 @@ def process_embeddings(jobs: List[Dict[str, Any]]) -> Dict[str, Any]:
     for job in jobs:
         try:
             # Generate embeddings with intelligent chunking
-            embeddings = embeddings_generator.generate_embeddings(
+            generator = get_embeddings_generator()
+            embeddings = generator.generate_embeddings(
                 job_posting_id=job['job_posting_id'],
                 job_description=job['job_description_formatted'],
                 metadata={
@@ -237,16 +253,16 @@ def process_embeddings(jobs: List[Dict[str, Any]]) -> Dict[str, Any]:
                 enrichment_id = log_enrichment(
                     job_posting_id=job['job_posting_id'],
                     enrichment_type='embeddings',
-                    enrichment_version=embeddings_generator.get_version(),
+                    enrichment_version=generator.get_version(),
                     status='success',
                     metadata={
                         'chunks_count': len(embeddings),
-                        'model': embeddings_generator.get_model_name()
+                        'model': generator.get_model_name()
                     }
                 )
                 
                 # Store embeddings in job_embeddings table
-                embeddings_generator.store_embeddings(
+                generator.store_embeddings(
                     job_posting_id=job['job_posting_id'],
                     enrichment_id=enrichment_id,
                     embeddings=embeddings
@@ -259,7 +275,7 @@ def process_embeddings(jobs: List[Dict[str, Any]]) -> Dict[str, Any]:
                 log_enrichment(
                     job_posting_id=job['job_posting_id'],
                     enrichment_type='embeddings',
-                    enrichment_version=embeddings_generator.get_version(),
+                    enrichment_version=generator.get_version(),
                     status='failed',
                     error_message='No embeddings generated'
                 )
@@ -273,7 +289,7 @@ def process_embeddings(jobs: List[Dict[str, Any]]) -> Dict[str, Any]:
             log_enrichment(
                 job_posting_id=job['job_posting_id'],
                 enrichment_type='embeddings',
-                enrichment_version=embeddings_generator.get_version(),
+                enrichment_version=generator.get_version(),
                 status='failed',
                 error_message=str(e)
             )

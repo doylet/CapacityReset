@@ -25,10 +25,17 @@ class EmbeddingsGenerator:
         self.version = f"v1.0-{self.model_name}"
         self.embedding_dimension = 768
         self.max_tokens_per_chunk = 2000  # Conservative limit
-        self.model = TextEmbeddingModel.from_pretrained(self.model_name)
+        self._model = None  # Lazy load
         self.bigquery_client = bigquery.Client()
         self.project_id = "sylvan-replica-478802-p4"
         self.dataset_id = f"{self.project_id}.brightdata_jobs"
+    
+    @property
+    def model(self):
+        """Lazy load the embedding model on first use."""
+        if self._model is None:
+            self._model = TextEmbeddingModel.from_pretrained(self.model_name)
+        return self._model
     
     def get_version(self) -> str:
         """Return generator version identifier."""

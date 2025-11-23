@@ -7,12 +7,19 @@ using spaCy NLP and pattern matching.
 
 import spacy
 import uuid
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from datetime import datetime
 from google.cloud import bigquery
 
-# Load spaCy model
-nlp = spacy.load("en_core_web_sm")
+# Don't load model at module level - lazy load instead
+_nlp = None
+
+def get_nlp():
+    """Lazy load spaCy model."""
+    global _nlp
+    if _nlp is None:
+        _nlp = spacy.load("en_core_web_sm")
+    return _nlp
 
 # Technology keywords and categories
 TECH_KEYWORDS = {
@@ -87,6 +94,7 @@ class SkillsExtractor:
             text_lower = text.lower()
             
             # Process with spaCy
+            nlp = get_nlp()
             doc = nlp(text)
             
             # Extract skills by category
