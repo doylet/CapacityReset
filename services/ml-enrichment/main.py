@@ -20,6 +20,7 @@ from typing import List, Dict, Any, Optional
 from google.cloud import bigquery, logging as cloud_logging
 from lib.enrichment.skills_extractor import SkillsExtractor
 from lib.enrichment.embeddings_generator import EmbeddingsGenerator
+from lib.enrichment.job_clusterer import JobClusterer
 
 # Initialize clients
 bigquery_client = bigquery.Client()
@@ -29,6 +30,7 @@ logger = logging_client.logger("ml-enrichment")
 # Lazy-load enrichment modules to speed up cold start
 _skills_extractor = None
 _embeddings_generator = None
+_job_clusterer = None
 
 def get_skills_extractor():
     """Lazy load skills extractor."""
@@ -43,6 +45,13 @@ def get_embeddings_generator():
     if _embeddings_generator is None:
         _embeddings_generator = EmbeddingsGenerator()
     return _embeddings_generator
+
+def get_job_clusterer():
+    """Lazy load job clusterer."""
+    global _job_clusterer
+    if _job_clusterer is None:
+        _job_clusterer = JobClusterer()
+    return _job_clusterer
 
 PROJECT_ID = "sylvan-replica-478802-p4"
 DATASET_ID = f"{PROJECT_ID}.brightdata_jobs"
@@ -302,6 +311,76 @@ def process_embeddings(jobs: List[Dict[str, Any]]) -> Dict[str, Any]:
     }
 
 
+def process_clustering(n_clusters: int = 10, method: str = "kmeans") -> Dict[str, Any]:
+    """
+    Cluster all jobs with embeddings and extract keywords.
+    
+    Args:
+        n_clusters: Number of clusters for kmeans
+        method: Clustering method ('kmeans' or 'dbscan')
+        
+    Returns:
+        Statistics: total_jobs, clusters_created, keywords_extracted
+    """
+    try:
+        clusterer = get_job_clusterer()
+        
+        # Perform clustering
+        cluster_results = clusterer.cluster_jobs(
+            method=method,
+            n_clusters=n_clusters
+        )
+        
+        if cluster_results:
+            # Log successful enrichment
+            enrichment_id = log_enrichment(
+                job_posting_id="ALL",  # Clustering applies to all jobs
+                enrichment_type='job_clustering',
+                enrichment_version=clusterer.get_version(),
+                status='success',
+                metadata={
+                    'n_clusters': n_clusters,
+                    'method': method,
+                    'jobs_clustered': len(cluster_results)
+                }
+            )
+            
+            # Store cluster assignments
+            clusterer.store_clusters(
+                cluster_results=cluster_results,
+                enrichment_id=enrichment_id
+            )
+            
+            # Count unique clusters
+            unique_clusters = len(set(r['cluster_id'] for r in cluster_results))
+            
+            return {
+                'total_jobs': len(cluster_results),
+                'clusters_created': unique_clusters,
+                'method': method
+            }
+        else:
+            return {
+                'total_jobs': 0,
+                'clusters_created': 0,
+                'method': method
+            }
+            
+    except Exception as e:
+        logger.log_text(
+            f"Job clustering failed: {str(e)}",
+            severity="ERROR"
+        )
+        log_enrichment(
+            job_posting_id="ALL",
+            enrichment_type='job_clustering',
+            enrichment_version=clusterer.get_version(),
+            status='failed',
+            error_message=str(e)
+        )
+        raise
+
+
 @functions_framework.http
 def main(request):
     """
@@ -309,8 +388,10 @@ def main(request):
     
     Request body (optional):
         {
-            "enrichment_types": ["skills_extraction", "embeddings"],  # defaults to both
-            "batch_size": 50  # defaults to 50
+            "enrichment_types": ["skills_extraction", "embeddings", "clustering"],  # defaults to all except clustering
+            "batch_size": 50,  # for skills and embeddings
+            "n_clusters": 10,  # for clustering only
+            "clustering_method": "kmeans"  # 'kmeans' or 'dbscan'
         }
     
     Response:
@@ -318,6 +399,7 @@ def main(request):
             "status": "success",
             "skills_extraction": {"processed": 10, "failed": 0, "total_skills": 45},
             "embeddings": {"processed": 10, "failed": 0, "total_embeddings": 30},
+            "clustering": {"total_jobs": 64, "clusters_created": 10, "method": "kmeans"},
             "execution_time_seconds": 12.5
         }
     """
@@ -328,6 +410,8 @@ def main(request):
         request_json = request.get_json(silent=True) or {}
         enrichment_types = request_json.get('enrichment_types', ['skills_extraction', 'embeddings'])
         batch_size = request_json.get('batch_size', 50)
+        n_clusters = request_json.get('n_clusters', 10)
+        clustering_method = request_json.get('clustering_method', 'kmeans')
         
         logger.log_text(
             f"Starting ML enrichment: types={enrichment_types}, batch_size={batch_size}",
@@ -359,6 +443,17 @@ def main(request):
                 logger.log_text(f"Embeddings generation complete: {embeddings_stats}", severity="INFO")
             else:
                 results['embeddings'] = {'processed': 0, 'failed': 0, 'total_embeddings': 0}
+        
+        # Process clustering (operates on all jobs with embeddings)
+        if 'clustering' in enrichment_types:
+            logger.log_text(f"Starting job clustering with method={clustering_method}, n_clusters={n_clusters}", severity="INFO")
+            
+            clustering_stats = process_clustering(
+                n_clusters=n_clusters,
+                method=clustering_method
+            )
+            results['clustering'] = clustering_stats
+            logger.log_text(f"Job clustering complete: {clustering_stats}", severity="INFO")
         
         # Calculate execution time
         end_time = datetime.utcnow()

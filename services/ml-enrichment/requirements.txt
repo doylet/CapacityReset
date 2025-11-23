@@ -3,3 +3,5 @@ google-cloud-bigquery==3.*
 google-cloud-aiplatform==1.*
 google-cloud-logging==3.*
 spacy==3.*
+scikit-learn==1.*
+numpy==1.*
