@@ -139,9 +139,9 @@ def main(request):
         if 'clustering' in enrichment_types:
             logger.log_text(f"Starting job clustering: method={clustering_method}, n_clusters={n_clusters}", severity="INFO")
             clustering_stats = process_clustering(
+                job_clusterer=get_job_clusterer(),
                 n_clusters=n_clusters,
-                method=clustering_method,
-                clusterer=get_job_clusterer()
+                method=clustering_method
             )
             results['clustering'] = clustering_stats
             logger.log_text(f"Job clustering complete: {clustering_stats}", severity="INFO")
