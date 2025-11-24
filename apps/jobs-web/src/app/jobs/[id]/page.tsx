@@ -3,7 +3,8 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Calendar, MapPin, Tag, Edit2, Plus, Save, X, ExternalLink, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Tag, Edit2, Plus, Save, X, ExternalLink } from 'lucide-react';
+import { HandThumbUpIcon, HandThumbDownIcon } from '@heroicons/react/24/solid';
 import { format, formatDistanceToNow } from 'date-fns';
 
 interface Skill {
@@ -412,7 +413,7 @@ export default function JobDetailPage() {
                     Suggested Skills ({job.skills.filter(s => s.is_approved !== true).length})
                   </h2>
                   <p className="text-sm text-gray-600 mb-4">
-                    ML-extracted skills. <ThumbsUp className="w-3 h-3 inline text-green-600" /> approves & adds to lexicon. <ThumbsDown className="w-3 h-3 inline text-red-600" /> rejects & deletes permanently.
+                    ML-extracted skills. <HandThumbUpIcon className="w-3 h-3 inline text-green-600" /> approves & adds to lexicon. <HandThumbDownIcon className="w-3 h-3 inline text-red-600" /> rejects & deletes permanently.
                   </p>
                   <div className="space-y-2">
                     {job.skills.filter(s => s.is_approved !== true).map(skill => (
@@ -432,14 +433,14 @@ export default function JobDetailPage() {
                             className="p-2 text-green-600 hover:bg-green-50 rounded transition-colors"
                             title="Approve skill"
                           >
-                            <ThumbsUp className="w-4 h-4" />
+                            <HandThumbUpIcon className="w-5 h-5" />
                           </button>
                           <button
                             onClick={() => rejectSkill(skill.skill_id)}
                             className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors"
                             title="Reject skill"
                           >
-                            <ThumbsDown className="w-4 h-4" />
+                            <HandThumbDownIcon className="w-5 h-5" />
                           </button>
                         </div>
                       </div>
