@@ -7,6 +7,7 @@ import SelectionActionBar from '@/components/SelectionActionBar';
 import JobCard from '@/components/JobCard';
 import JobGridCard from '@/components/JobGridCard';
 import JobListControls, { SortField, SortOrder, ViewMode } from '@/components/JobListControls';
+import Pagination from '@/components/Pagination';
 import { Job, Cluster, JobFilters as JobFiltersType } from '@/types';
 
 export default function Home() {
@@ -282,6 +283,18 @@ export default function Home() {
                     onToggleHidden={toggleHidden}
                   />
                 ))}
+              </div>
+            )}
+
+            {/* Bottom Pagination */}
+            {!loading && sortedJobs.length > 0 && (
+              <div className="mt-8 flex justify-center">
+                <Pagination
+                  currentPage={currentPage}
+                  totalJobs={sortedJobs.length}
+                  pageSize={pageSize}
+                  onPageChange={handlePageChange}
+                />
               </div>
             )}
           </>
