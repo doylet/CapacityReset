@@ -58,6 +58,9 @@ class Job:
     job_summary: str
     job_description_formatted: str
     job_posted_date: datetime
+    company_url: Optional[str] = None
+    company_logo: Optional[str] = None
+    job_url: Optional[str] = None
     skills: List[Skill] = field(default_factory=list)
     cluster: Optional[Cluster] = None
     skills_count: int = 0  # Precomputed count from database

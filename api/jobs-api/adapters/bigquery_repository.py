@@ -57,10 +57,13 @@ class BigQueryJobRepository(JobRepository):
             jp.job_posting_id,
             jp.job_title,
             jp.company_name,
+            jp.company_url,
+            jp.company_logo,
             jp.job_location,
             jp.job_summary,
             jp.job_description_formatted,
             jp.job_posted_date,
+            jp.job_url,
             COALESCE(jsc.skills_count, 0) as skills_count
         FROM `{DATASET_ID}.job_postings` jp
         LEFT JOIN `{DATASET_ID}.job_clusters` jc ON jp.job_posting_id = jc.job_posting_id
@@ -81,10 +84,13 @@ class BigQueryJobRepository(JobRepository):
                 job_posting_id=row['job_posting_id'],
                 job_title=row['job_title'],
                 company_name=row['company_name'],
+                company_url=row.get('company_url'),
+                company_logo=row.get('company_logo'),
                 job_location=row['job_location'],
                 job_summary=row['job_summary'],
                 job_description_formatted=row['job_description_formatted'],
                 job_posted_date=row['job_posted_date'],
+                job_url=row.get('job_url'),
                 skills_count=row['skills_count']
             )
             jobs.append(job)
@@ -105,10 +111,13 @@ class BigQueryJobRepository(JobRepository):
             jp.job_posting_id,
             jp.job_title,
             jp.company_name,
+            jp.company_url,
+            jp.company_logo,
             jp.job_location,
             jp.job_summary,
             jp.job_description_formatted,
             jp.job_posted_date,
+            jp.job_url,
             COALESCE(jsc.skills_count, 0) as skills_count
         FROM `{DATASET_ID}.job_postings` jp
         LEFT JOIN job_skill_counts jsc ON jp.job_posting_id = jsc.job_posting_id
@@ -126,10 +135,13 @@ class BigQueryJobRepository(JobRepository):
             job_posting_id=row['job_posting_id'],
             job_title=row['job_title'],
             company_name=row['company_name'],
+            company_url=row.get('company_url'),
+            company_logo=row.get('company_logo'),
             job_location=row['job_location'],
             job_summary=row['job_summary'],
             job_description_formatted=row['job_description_formatted'],
             job_posted_date=row['job_posted_date'],
+            job_url=row.get('job_url'),
             skills_count=row['skills_count']
         )
     
@@ -148,10 +160,13 @@ class BigQueryJobRepository(JobRepository):
             jp.job_posting_id,
             jp.job_title,
             jp.company_name,
+            jp.company_url,
+            jp.company_logo,
             jp.job_location,
             jp.job_summary,
             jp.job_description_formatted,
             jp.job_posted_date,
+            jp.job_url,
             COALESCE(jsc.skills_count, 0) as skills_count
         FROM `{DATASET_ID}.job_postings` jp
         LEFT JOIN job_skill_counts jsc ON jp.job_posting_id = jsc.job_posting_id
@@ -167,10 +182,13 @@ class BigQueryJobRepository(JobRepository):
                 job_posting_id=row['job_posting_id'],
                 job_title=row['job_title'],
                 company_name=row['company_name'],
+                company_url=row.get('company_url'),
+                company_logo=row.get('company_logo'),
                 job_location=row['job_location'],
                 job_summary=row['job_summary'],
                 job_description_formatted=row['job_description_formatted'],
                 job_posted_date=row['job_posted_date'],
+                job_url=row.get('job_url'),
                 skills_count=row['skills_count']
             )
             jobs.append(job)

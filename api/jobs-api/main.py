@@ -79,9 +79,12 @@ class JobResponse(BaseModel):
     job_posting_id: str
     job_title: str
     company_name: str
+    company_url: Optional[str] = None
+    company_logo: Optional[str] = None
     job_location: str
     job_summary: str
     job_posted_date: date
+    job_url: Optional[str] = None
     skills_count: Optional[int] = None
     cluster: Optional[ClusterResponse] = None
 
@@ -150,9 +153,12 @@ async def list_jobs(
             job_posting_id=job.job_posting_id,
             job_title=job.job_title,
             company_name=job.company_name,
+            company_url=job.company_url,
+            company_logo=job.company_logo,
             job_location=job.job_location,
             job_summary=job.job_summary,
             job_posted_date=job.job_posted_date.date() if hasattr(job.job_posted_date, 'date') else job.job_posted_date,
+            job_url=job.job_url,
             skills_count=job.skills_count,
             cluster=cluster_resp
         ))
@@ -195,9 +201,12 @@ async def get_job_detail(job_id: str):
         job_posting_id=job.job_posting_id,
         job_title=job.job_title,
         company_name=job.company_name,
+        company_url=job.company_url,
+        company_logo=job.company_logo,
         job_location=job.job_location,
         job_summary=job.job_summary,
         job_posted_date=job.job_posted_date.date() if hasattr(job.job_posted_date, 'date') else job.job_posted_date,
+        job_url=job.job_url,
         job_description_formatted=job.job_description_formatted,
         skills=skills_resp,
         cluster=cluster_resp
