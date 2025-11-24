@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { MapPin, Calendar, Briefcase, Star, EyeOff } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import { MapPin, Calendar, Briefcase, Star, EyeOff, Tag } from 'lucide-react';
+import { formatDistanceToNow, format } from 'date-fns';
 import { Job, Cluster } from '@/types';
 
 interface JobCardProps {
