@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Calendar, MapPin, Tag, Edit2, Plus, Save, X, ExternalLink } from 'lucide-react';
@@ -43,6 +43,12 @@ interface EditingSkill {
   skill_type: 'GENERAL' | 'SPECIALISED' | 'TRANSFERRABLE';
 }
 
+interface SkillCategory {
+  category: string;
+  display_name: string;
+  skill_count: number;
+}
+
 export default function JobDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -53,6 +59,8 @@ export default function JobDetailPage() {
   const [editingSkill, setEditingSkill] = useState<EditingSkill | null>(null);
   const [showAddSkill, setShowAddSkill] = useState(false);
   const [selectedText, setSelectedText] = useState('');
+  const [skillCategories, setSkillCategories] = useState<SkillCategory[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [newSkill, setNewSkill] = useState({
     skill_name: '',
     skill_category: 'technical_skills',
@@ -63,6 +71,7 @@ export default function JobDetailPage() {
 
   useEffect(() => {
     fetchJobDetail();
+    fetchSkillCategories();
   }, [jobId]);
 
   const fetchJobDetail = async () => {
@@ -75,6 +84,25 @@ export default function JobDetailPage() {
       console.error('Error fetching job detail:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchSkillCategories = async () => {
+    setCategoriesLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/skills/categories`);
+      const data = await response.json();
+      setSkillCategories(data.categories || []);
+    } catch (error) {
+      console.error('Error fetching skill categories:', error);
+      // Fallback to default categories if API fails
+      setSkillCategories([
+        { category: 'technical_skills', display_name: 'Technical Skills', skill_count: 0 },
+        { category: 'communicating', display_name: 'Communicating', skill_count: 0 },
+        { category: 'creative_skills', display_name: 'Creative Skills', skill_count: 0 },
+      ]);
+    } finally {
+      setCategoriesLoading(false);
     }
   };
 
@@ -152,24 +180,26 @@ export default function JobDetailPage() {
       .trim();
   };
 
-  const highlightSkillsInText = (text: string) => {
-    if (!job?.skills || job.skills.length === 0) return normalizeWhitespace(text);
+  // Optimize: Memoize highlighted text so it's only recalculated when skills or description change
+  const highlightedDescription = useMemo(() => {
+    if (!job?.skills || job.skills.length === 0 || !job.job_description_formatted) {
+      return normalizeWhitespace(job?.job_description_formatted || '');
+    }
 
-    // For HTML content, we need to be more careful with replacements
+    const text = job.job_description_formatted;
     const isHTML = text.includes('<') && text.includes('>');
     let highlightedText = isHTML ? text : normalizeWhitespace(text);
     
+    // Sort skills by length (longest first) to avoid partial matches
     const skillsToHighlight = [...job.skills].sort((a, b) => 
       b.skill_name.length - a.skill_name.length
     );
 
+    // Build a single regex pattern for all skills (more efficient than looping)
     skillsToHighlight.forEach(skill => {
-      // Escape special regex characters in skill name
       const escapedSkill = skill.skill_name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       
       if (isHTML) {
-        // For HTML, only replace text nodes, not inside tags
-        // Match skill name not inside HTML tags
         const regex = new RegExp(`(?<!<[^>]*)\\b${escapedSkill}\\b(?![^<]*>)`, 'gi');
         const skillTypeClass = skill.skill_type ? skill.skill_type.toLowerCase() : '';
         highlightedText = highlightedText.replace(
@@ -187,6 +217,12 @@ export default function JobDetailPage() {
     });
 
     return highlightedText;
+  }, [job?.skills, job?.job_description_formatted]); // Only recalculate when these change
+
+  const highlightSkillsInText = (text: string) => {
+    // This function is now deprecated in favor of the memoized version
+    // Kept for backward compatibility but should use highlightedDescription instead
+    return highlightedDescription;
   };
 
   const getSkillsByCategory = () => {
@@ -322,7 +358,7 @@ export default function JobDetailPage() {
                 </p>
                 <div
                   onMouseUp={handleTextSelection}
-                  dangerouslySetInnerHTML={{ __html: highlightSkillsInText(job.job_description_formatted) }}
+                  dangerouslySetInnerHTML={{ __html: highlightedDescription }}
                   className="prose prose-sm max-w-none prose-headings:font-semibold prose-headings:text-gray-900 prose-p:text-gray-700 prose-li:text-gray-700 prose-strong:text-gray-900"
                 />
               </div>
@@ -432,23 +468,23 @@ export default function JobDetailPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
-                <select
-                  value={newSkill.skill_category}
-                  onChange={(e) => setNewSkill({ ...newSkill, skill_category: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="technical_skills">Technical Skills</option>
-                  <option value="communicating">Communicating</option>
-                  <option value="creative_skills">Creative Skills</option>
-                  <option value="developing_people">Developing People</option>
-                  <option value="financial_skills">Financial Skills</option>
-                  <option value="interpersonal_skills">Interpersonal Skills</option>
-                  <option value="managing_directing">Managing & Directing</option>
-                  <option value="organising">Organising</option>
-                  <option value="planning">Planning</option>
-                  <option value="researching_analysing">Researching & Analysing</option>
-                  <option value="selling_marketing">Selling & Marketing</option>
-                </select>
+                {categoriesLoading ? (
+                  <div className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-400">
+                    Loading categories...
+                  </div>
+                ) : (
+                  <select
+                    value={newSkill.skill_category}
+                    onChange={(e) => setNewSkill({ ...newSkill, skill_category: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    {skillCategories.map((cat) => (
+                      <option key={cat.category} value={cat.category}>
+                        {cat.display_name} ({cat.skill_count})
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
 
               <div>

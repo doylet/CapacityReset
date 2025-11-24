@@ -332,7 +332,7 @@ class BigQueryClusterRepository(ClusterRepository):
 
 
 class InMemorySkillLexiconRepository(SkillLexiconRepository):
-    """In-memory lexicon repository (TODO: persist to BigQuery or file)."""
+    """In-memory lexicon repository (DEPRECATED - use BigQuerySkillLexiconRepository)."""
     
     def __init__(self):
         self.lexicon: Dict[str, SkillLexiconEntry] = {}
@@ -354,3 +354,217 @@ class InMemorySkillLexiconRepository(SkillLexiconRepository):
     async def get_lexicon_by_category(self, category: str) -> List[SkillLexiconEntry]:
         """Get lexicon by category."""
         return [e for e in self.lexicon.values() if e.skill_category == category]
+
+
+class BigQuerySkillLexiconRepository(SkillLexiconRepository):
+    """BigQuery-backed persistent skills lexicon."""
+    
+    def __init__(self):
+        self.client = bigquery.Client()
+    
+    def _normalize_skill_name(self, name: str) -> str:
+        """Normalize skill name for matching."""
+        return name.lower().strip()
+    
+    async def get_lexicon(self) -> List[SkillLexiconEntry]:
+        """Get all lexicon entries."""
+        query = f"""
+        SELECT
+            skill_id,
+            skill_name,
+            skill_name_original,
+            skill_category,
+            skill_type,
+            source,
+            usage_count,
+            confidence_sum,
+            user_corrections,
+            aliases,
+            first_seen,
+            last_updated,
+            created_by_user_id
+        FROM `{DATASET_ID}.skills_lexicon`
+        ORDER BY usage_count DESC, skill_name
+        """
+        
+        query_job = self.client.query(query)
+        results = query_job.result()
+        
+        entries = []
+        for row in results:
+            entry = SkillLexiconEntry(
+                skill_name=row['skill_name'],
+                skill_category=row['skill_category'],
+                skill_type=SkillType(row['skill_type']) if row['skill_type'] else SkillType.GENERAL,
+                added_by_user=row['source'] == 'USER_ADDED',
+                usage_count=row['usage_count'],
+                created_at=row['first_seen']
+            )
+            entries.append(entry)
+        
+        return entries
+    
+    async def add_to_lexicon(self, entry: SkillLexiconEntry) -> SkillLexiconEntry:
+        """Add new skill to lexicon or update if exists."""
+        import uuid
+        from datetime import datetime
+        
+        normalized_name = self._normalize_skill_name(entry.skill_name)
+        
+        # Check if skill already exists
+        check_query = f"""
+        SELECT skill_id, usage_count, confidence_sum, user_corrections
+        FROM `{DATASET_ID}.skills_lexicon`
+        WHERE skill_name = '{normalized_name}'
+        LIMIT 1
+        """
+        
+        check_job = self.client.query(check_query)
+        existing = list(check_job.result())
+        
+        if existing:
+            # Update existing skill
+            row = existing[0]
+            update_query = f"""
+            UPDATE `{DATASET_ID}.skills_lexicon`
+            SET 
+                usage_count = usage_count + 1,
+                user_corrections = user_corrections + 1,
+                last_updated = CURRENT_TIMESTAMP()
+            WHERE skill_name = '{normalized_name}'
+            """
+            self.client.query(update_query).result()
+        else:
+            # Insert new skill
+            now = datetime.utcnow().isoformat()
+            insert_data = [{
+                "skill_id": str(uuid.uuid4()),
+                "skill_name": normalized_name,
+                "skill_name_original": entry.skill_name,
+                "skill_category": entry.skill_category,
+                "skill_type": entry.skill_type.value if entry.skill_type else "GENERAL",
+                "source": "USER_ADDED" if entry.added_by_user else "ML_EXTRACTED",
+                "usage_count": 1,
+                "confidence_sum": 1.0,
+                "user_corrections": 1 if entry.added_by_user else 0,
+                "aliases": [],
+                "first_seen": now,
+                "last_updated": now,
+                "created_by_user_id": None
+            }]
+            
+            errors = self.client.insert_rows_json(
+                f"{DATASET_ID}.skills_lexicon",
+                insert_data
+            )
+            
+            if errors:
+                raise Exception(f"Failed to insert skill: {errors}")
+        
+        return entry
+    
+    async def update_lexicon_entry(self, entry: SkillLexiconEntry) -> SkillLexiconEntry:
+        """Update existing lexicon entry."""
+        normalized_name = self._normalize_skill_name(entry.skill_name)
+        
+        update_query = f"""
+        UPDATE `{DATASET_ID}.skills_lexicon`
+        SET 
+            skill_category = '{entry.skill_category}',
+            skill_type = '{entry.skill_type.value if entry.skill_type else "GENERAL"}',
+            last_updated = CURRENT_TIMESTAMP()
+        WHERE skill_name = '{normalized_name}'
+        """
+        
+        self.client.query(update_query).result()
+        return entry
+    
+    async def get_lexicon_by_category(self, category: str) -> List[SkillLexiconEntry]:
+        """Get lexicon entries for a specific category."""
+        query = f"""
+        SELECT
+            skill_name,
+            skill_name_original,
+            skill_category,
+            skill_type,
+            source,
+            usage_count,
+            first_seen
+        FROM `{DATASET_ID}.skills_lexicon`
+        WHERE skill_category = '{category}'
+        ORDER BY usage_count DESC, skill_name
+        """
+        
+        query_job = self.client.query(query)
+        results = query_job.result()
+        
+        entries = []
+        for row in results:
+            entry = SkillLexiconEntry(
+                skill_name=row['skill_name'],
+                skill_category=row['skill_category'],
+                skill_type=SkillType(row['skill_type']) if row['skill_type'] else SkillType.GENERAL,
+                added_by_user=row['source'] == 'USER_ADDED',
+                usage_count=row['usage_count'],
+                created_at=row['first_seen']
+            )
+            entries.append(entry)
+        
+        return entries
+    
+    async def search_skills(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
+        """Search skills by name (for autocomplete)."""
+        normalized_query = self._normalize_skill_name(query)
+        
+        search_query = f"""
+        SELECT
+            skill_id,
+            skill_name,
+            skill_name_original,
+            skill_category,
+            usage_count
+        FROM `{DATASET_ID}.skills_lexicon`
+        WHERE skill_name LIKE '%{normalized_query}%'
+        ORDER BY usage_count DESC, skill_name
+        LIMIT {limit}
+        """
+        
+        query_job = self.client.query(search_query)
+        results = query_job.result()
+        
+        skills = []
+        for row in results:
+            skills.append({
+                "skill_id": row['skill_id'],
+                "skill_name": row['skill_name_original'],
+                "skill_category": row['skill_category'],
+                "usage_count": row['usage_count']
+            })
+        
+        return skills
+    
+    async def get_categories_with_counts(self) -> List[Dict[str, Any]]:
+        """Get all skill categories with skill counts."""
+        query = f"""
+        SELECT
+            skill_category,
+            COUNT(*) as skill_count
+        FROM `{DATASET_ID}.skills_lexicon`
+        GROUP BY skill_category
+        ORDER BY skill_category
+        """
+        
+        query_job = self.client.query(query)
+        results = query_job.result()
+        
+        categories = []
+        for row in results:
+            # Convert snake_case to Title Case
+            display_name = row['skill_category'].replace('_', ' ').title()
+            categories.append({
+                "category": row['skill_category'],
+                "display_name": display_name,
+                "skill_count": row['skill_count']
+            })
+        
+        return categories

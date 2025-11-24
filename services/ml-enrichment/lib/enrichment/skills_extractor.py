@@ -81,14 +81,18 @@ def get_nlp():
         _nlp = spacy.load("en_core_web_sm")
     return _nlp
 
-def get_phrase_matcher(nlp):
-    """Lazy load phrase matcher with skills lexicon."""
+def get_phrase_matcher(nlp, skills_lexicon=None):
+    """
+    Lazy load phrase matcher with skills lexicon.
+    Now reads from BigQuery if available, falls back to hardcoded.
+    """
     global _phrase_matcher
     if _phrase_matcher is None:
         _phrase_matcher = PhraseMatcher(nlp.vocab, attr="LOWER")
         
-        # Load skills lexicon from embedded data
-        skills_lexicon = SKILLS_LEXICON
+        # Use provided lexicon or load from BigQuery
+        if skills_lexicon is None:
+            skills_lexicon = load_skills_from_bigquery() or SKILLS_LEXICON
         
         # Add patterns for each skill
         for category, skills in skills_lexicon.items():
@@ -96,6 +100,47 @@ def get_phrase_matcher(nlp):
             _phrase_matcher.add(category, patterns)
     
     return _phrase_matcher
+
+
+def load_skills_from_bigquery() -> Optional[Dict[str, List[str]]]:
+    """
+    Load skills lexicon from BigQuery skills_lexicon table.
+    Returns skills organized by category.
+    Falls back to None if table doesn't exist or query fails.
+    """
+    try:
+        client = bigquery.Client()
+        project_id = "sylvan-replica-478802-p4"
+        dataset_id = f"{project_id}.brightdata_jobs"
+        
+        query = f"""
+        SELECT 
+            skill_category,
+            skill_name_original
+        FROM `{dataset_id}.skills_lexicon`
+        ORDER BY skill_category, usage_count DESC
+        """
+        
+        query_job = client.query(query)
+        results = query_job.result()
+        
+        # Organize by category
+        lexicon_dict = {}
+        for row in results:
+            category = row['skill_category']
+            skill = row['skill_name_original']
+            
+            if category not in lexicon_dict:
+                lexicon_dict[category] = []
+            lexicon_dict[category].append(skill)
+        
+        print(f"✅ Loaded {sum(len(v) for v in lexicon_dict.values())} skills from BigQuery lexicon")
+        return lexicon_dict
+        
+    except Exception as e:
+        print(f"⚠️  Could not load skills from BigQuery: {e}")
+        print(f"   Falling back to hardcoded SKILLS_LEXICON")
+        return None
 
 # Skills Lexicon - 175 general skills across 11 categories
 # Source: User-provided skills CSV (unsupervised reference)

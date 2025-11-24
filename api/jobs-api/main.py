@@ -26,7 +26,7 @@ from adapters.bigquery_repository import (
     BigQueryJobRepository,
     BigQuerySkillRepository,
     BigQueryClusterRepository,
-    InMemorySkillLexiconRepository
+    BigQuerySkillLexiconRepository  # Use persistent version
 )
 
 
@@ -45,7 +45,7 @@ app.add_middleware(
 job_repo = BigQueryJobRepository()
 skill_repo = BigQuerySkillRepository()
 cluster_repo = BigQueryClusterRepository()
-lexicon_repo = InMemorySkillLexiconRepository()
+lexicon_repo = BigQuerySkillLexiconRepository()  # Now persistent!
 
 # Instantiate use cases
 list_jobs_uc = ListJobsUseCase(job_repo, cluster_repo)
@@ -285,3 +285,35 @@ async def list_clusters():
         )
         for c in clusters
     ]
+
+
+# === New Skills Management Endpoints ===
+
+@app.get("/skills/categories")
+async def get_skill_categories():
+    """Get all skill categories with counts (dynamic from lexicon)."""
+    categories = await lexicon_repo.get_categories_with_counts()
+    return {"categories": categories}
+
+
+@app.get("/skills")
+async def search_skills(
+    q: Optional[str] = Query(None, description="Search query"),
+    limit: int = Query(10, le=50)
+):
+    """Search skills for autocomplete."""
+    if q:
+        skills = await lexicon_repo.search_skills(q, limit)
+    else:
+        # Return most popular skills
+        all_skills = await lexicon_repo.get_lexicon()
+        skills = [
+            {
+                "skill_name": s.skill_name,
+                "skill_category": s.skill_category,
+                "usage_count": s.usage_count
+            }
+            for s in sorted(all_skills, key=lambda x: x.usage_count, reverse=True)[:limit]
+        ]
+    
+    return {"skills": skills, "total": len(skills)}
