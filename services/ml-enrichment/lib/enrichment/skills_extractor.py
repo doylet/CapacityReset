@@ -213,18 +213,108 @@ class SkillsExtractor:
     """Extract skills from job descriptions using unsupervised NLP."""
     
     def __init__(self):
-        self.version = "v2.3-normalized-lemmatized"
+        self.version = "v2.4-section-filtered"
         self.bigquery_client = bigquery.Client()
         self.project_id = "sylvan-replica-478802-p4"
         self.dataset_id = f"{self.project_id}.brightdata_jobs"
+        
+        # Section headers that typically contain skills
+        self.skill_relevant_sections = [
+            'responsibilities', 'requirements', 'qualifications', 'required qualifications',
+            'preferred qualifications', 'what you\'ll do', 'what we\'re looking for',
+            'about you', 'about the role', 'key responsibilities', 'your role',
+            'essential skills', 'required skills', 'desired skills', 'technical skills',
+            'experience', 'must have', 'nice to have', 'ideal candidate',
+            'you will', 'job description', 'role overview', 'duties'
+        ]
+        
+        # Section headers to exclude (non-skill content)
+        self.excluded_sections = [
+            'benefits', 'about us', 'about the company', 'compensation', 'perks',
+            'salary', 'location', 'equal opportunity', 'diversity', 'how to apply',
+            'company culture', 'our values', 'why join us', 'work environment'
+        ]
     
     def get_version(self) -> str:
         """Return extractor version identifier."""
         return self.version
     
+    def _identify_skill_relevant_sections(self, text: str) -> List[Dict[str, str]]:
+        """
+        Identify and extract sections of job description that are relevant for skill extraction.
+        
+        This filters out company info, benefits, culture sections that often contain
+        false positives (company names, locations, etc).
+        
+        Args:
+            text: Job description text (cleaned HTML)
+            
+        Returns:
+            List of sections with type and content
+        """
+        if not text:
+            return []
+        
+        text_lower = text.lower()
+        sections = []
+        
+        # Find all section headers with their positions
+        section_markers = []
+        
+        # Find skill-relevant sections
+        for keyword in self.skill_relevant_sections:
+            pos = text_lower.find(keyword)
+            if pos != -1:
+                section_markers.append((pos, keyword, 'relevant'))
+        
+        # Find excluded sections
+        for keyword in self.excluded_sections:
+            pos = text_lower.find(keyword)
+            if pos != -1:
+                section_markers.append((pos, keyword, 'excluded'))
+        
+        # Sort by position
+        section_markers.sort()
+        
+        if not section_markers:
+            # No sections found - use entire text (might be unstructured)
+            return [{'type': 'full_text', 'content': text, 'relevant': True}]
+        
+        # Extract content between markers
+        for i, (start_pos, keyword, relevance) in enumerate(section_markers):
+            # Find end position (next section or end of text)
+            if i + 1 < len(section_markers):
+                end_pos = section_markers[i + 1][0]
+            else:
+                end_pos = len(text)
+            
+            # Extract section content
+            section_content = text[start_pos:end_pos].strip()
+            
+            # Skip if too small or excluded
+            if len(section_content) < 50:
+                continue
+            
+            sections.append({
+                'type': keyword.replace(' ', '_'),
+                'content': section_content,
+                'relevant': relevance == 'relevant'
+            })
+        
+        # If we found sections but none are relevant, return first section as fallback
+        relevant_sections = [s for s in sections if s['relevant']]
+        if not relevant_sections and sections:
+            # No relevant sections found, but we have sections - take the longest one
+            longest_section = max(sections, key=lambda s: len(s['content']))
+            longest_section['relevant'] = True
+            return [longest_section]
+        
+        return relevant_sections if relevant_sections else [{'type': 'full_text', 'content': text, 'relevant': True}]
+    
     def extract_skills(self, job_summary: str, job_description: str) -> List[Dict[str, Any]]:
         """
-        Extract skills using unsupervised NLP approach:
+        Extract skills using unsupervised NLP approach with section filtering:
+        0. Identify skill-relevant sections (responsibilities, qualifications, etc)
         1. Use spaCy NER to identify entities (organizations, products, skills)
         2. Use phrase matcher against skills lexicon (175 general skills)
         3. Extract noun chunks that look skill-like
@@ -245,29 +335,42 @@ class SkillsExtractor:
         # Strip HTML from job description before processing
         job_description_clean = strip_html(job_description) if job_description else ''
         
-        # Combine texts for analysis
-        texts = {
-            'job_summary': job_summary or '',
-            'job_description_formatted': job_description_clean
-        }
+        # STEP 0: Identify skill-relevant sections in job description
+        # This filters out company info, benefits, culture sections that cause false positives
+        relevant_sections = self._identify_skill_relevant_sections(job_description_clean)
         
-        for source_field, text in texts.items():
-            if not text:
-                continue
+        # Process job summary (always relevant)
+        if job_summary:
+            doc = nlp(job_summary)
             
-            # Process with spaCy
-            doc = nlp(text)
-            
-            # 1. Extract skills from lexicon using phrase matcher
-            lexicon_skills = self._extract_lexicon_skills(doc, phrase_matcher, text, source_field)
+            # Extract from all methods
+            lexicon_skills = self._extract_lexicon_skills(doc, phrase_matcher, job_summary, 'job_summary')
             skills.extend(lexicon_skills)
             
-            # 2. Extract named entities (PRODUCT, ORG, SKILL)
-            entity_skills = self._extract_entity_skills(doc, text, source_field)
+            entity_skills = self._extract_entity_skills(doc, job_summary, 'job_summary')
             skills.extend(entity_skills)
             
-            # 3. Extract skill-like noun chunks (verbs + -ing forms)
-            chunk_skills = self._extract_noun_chunk_skills(doc, text, source_field)
+            chunk_skills = self._extract_noun_chunk_skills(doc, job_summary, 'job_summary')
+            skills.extend(chunk_skills)
+        
+        # Process only relevant sections from job description
+        for section in relevant_sections:
+            section_text = section['content']
+            section_type = section['type']
+            
+            # Process with spaCy
+            doc = nlp(section_text)
+            
+            # Extract skills using all methods
+            lexicon_skills = self._extract_lexicon_skills(
+                doc, phrase_matcher, section_text, f'job_description_{section_type}'
+            )
+            skills.extend(lexicon_skills)
+            
+            entity_skills = self._extract_entity_skills(doc, section_text, f'job_description_{section_type}')
+            skills.extend(entity_skills)
+            
+            chunk_skills = self._extract_noun_chunk_skills(doc, section_text, f'job_description_{section_type}')
             skills.extend(chunk_skills)
         
         # Deduplicate skills (keep highest confidence)
