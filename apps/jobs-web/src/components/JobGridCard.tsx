@@ -67,7 +67,29 @@ export default function JobGridCard({
           {job.job_title}
         </h3>
       </Link>
-      <p className="text-sm text-gray-600 mb-2 line-clamp-1">{job.company_name}</p>
+      
+      <div className="flex items-center gap-2 mb-2">
+        {job.company_logo && (
+          <img 
+            src={job.company_logo} 
+            alt={`${job.company_name} logo`} 
+            className="h-4 w-4 object-contain"
+          />
+        )}
+        {job.company_url ? (
+          <a
+            href={job.company_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-blue-600 hover:text-blue-800 hover:underline line-clamp-1"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {job.company_name}
+          </a>
+        ) : (
+          <p className="text-sm text-gray-600 line-clamp-1">{job.company_name}</p>
+        )}
+      </div>
 
       <div className="flex flex-col gap-1.5 text-xs text-gray-500 mb-3">
         <span className="flex items-center gap-1">

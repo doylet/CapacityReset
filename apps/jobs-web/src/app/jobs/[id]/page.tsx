@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Calendar, MapPin, Tag, Edit2, Plus, Save, X } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Tag, Edit2, Plus, Save, X, ExternalLink } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface Skill {
@@ -27,9 +27,12 @@ interface JobDetail {
   job_posting_id: string;
   job_title: string;
   company_name: string;
+  company_url?: string | null;
+  company_logo?: string | null;
   job_location: string;
   job_summary: string;
   job_posted_date: string;
+  job_url?: string | null;
   job_description_formatted: string;
   skills: Skill[];
   cluster?: Cluster;
@@ -207,7 +210,40 @@ export default function JobDetailPage() {
             Back to Jobs
           </Link>
           <h1 className="text-2xl font-bold text-gray-900">{job.job_title}</h1>
-          <p className="text-lg text-gray-600 mt-1">{job.company_name}</p>
+          <div className="flex items-center gap-4 mt-1">
+            {job.company_logo && (
+              <img 
+                src={job.company_logo} 
+                alt={`${job.company_name} logo`}
+                className="h-8 w-8 object-contain"
+              />
+            )}
+            <div>
+              {job.company_url ? (
+                <a 
+                  href={job.company_url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-lg text-blue-600 hover:text-blue-800 hover:underline"
+                >
+                  {job.company_name}
+                </a>
+              ) : (
+                <p className="text-lg text-gray-600">{job.company_name}</p>
+              )}
+            </div>
+          </div>
+          {job.job_url && (
+            <a 
+              href={job.job_url} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 mt-2"
+            >
+              View Original Job Posting
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          )}
         </div>
       </header>
 

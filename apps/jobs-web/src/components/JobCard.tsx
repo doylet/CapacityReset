@@ -1,26 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { Calendar, MapPin, Tag, Star, EyeOff } from 'lucide-react';
-import { format } from 'date-fns';
-
-interface Cluster {
-  cluster_id: number;
-  cluster_name: string;
-  cluster_keywords: string[];
-  cluster_size: number;
-}
-
-interface Job {
-  job_posting_id: string;
-  job_title: string;
-  company_name: string;
-  job_location: string;
-  job_summary: string;
-  job_posted_date: string;
-  skills_count?: number;
-  cluster?: Cluster;
-}
+import { MapPin, Calendar, Briefcase } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+import { Job, Cluster } from '@/types';
 
 interface JobCardProps {
   job: Job;
@@ -85,7 +68,28 @@ export default function JobCard({
                 </button>
               </div>
             </div>
-            <p className="text-sm text-gray-600 mt-1">{job.company_name}</p>
+            <div className="flex items-center gap-3 mt-1">
+              {job.company_logo && (
+                <img 
+                  src={job.company_logo} 
+                  alt={`${job.company_name} logo`}
+                  className="h-6 w-6 object-contain"
+                />
+              )}
+              {job.company_url ? (
+                <a 
+                  href={job.company_url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {job.company_name}
+                </a>
+              ) : (
+                <p className="text-sm text-gray-600">{job.company_name}</p>
+              )}
+            </div>
             
             <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
               <span className="flex items-center gap-1">
