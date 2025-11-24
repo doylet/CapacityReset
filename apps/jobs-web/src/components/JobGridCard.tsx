@@ -78,7 +78,7 @@ export default function JobGridCard({
           <Calendar className="w-3 h-3 flex-shrink-0" />
           {format(new Date(job.job_posted_date), 'MMM d, yyyy')}
         </span>
-        {job.skills_count > 0 && (
+        {(job.skills_count ?? 0) > 0 && (
           <span className="flex items-center gap-1">
             <Tag className="w-3 h-3 flex-shrink-0" />
             {job.skills_count} skills
