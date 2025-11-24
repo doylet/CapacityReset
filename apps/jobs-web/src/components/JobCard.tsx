@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { MapPin, Calendar, Briefcase } from 'lucide-react';
+import { MapPin, Calendar, Briefcase, Star, EyeOff } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Job, Cluster } from '@/types';
 
