@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import PageHeader from '@/components/PageHeader';
 import JobFilters from '@/components/JobFilters';
@@ -11,7 +11,7 @@ import JobListControls, { SortField, SortOrder, ViewMode } from '@/components/Jo
 import Pagination from '@/components/Pagination';
 import { Job, Cluster, JobFilters as JobFiltersType } from '@/types';
 
-export default function Home() {
+function JobListContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isInitialized, setIsInitialized] = useState(false);
@@ -350,5 +350,17 @@ export default function Home() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      </div>
+    }>
+      <JobListContent />
+    </Suspense>
   );
 }
