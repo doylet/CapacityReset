@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import PageHeader from '@/components/PageHeader';
 import JobFilters from '@/components/JobFilters';
 import SelectionActionBar from '@/components/SelectionActionBar';
@@ -11,6 +12,10 @@ import Pagination from '@/components/Pagination';
 import { Job, Cluster, JobFilters as JobFiltersType } from '@/types';
 
 export default function Home() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [isInitialized, setIsInitialized] = useState(false);
+
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<JobFiltersType>({
@@ -29,6 +34,48 @@ export default function Home() {
   const pageSize = 20;
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+
+  // Initialize state from URL query params
+  useEffect(() => {
+    const location = searchParams.get('location') || '';
+    const skill = searchParams.get('skill') || '';
+    const cluster = searchParams.get('cluster') || '';
+    const sort = searchParams.get('sort') as SortField || 'date';
+    const order = searchParams.get('order') as SortOrder || 'desc';
+    const view = searchParams.get('view') as ViewMode || null;
+    const page = parseInt(searchParams.get('page') || '1', 10);
+
+    setFilters({ location, skill_name: skill, cluster_id: cluster });
+    setSortField(sort);
+    setSortOrder(order);
+    setCurrentPage(page);
+    
+    // Only override viewMode from URL if no localStorage preference exists
+    const savedViewMode = localStorage.getItem('viewMode');
+    if (view && !savedViewMode) {
+      setViewMode(view);
+    }
+
+    setIsInitialized(true);
+  }, []);
+
+  // Update URL when state changes
+  useEffect(() => {
+    if (!isInitialized) return;
+
+    const params = new URLSearchParams();
+    if (filters.location) params.set('location', filters.location);
+    if (filters.skill_name) params.set('skill', filters.skill_name);
+    if (filters.cluster_id) params.set('cluster', filters.cluster_id);
+    if (sortField !== 'date') params.set('sort', sortField);
+    if (sortOrder !== 'desc') params.set('order', sortOrder);
+    if (viewMode !== 'list') params.set('view', viewMode);
+    if (currentPage !== 1) params.set('page', currentPage.toString());
+
+    const queryString = params.toString();
+    const newUrl = queryString ? `/?${queryString}` : '/';
+    router.replace(newUrl, { scroll: false });
+  }, [filters, sortField, sortOrder, viewMode, currentPage, isInitialized, router]);
 
   // Load preferences from localStorage
   useEffect(() => {
@@ -93,10 +140,12 @@ export default function Home() {
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));
+    setCurrentPage(1); // Reset to page 1 when filters change
   };
 
   const handleClearFilters = () => {
     setFilters({ location: '', skill_name: '', cluster_id: '' });
+    setCurrentPage(1); // Reset to page 1 when clearing filters
   };
 
   const toggleJobSelection = (jobId: string) => {
