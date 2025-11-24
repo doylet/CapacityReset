@@ -134,6 +134,12 @@ export default function JobDetailPage() {
   };
 
   const normalizeWhitespace = (text: string): string => {
+    // If it's HTML content (contains tags), don't normalize
+    if (text.includes('<') && text.includes('>')) {
+      return text;
+    }
+    
+    // For plain text, normalize whitespace
     return text
       // Replace multiple spaces with single space
       .replace(/ {2,}/g, ' ')
@@ -311,7 +317,13 @@ export default function JobDetailPage() {
                 <div
                   onMouseUp={handleTextSelection}
                   dangerouslySetInnerHTML={{ __html: highlightSkillsInText(job.job_description_formatted) }}
-                  className="whitespace-pre-wrap"
+                  className="prose prose-sm max-w-none
+                    prose-ul:list-disc prose-ul:ml-6 prose-ul:space-y-1
+                    prose-ol:list-decimal prose-ol:ml-6 prose-ol:space-y-1
+                    prose-li:text-gray-700
+                    prose-strong:text-gray-900 prose-strong:font-semibold
+                    prose-p:mb-3
+                    prose-headings:font-semibold prose-headings:text-gray-900"
                 />
               </div>
             </div>
