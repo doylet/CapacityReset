@@ -8,8 +8,8 @@ It combines hardcoded skills, ML-extracted skills, and user-added skills in one 
 from google.cloud import bigquery
 import os
 
-PROJECT_ID = os.getenv("GCP_PROJECT_ID", "capacity-reset")
-DATASET_ID = os.getenv("BIGQUERY_DATASET_ID", "jobs_data")
+PROJECT_ID = "sylvan-replica-478802-p4"
+DATASET_ID = "brightdata_jobs"
 
 def create_skills_lexicon_table():
     """Create the skills_lexicon table with proper schema."""
@@ -37,29 +37,18 @@ def create_skills_lexicon_table():
     table = bigquery.Table(table_id, schema=schema)
     table.description = "Skills lexicon - unified storage for all known skills (hardcoded + ML + user-added)"
     
+    # Add clustering to the table definition
+    table.clustering_fields = ["skill_category", "skill_name"]
+    
     # Create table
     try:
         table = client.create_table(table)
-        print(f"✅ Created table {table.project}.{table.dataset_id}.{table.table_id}")
+        print(f"✅ Created table {table.project}.{table.dataset_id}.{table.table_id} with clustering")
     except Exception as e:
         if "Already Exists" in str(e):
             print(f"ℹ️  Table {table_id} already exists")
         else:
             raise e
-    
-    # Create indexes for common queries
-    print("Creating indexes...")
-    
-    # Index on skill_name for fast lookups
-    client.query(f"""
-        -- BigQuery doesn't need explicit indexes, it auto-optimizes
-        -- But we can create a clustered table for better performance
-        CREATE OR REPLACE TABLE `{table_id}`
-        CLUSTER BY skill_category, skill_name
-        AS SELECT * FROM `{table_id}`
-    """).result()
-    
-    print("✅ Table created successfully with clustering")
 
 
 def seed_hardcoded_skills():
