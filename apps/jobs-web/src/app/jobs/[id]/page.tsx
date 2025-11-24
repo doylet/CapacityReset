@@ -294,27 +294,14 @@ export default function JobDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Job Info */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
-                <span className="flex items-center gap-1">
-                  <MapPin className="w-4 h-4" />
-                  {job.job_location}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Calendar className="w-4 h-4" />
-                  {format(new Date(job.job_posted_date), 'MMMM d, yyyy')}
+            {/* Cluster Badge */}
+            {job.cluster && (
+              <div>
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
+                  {job.cluster.cluster_name}
                 </span>
               </div>
-
-              {job.cluster && (
-                <div className="mb-4">
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
-                    {job.cluster.cluster_name}
-                  </span>
-                </div>
-              )}
-            </div>
+            )}
 
             {/* Job Description with Highlighted Skills */}
             <div className="bg-white rounded-lg shadow-sm p-6">
