@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Calendar, MapPin, Tag, Edit2, Plus, Save, X, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Tag, Edit2, Plus, Save, X, ExternalLink, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 
 interface Skill {
@@ -217,11 +217,12 @@ export default function JobDetailPage() {
     const isHTML = text.includes('<') && text.includes('>');
     let highlightedText = isHTML ? text : normalizeWhitespace(text);
     
-    // Only highlight approved skills (is_approved=true)
-    const approvedSkills = job.skills.filter(skill => skill.is_approved === true);
+    // Highlight all skills (both approved and pending suggestions)
+    // Only exclude explicitly rejected ones (is_approved === false)
+    const skillsToHighlight = job.skills.filter(skill => skill.is_approved !== false);
     
     // Sort skills by length (longest first) to avoid partial matches
-    const skillsToHighlight = [...approvedSkills].sort((a, b) => 
+    const sortedSkills = [...skillsToHighlight].sort((a, b) => 
       b.skill_name.length - a.skill_name.length
     );
 
@@ -411,7 +412,7 @@ export default function JobDetailPage() {
                     Suggested Skills ({job.skills.filter(s => s.is_approved !== true).length})
                   </h2>
                   <p className="text-sm text-gray-600 mb-4">
-                    Skills awaiting approval. Approve to add to lexicon and highlight in descriptions.
+                    ML-extracted skills. <ThumbsUp className="w-3 h-3 inline text-green-600" /> approves & adds to lexicon. <ThumbsDown className="w-3 h-3 inline text-red-600" /> rejects & deletes permanently.
                   </p>
                   <div className="space-y-2">
                     {job.skills.filter(s => s.is_approved !== true).map(skill => (
@@ -428,15 +429,17 @@ export default function JobDetailPage() {
                         <div className="flex gap-2 ml-2">
                           <button
                             onClick={() => approveSkill(skill.skill_id)}
-                            className="px-3 py-1.5 text-xs font-medium text-white bg-green-600 rounded hover:bg-green-700 transition-colors"
+                            className="p-2 text-green-600 hover:bg-green-50 rounded transition-colors"
+                            title="Approve skill"
                           >
-                            Approve
+                            <ThumbsUp className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => rejectSkill(skill.skill_id)}
-                            className="px-3 py-1.5 text-xs font-medium text-white bg-red-600 rounded hover:bg-red-700 transition-colors"
+                            className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors"
+                            title="Reject skill"
                           >
-                            Reject
+                            <ThumbsDown className="w-4 h-4" />
                           </button>
                         </div>
                       </div>
