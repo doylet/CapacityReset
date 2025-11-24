@@ -257,9 +257,12 @@ export default function JobDetailPage() {
 
   const getSkillsByCategory = () => {
     if (!job?.skills) return {};
-    // Only show approved skills in the categorized view
+    // Show approved skills in the categorized view
+    // If no skills are approved yet, show all skills (backward compatibility)
     const approvedSkills = job.skills.filter(skill => skill.is_approved === true);
-    return approvedSkills.reduce((acc, skill) => {
+    const skillsToShow = approvedSkills.length > 0 ? approvedSkills : job.skills;
+    
+    return skillsToShow.reduce((acc, skill) => {
       if (!acc[skill.skill_category]) {
         acc[skill.skill_category] = [];
       }
@@ -401,17 +404,17 @@ export default function JobDetailPage() {
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg shadow-sm p-6 sticky top-6">
               {/* Suggested Skills (Pending Approval) */}
-              {job.skills.filter(s => s.is_approved === null).length > 0 && (
+              {job.skills.filter(s => s.is_approved !== true).length > 0 && (
                 <div className="mb-6 pb-6 border-b border-gray-200">
                   <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                     <Tag className="w-5 h-5 text-amber-500" />
-                    Suggested Skills ({job.skills.filter(s => s.is_approved === null).length})
+                    Suggested Skills ({job.skills.filter(s => s.is_approved !== true).length})
                   </h2>
                   <p className="text-sm text-gray-600 mb-4">
-                    ML-extracted skills awaiting approval. Approve to add to lexicon and highlight in descriptions.
+                    Skills awaiting approval. Approve to add to lexicon and highlight in descriptions.
                   </p>
                   <div className="space-y-2">
-                    {job.skills.filter(s => s.is_approved === null).map(skill => (
+                    {job.skills.filter(s => s.is_approved !== true).map(skill => (
                       <div
                         key={skill.skill_id}
                         className="flex items-center justify-between p-3 bg-amber-50 border border-amber-200 rounded hover:bg-amber-100 transition-colors"
