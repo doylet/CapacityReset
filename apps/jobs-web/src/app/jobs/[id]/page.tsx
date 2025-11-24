@@ -227,8 +227,23 @@ export default function JobDetailPage() {
             )}
             
             <div className="flex-1">
-              {/* Job Title */}
-              <h1 className="text-2xl font-semibold text-gray-900 mb-1">{job.job_title}</h1>
+              {/* Job Title and External Link */}
+              <div className="flex items-start justify-between gap-4 mb-1">
+                <h1 className="text-2xl font-semibold text-gray-900">{job.job_title}</h1>
+                
+                {/* View Original Link */}
+                {job.job_url && (
+                  <a 
+                    href={job.job_url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-blue-700 bg-white border border-blue-700 rounded-full hover:bg-blue-50 transition-colors flex-shrink-0"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    View Original Job Posting
+                  </a>
+                )}
+              </div>
               
               {/* Company Name */}
               {job.company_url ? (
@@ -245,7 +260,7 @@ export default function JobDetailPage() {
               )}
               
               {/* Job Metadata */}
-              <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
+              <div className="flex items-center gap-2 text-sm text-gray-600">
                 <span className="flex items-center gap-1">
                   <MapPin className="w-4 h-4" />
                   {job.job_location}
@@ -253,19 +268,6 @@ export default function JobDetailPage() {
                 <span className="text-gray-400">·</span>
                 <span>{formatDistanceToNow(new Date(job.job_posted_date), { addSuffix: true })}</span>
               </div>
-              
-              {/* View Original Link */}
-              {job.job_url && (
-                <a 
-                  href={job.job_url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-blue-700 bg-white border border-blue-700 rounded-full hover:bg-blue-50 transition-colors"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                  View Original Job Posting
-                </a>
-              )}
             </div>
           </div>
         </div>
