@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Calendar, MapPin, Tag, Edit2, Plus, Save, X, ExternalLink } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 
 interface Skill {
   skill_id: string;
@@ -203,47 +203,65 @@ export default function JobDetailPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <Link href="/" className="inline-flex items-center text-blue-600 hover:text-blue-800 mb-2">
-            <ArrowLeft className="w-4 h-4 mr-2" />
+      <header className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <Link href="/" className="inline-flex items-center text-sm text-gray-600 hover:text-blue-700 mb-4">
+            <ArrowLeft className="w-4 h-4 mr-1" />
             Back to Jobs
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900">{job.job_title}</h1>
-          <div className="flex items-center gap-4 mt-1">
+          
+          <div className="flex items-start gap-4">
+            {/* Company Logo */}
             {job.company_logo && (
               <img 
                 src={job.company_logo} 
                 alt={`${job.company_name} logo`}
-                className="h-8 w-8 object-contain"
+                className="h-16 w-16 object-contain flex-shrink-0"
               />
             )}
-            <div>
+            
+            <div className="flex-1">
+              {/* Job Title */}
+              <h1 className="text-2xl font-semibold text-gray-900 mb-1">{job.job_title}</h1>
+              
+              {/* Company Name */}
               {job.company_url ? (
                 <a 
                   href={job.company_url} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="text-lg text-blue-600 hover:text-blue-800 hover:underline"
+                  className="text-base text-gray-900 hover:text-blue-700 hover:underline inline-block mb-2"
                 >
                   {job.company_name}
                 </a>
               ) : (
-                <p className="text-lg text-gray-600">{job.company_name}</p>
+                <p className="text-base text-gray-900 mb-2">{job.company_name}</p>
+              )}
+              
+              {/* Job Metadata */}
+              <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
+                <span className="flex items-center gap-1">
+                  <MapPin className="w-4 h-4" />
+                  {job.job_location}
+                </span>
+                <span className="text-gray-400">·</span>
+                <span>{formatDistanceToNow(new Date(job.job_posted_date), { addSuffix: true })}</span>
+              </div>
+              
+              {/* View Original Link */}
+              {job.job_url && (
+                <a 
+                  href={job.job_url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-blue-700 bg-white border border-blue-700 rounded-full hover:bg-blue-50 transition-colors"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  View Original Job Posting
+                </a>
               )}
             </div>
           </div>
-          {job.job_url && (
-            <a 
-              href={job.job_url} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 mt-2"
-            >
-              View Original Job Posting
-              <ExternalLink className="w-3 h-3" />
-            </a>
-          )}
         </div>
       </header>
 
