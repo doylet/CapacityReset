@@ -130,10 +130,23 @@ export default function JobDetailPage() {
     }
   };
 
-  const highlightSkillsInText = (text: string) => {
-    if (!job?.skills || job.skills.length === 0) return text;
+  const normalizeWhitespace = (text: string): string => {
+    return text
+      // Replace multiple spaces with single space
+      .replace(/ {2,}/g, ' ')
+      // Replace multiple newlines with double newline (paragraph break)
+      .replace(/\n{3,}/g, '\n\n')
+      // Remove trailing/leading whitespace from each line
+      .split('\n')
+      .map(line => line.trim())
+      .join('\n')
+      .trim();
+  };
 
-    let highlightedText = text;
+  const highlightSkillsInText = (text: string) => {
+    if (!job?.skills || job.skills.length === 0) return normalizeWhitespace(text);
+
+    let highlightedText = normalizeWhitespace(text);
     const skillsToHighlight = [...job.skills].sort((a, b) => 
       b.skill_name.length - a.skill_name.length
     );
