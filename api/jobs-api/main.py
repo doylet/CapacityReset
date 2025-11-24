@@ -251,6 +251,36 @@ async def add_skill_to_job(job_id: str, request: AddSkillRequest):
     }
 
 
+@app.post("/jobs/{job_id}/skills/{skill_id}/approve")
+async def approve_skill(job_id: str, skill_id: str):
+    """Approve an ML-suggested skill and add to lexicon."""
+    from application.use_cases import ApproveSkillUseCase
+    approve_uc = ApproveSkillUseCase(skill_repo, lexicon_repo)
+    skill = await approve_uc.execute(skill_id)
+    
+    return {
+        "skill_id": skill.skill_id,
+        "skill_name": skill.skill_name,
+        "is_approved": skill.is_approved,
+        "message": "Skill approved and added to lexicon"
+    }
+
+
+@app.post("/jobs/{job_id}/skills/{skill_id}/reject")
+async def reject_skill(job_id: str, skill_id: str):
+    """Reject an ML-suggested skill and remove it."""
+    from application.use_cases import RejectSkillUseCase
+    reject_uc = RejectSkillUseCase(skill_repo)
+    success = await reject_uc.execute(skill_id)
+    
+    if not success:
+        raise HTTPException(status_code=404, detail="Skill not found")
+    
+    return {
+        "message": "Skill rejected and removed"
+    }
+
+
 @app.post("/jobs/report")
 async def generate_report(request: GenerateReportRequest):
     """Generate ML report for multiple jobs."""

@@ -246,3 +246,52 @@ class ReinforceLexiconUseCase:
             created_at=datetime.utcnow()
         )
         return await self.lexicon_repo.add_to_lexicon(entry)
+    
+    async def get_lexicon(self) -> List[SkillLexiconEntry]:
+        """Get all lexicon entries."""
+        return await self.lexicon_repo.get_lexicon()
+
+
+class ApproveSkillUseCase:
+    """Use case: Approve ML-suggested skill and add to lexicon."""
+    
+    def __init__(self, skill_repo: SkillRepository, lexicon_repo: SkillLexiconRepository):
+        self.skill_repo = skill_repo
+        self.lexicon_repo = lexicon_repo
+    
+    async def execute(self, skill_id: str) -> Skill:
+        """
+        Approve a suggested skill and reinforce the lexicon.
+        
+        This teaches the ML model that this extraction was correct.
+        """
+        # Approve the skill (sets is_approved=True)
+        skill = await self.skill_repo.approve_skill(skill_id)
+        
+        # Add to lexicon for model reinforcement
+        lexicon_entry = SkillLexiconEntry(
+            skill_name=skill.skill_name,
+            skill_category=skill.skill_category,
+            skill_type=skill.skill_type,
+            added_by_user=False,  # ML-extracted, human-approved
+            usage_count=1,
+            created_at=datetime.utcnow()
+        )
+        await self.lexicon_repo.add_to_lexicon(lexicon_entry)
+        
+        return skill
+
+
+class RejectSkillUseCase:
+    """Use case: Reject ML-suggested skill and remove it."""
+    
+    def __init__(self, skill_repo: SkillRepository):
+        self.skill_repo = skill_repo
+    
+    async def execute(self, skill_id: str) -> bool:
+        """
+        Reject a suggested skill and remove it.
+        
+        This teaches the ML model that this extraction was incorrect.
+        """
+        return await self.skill_repo.reject_skill(skill_id)

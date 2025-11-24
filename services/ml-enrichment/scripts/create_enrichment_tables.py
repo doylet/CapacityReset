@@ -48,6 +48,7 @@ def create_enrichment_tables(project_id: str = "sylvan-replica-478802-p4"):
         bigquery.SchemaField("source_field", "STRING", mode="REQUIRED", description="Where extracted from: job_summary, job_description_formatted, etc."),
         bigquery.SchemaField("confidence_score", "FLOAT64", mode="NULLABLE", description="Extraction confidence 0.0-1.0"),
         bigquery.SchemaField("context_snippet", "STRING", mode="NULLABLE", description="Surrounding text for verification"),
+        bigquery.SchemaField("is_approved", "BOOLEAN", mode="NULLABLE", description="Whether human approved this skill (NULL=pending, FALSE=rejected, TRUE=approved)"),
         bigquery.SchemaField("created_at", "TIMESTAMP", mode="REQUIRED", description="When skill was extracted"),
     ]
     

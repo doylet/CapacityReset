@@ -579,6 +579,7 @@ class SkillsExtractor:
                 'source_field': skill['source_field'],
                 'confidence_score': skill['confidence_score'],
                 'context_snippet': skill['context_snippet'],
+                'is_approved': None,  # Pending approval by default
                 'created_at': datetime.utcnow().isoformat()
             })
         

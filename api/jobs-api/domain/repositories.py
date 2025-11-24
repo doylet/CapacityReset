@@ -57,6 +57,16 @@ class SkillRepository(ABC):
     async def delete_skill(self, skill_id: str) -> bool:
         """Remove a skill from a job."""
         pass
+    
+    @abstractmethod
+    async def approve_skill(self, skill_id: str) -> Skill:
+        """Approve a suggested skill (sets is_approved=True)."""
+        pass
+    
+    @abstractmethod
+    async def reject_skill(self, skill_id: str) -> bool:
+        """Reject a suggested skill (sets is_approved=False or deletes)."""
+        pass
 
 
 class SkillLexiconRepository(ABC):

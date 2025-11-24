@@ -14,6 +14,7 @@ interface Skill {
   context_snippet: string;
   extraction_method: string;
   skill_type?: 'GENERAL' | 'SPECIALISED' | 'TRANSFERRABLE';
+  is_approved?: boolean | null; // null=pending, true=approved, false=rejected
 }
 
 interface Cluster {
@@ -161,6 +162,32 @@ export default function JobDetailPage() {
     }
   };
 
+  const approveSkill = async (skillId: string) => {
+    try {
+      await fetch(`${API_URL}/jobs/${jobId}/skills/${skillId}/approve`, {
+        method: 'POST',
+      });
+      
+      // Refresh job data
+      fetchJobDetail();
+    } catch (error) {
+      console.error('Error approving skill:', error);
+    }
+  };
+
+  const rejectSkill = async (skillId: string) => {
+    try {
+      await fetch(`${API_URL}/jobs/${jobId}/skills/${skillId}/reject`, {
+        method: 'POST',
+      });
+      
+      // Refresh job data
+      fetchJobDetail();
+    } catch (error) {
+      console.error('Error rejecting skill:', error);
+    }
+  };
+
   const normalizeWhitespace = (text: string): string => {
     // If it's HTML content (contains tags), don't normalize
     if (text.includes('<') && text.includes('>')) {
@@ -190,8 +217,11 @@ export default function JobDetailPage() {
     const isHTML = text.includes('<') && text.includes('>');
     let highlightedText = isHTML ? text : normalizeWhitespace(text);
     
+    // Only highlight approved skills (is_approved=true)
+    const approvedSkills = job.skills.filter(skill => skill.is_approved === true);
+    
     // Sort skills by length (longest first) to avoid partial matches
-    const skillsToHighlight = [...job.skills].sort((a, b) => 
+    const skillsToHighlight = [...approvedSkills].sort((a, b) => 
       b.skill_name.length - a.skill_name.length
     );
 
@@ -227,7 +257,9 @@ export default function JobDetailPage() {
 
   const getSkillsByCategory = () => {
     if (!job?.skills) return {};
-    return job.skills.reduce((acc, skill) => {
+    // Only show approved skills in the categorized view
+    const approvedSkills = job.skills.filter(skill => skill.is_approved === true);
+    return approvedSkills.reduce((acc, skill) => {
       if (!acc[skill.skill_category]) {
         acc[skill.skill_category] = [];
       }
@@ -368,9 +400,52 @@ export default function JobDetailPage() {
           {/* Sidebar - Skills */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg shadow-sm p-6 sticky top-6">
+              {/* Suggested Skills (Pending Approval) */}
+              {job.skills.filter(s => s.is_approved === null).length > 0 && (
+                <div className="mb-6 pb-6 border-b border-gray-200">
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <Tag className="w-5 h-5 text-amber-500" />
+                    Suggested Skills ({job.skills.filter(s => s.is_approved === null).length})
+                  </h2>
+                  <p className="text-sm text-gray-600 mb-4">
+                    ML-extracted skills awaiting approval. Approve to add to lexicon and highlight in descriptions.
+                  </p>
+                  <div className="space-y-2">
+                    {job.skills.filter(s => s.is_approved === null).map(skill => (
+                      <div
+                        key={skill.skill_id}
+                        className="flex items-center justify-between p-3 bg-amber-50 border border-amber-200 rounded hover:bg-amber-100 transition-colors"
+                      >
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-900">{skill.skill_name}</p>
+                          <p className="text-xs text-gray-500">
+                            {skill.skill_category.replace(/_/g, ' ')} • Confidence: {(skill.confidence_score * 100).toFixed(0)}%
+                          </p>
+                        </div>
+                        <div className="flex gap-2 ml-2">
+                          <button
+                            onClick={() => approveSkill(skill.skill_id)}
+                            className="px-3 py-1.5 text-xs font-medium text-white bg-green-600 rounded hover:bg-green-700 transition-colors"
+                          >
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => rejectSkill(skill.skill_id)}
+                            className="px-3 py-1.5 text-xs font-medium text-white bg-red-600 rounded hover:bg-red-700 transition-colors"
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Approved Skills */}
               <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                 <Tag className="w-5 h-5" />
-                Extracted Skills ({job.skills.length})
+                Approved Skills ({job.skills.filter(s => s.is_approved === true).length})
               </h2>
 
               <div className="space-y-4">

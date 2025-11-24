@@ -29,6 +29,7 @@ class Skill:
     context_snippet: str
     extraction_method: str
     skill_type: Optional[SkillType] = None  # User-editable metadata
+    is_approved: Optional[bool] = None  # None=pending, False=rejected, True=approved
     created_at: Optional[datetime] = None
     
     def __post_init__(self):

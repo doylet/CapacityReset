@@ -213,6 +213,7 @@ class BigQuerySkillRepository(SkillRepository):
             confidence_score,
             context_snippet,
             'lexicon_match' as extraction_method,
+            is_approved,
             created_at
         FROM `{DATASET_ID}.job_skills`
         WHERE job_posting_id = '{job_id}'
@@ -232,6 +233,7 @@ class BigQuerySkillRepository(SkillRepository):
                 confidence_score=row['confidence_score'],
                 context_snippet=row['context_snippet'],
                 extraction_method=row['extraction_method'],
+                is_approved=row.get('is_approved'),
                 created_at=row['created_at']
             )
             skills.append(skill)
@@ -251,8 +253,59 @@ class BigQuerySkillRepository(SkillRepository):
     
     async def delete_skill(self, skill_id: str) -> bool:
         """Delete a skill."""
-        # TODO: Implement deletion
+        query = f"""
+        DELETE FROM `{DATASET_ID}.job_skills`
+        WHERE skill_id = '{skill_id}'
+        """
+        self.client.query(query).result()
         return True
+    
+    async def approve_skill(self, skill_id: str) -> Skill:
+        """Approve a suggested skill (sets is_approved=True)."""
+        # Update skill to approved
+        update_query = f"""
+        UPDATE `{DATASET_ID}.job_skills`
+        SET is_approved = TRUE
+        WHERE skill_id = '{skill_id}'
+        """
+        self.client.query(update_query).result()
+        
+        # Fetch updated skill
+        select_query = f"""
+        SELECT
+            skill_id,
+            job_posting_id,
+            skill_name,
+            skill_category,
+            confidence_score,
+            context_snippet,
+            'lexicon_match' as extraction_method,
+            is_approved,
+            created_at
+        FROM `{DATASET_ID}.job_skills`
+        WHERE skill_id = '{skill_id}'
+        """
+        result = list(self.client.query(select_query).result())
+        
+        if not result:
+            raise ValueError(f"Skill {skill_id} not found")
+        
+        row = result[0]
+        return Skill(
+            skill_id=row['skill_id'],
+            job_posting_id=row['job_posting_id'],
+            skill_name=row['skill_name'],
+            skill_category=row['skill_category'],
+            confidence_score=row['confidence_score'],
+            context_snippet=row['context_snippet'],
+            extraction_method=row['extraction_method'],
+            is_approved=row.get('is_approved'),
+            created_at=row['created_at']
+        )
+    
+    async def reject_skill(self, skill_id: str) -> bool:
+        """Reject a suggested skill (deletes it)."""
+        return await self.delete_skill(skill_id)
 
 
 class BigQueryClusterRepository(ClusterRepository):
