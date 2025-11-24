@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Search, Filter, MapPin, Tag } from 'lucide-react';
 
 interface Cluster {
@@ -17,7 +18,6 @@ interface JobFiltersProps {
   };
   clusters: Cluster[];
   onFilterChange: (key: string, value: string) => void;
-  onApplyFilters: () => void;
   onClearFilters: () => void;
 }
 
@@ -25,9 +25,40 @@ export default function JobFilters({
   filters,
   clusters,
   onFilterChange,
-  onApplyFilters,
   onClearFilters,
 }: JobFiltersProps) {
+  // Local state for debounced inputs
+  const [localLocation, setLocalLocation] = useState(filters.location);
+  const [localSkill, setLocalSkill] = useState(filters.skill_name);
+
+  // Sync local state with props when cleared externally
+  useEffect(() => {
+    setLocalLocation(filters.location);
+    setLocalSkill(filters.skill_name);
+  }, [filters.location, filters.skill_name]);
+
+  // Debounce location filter
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (localLocation !== filters.location) {
+        onFilterChange('location', localLocation);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [localLocation]);
+
+  // Debounce skill filter
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (localSkill !== filters.skill_name) {
+        onFilterChange('skill_name', localSkill);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [localSkill]);
+
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
       <div className="flex items-center gap-2 mb-4">
@@ -44,8 +75,8 @@ export default function JobFilters({
           <input
             type="text"
             placeholder="e.g., Sydney"
-            value={filters.location}
-            onChange={(e) => onFilterChange('location', e.target.value)}
+            value={localLocation}
+            onChange={(e) => setLocalLocation(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
@@ -58,8 +89,8 @@ export default function JobFilters({
           <input
             type="text"
             placeholder="e.g., Python"
-            value={filters.skill_name}
-            onChange={(e) => onFilterChange('skill_name', e.target.value)}
+            value={localSkill}
+            onChange={(e) => setLocalSkill(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
@@ -84,20 +115,16 @@ export default function JobFilters({
         </div>
       </div>
 
-      <div className="mt-4 flex gap-3">
-        <button
-          onClick={onApplyFilters}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-        >
-          Apply Filters
-        </button>
-        <button
-          onClick={onClearFilters}
-          className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
-        >
-          Clear
-        </button>
-      </div>
+      {(filters.location || filters.skill_name || filters.cluster_id) && (
+        <div className="mt-4">
+          <button
+            onClick={onClearFilters}
+            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
+          >
+            Clear Filters
+          </button>
+        </div>
+      )}
     </div>
   );
 }

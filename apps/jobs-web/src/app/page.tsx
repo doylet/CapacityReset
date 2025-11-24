@@ -117,7 +117,11 @@ function JobListContent() {
   };
 
   const fetchJobs = useCallback(async () => {
-    setLoading(true);
+    // Only show loading spinner on initial fetch (when jobs is empty)
+    if (jobs.length === 0) {
+      setLoading(true);
+    }
+    
     try {
       const params = new URLSearchParams();
       if (filters.location) params.append('location', filters.location);
@@ -132,7 +136,7 @@ function JobListContent() {
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [filters, jobs.length]);
 
   useEffect(() => {
     fetchJobs();
@@ -271,7 +275,6 @@ function JobListContent() {
           filters={filters}
           clusters={clusters}
           onFilterChange={handleFilterChange}
-          onApplyFilters={fetchJobs}
           onClearFilters={handleClearFilters}
         />
 
