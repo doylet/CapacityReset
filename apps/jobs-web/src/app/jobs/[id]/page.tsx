@@ -190,20 +190,34 @@ export default function JobDetailPage() {
   };
 
   const normalizeWhitespace = (text: string): string => {
-    // If it's HTML content (contains tags), don't normalize
+    if (!text) return '';
+    
+    // If it's HTML content (contains tags), clean up HTML whitespace
     if (text.includes('<') && text.includes('>')) {
-      return text;
+      return text
+        // Remove excessive whitespace between HTML tags
+        .replace(/>\s+</g, '><')
+        // Remove empty paragraphs and divs
+        .replace(/<(p|div)[^>]*>\s*<\/(p|div)>/gi, '')
+        // Normalize whitespace within text nodes
+        .replace(/\s{2,}/g, ' ')
+        .trim();
     }
     
-    // For plain text, normalize whitespace
+    // For plain text, aggressive whitespace normalization
     return text
-      // Replace multiple spaces with single space
-      .replace(/ {2,}/g, ' ')
-      // Replace multiple newlines with double newline (paragraph break)
+      // Replace multiple spaces/tabs with single space
+      .replace(/[ \t]{2,}/g, ' ')
+      // Replace 3+ newlines with just 2 (paragraph break)
       .replace(/\n{3,}/g, '\n\n')
+      // Remove spaces before newlines
+      .replace(/ +\n/g, '\n')
+      // Remove spaces after newlines
+      .replace(/\n +/g, '\n')
       // Remove trailing/leading whitespace from each line
       .split('\n')
       .map(line => line.trim())
+      .filter(line => line.length > 0) // Remove empty lines
       .join('\n')
       .trim();
   };
@@ -396,7 +410,13 @@ export default function JobDetailPage() {
                 <div
                   onMouseUp={handleTextSelection}
                   dangerouslySetInnerHTML={{ __html: highlightedDescription }}
-                  className="prose prose-sm max-w-none prose-headings:font-semibold prose-headings:text-gray-900 prose-p:text-gray-700 prose-li:text-gray-700 prose-strong:text-gray-900"
+                  className="prose prose-sm max-w-none 
+                    prose-headings:font-semibold prose-headings:text-gray-900 prose-headings:mt-6 prose-headings:mb-3
+                    prose-p:text-gray-700 prose-p:my-3 prose-p:leading-relaxed
+                    prose-li:text-gray-700 prose-li:my-1
+                    prose-ul:my-3 prose-ol:my-3
+                    prose-strong:text-gray-900 prose-strong:font-semibold
+                    [&>*:first-child]:mt-0"
                 />
               </div>
             </div>
@@ -409,17 +429,17 @@ export default function JobDetailPage() {
               {job.skills.filter(s => s.is_approved !== true).length > 0 && (
                 <div className="mb-6 pb-6 border-b border-gray-200">
                   <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                    <Tag className="w-5 h-5 text-amber-500" />
+                    <Tag className="w-5 h-5 text-gray-500" />
                     Suggested Skills ({job.skills.filter(s => s.is_approved !== true).length})
                   </h2>
                   <p className="text-sm text-gray-600 mb-4">
-                    ML-extracted skills. <HandThumbUpIcon className="w-3 h-3 inline text-green-600" /> approves & adds to lexicon. <HandThumbDownIcon className="w-3 h-3 inline text-red-600" /> rejects & deletes permanently.
+                    Smart skills. <HandThumbUpIcon className="w-3 h-3 inline text-green-600" /> approves & adds to lexicon. <HandThumbDownIcon className="w-3 h-3 inline text-red-600" /> rejects & deletes permanently.
                   </p>
                   <div className="space-y-2">
                     {job.skills.filter(s => s.is_approved !== true).map(skill => (
                       <div
                         key={skill.skill_id}
-                        className="flex items-center justify-between p-3 bg-amber-50 border border-amber-200 rounded hover:bg-amber-100 transition-colors"
+                        className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition-colors"
                       >
                         <div className="flex-1">
                           <p className="text-sm font-medium text-gray-900">{skill.skill_name}</p>
@@ -430,14 +450,14 @@ export default function JobDetailPage() {
                         <div className="flex gap-2 ml-2">
                           <button
                             onClick={() => approveSkill(skill.skill_id)}
-                            className="p-2 text-green-600 hover:bg-green-50 rounded transition-colors"
+                            className="ghost p-2 text-blue-600 hover:bg-blue-50 rounded transition-colors"
                             title="Approve skill"
                           >
                             <HandThumbUpIcon className="w-5 h-5" />
                           </button>
                           <button
                             onClick={() => rejectSkill(skill.skill_id)}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors"
+                            className="ghost p-2 text-blue-600 hover:bg-blue-50 rounded transition-colors"
                             title="Reject skill"
                           >
                             <HandThumbDownIcon className="w-5 h-5" />
