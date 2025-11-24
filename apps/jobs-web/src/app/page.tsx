@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import PageHeader from '@/components/PageHeader';
 import JobFilters from '@/components/JobFilters';
 import SelectionActionBar from '@/components/SelectionActionBar';
@@ -68,7 +68,7 @@ export default function Home() {
     }
   };
 
-  const fetchJobs = async () => {
+  const fetchJobs = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -84,7 +84,11 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
+
+  useEffect(() => {
+    fetchJobs();
+  }, [fetchJobs]);
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -92,7 +96,6 @@ export default function Home() {
 
   const handleClearFilters = () => {
     setFilters({ location: '', skill_name: '', cluster_id: '' });
-    fetchJobs();
   };
 
   const toggleJobSelection = (jobId: string) => {
