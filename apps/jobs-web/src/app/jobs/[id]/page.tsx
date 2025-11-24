@@ -155,18 +155,35 @@ export default function JobDetailPage() {
   const highlightSkillsInText = (text: string) => {
     if (!job?.skills || job.skills.length === 0) return normalizeWhitespace(text);
 
-    let highlightedText = normalizeWhitespace(text);
+    // For HTML content, we need to be more careful with replacements
+    const isHTML = text.includes('<') && text.includes('>');
+    let highlightedText = isHTML ? text : normalizeWhitespace(text);
+    
     const skillsToHighlight = [...job.skills].sort((a, b) => 
       b.skill_name.length - a.skill_name.length
     );
 
     skillsToHighlight.forEach(skill => {
-      const regex = new RegExp(`\\b${skill.skill_name}\\b`, 'gi');
-      const skillTypeClass = skill.skill_type ? skill.skill_type.toLowerCase() : '';
-      highlightedText = highlightedText.replace(
-        regex,
-        `<span class="skill-highlight ${skillTypeClass}" data-skill-id="${skill.skill_id}" title="${skill.skill_category} (${skill.confidence_score.toFixed(2)})">${skill.skill_name}</span>`
-      );
+      // Escape special regex characters in skill name
+      const escapedSkill = skill.skill_name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      
+      if (isHTML) {
+        // For HTML, only replace text nodes, not inside tags
+        // Match skill name not inside HTML tags
+        const regex = new RegExp(`(?<!<[^>]*)\\b${escapedSkill}\\b(?![^<]*>)`, 'gi');
+        const skillTypeClass = skill.skill_type ? skill.skill_type.toLowerCase() : '';
+        highlightedText = highlightedText.replace(
+          regex,
+          `<span class="skill-highlight ${skillTypeClass}" data-skill-id="${skill.skill_id}" title="${skill.skill_category} (${skill.confidence_score.toFixed(2)})">${skill.skill_name}</span>`
+        );
+      } else {
+        const regex = new RegExp(`\\b${escapedSkill}\\b`, 'gi');
+        const skillTypeClass = skill.skill_type ? skill.skill_type.toLowerCase() : '';
+        highlightedText = highlightedText.replace(
+          regex,
+          `<span class="skill-highlight ${skillTypeClass}" data-skill-id="${skill.skill_id}" title="${skill.skill_category} (${skill.confidence_score.toFixed(2)})">${skill.skill_name}</span>`
+        );
+      }
     });
 
     return highlightedText;
