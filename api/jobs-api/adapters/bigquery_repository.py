@@ -63,7 +63,7 @@ class BigQueryJobRepository(JobRepository):
             jp.job_summary,
             jp.job_description_formatted,
             jp.job_posted_date,
-            jp.job_url,
+            jp.url as job_url,
             COALESCE(jsc.skills_count, 0) as skills_count
         FROM `{DATASET_ID}.job_postings` jp
         LEFT JOIN `{DATASET_ID}.job_clusters` jc ON jp.job_posting_id = jc.job_posting_id
@@ -117,7 +117,7 @@ class BigQueryJobRepository(JobRepository):
             jp.job_summary,
             jp.job_description_formatted,
             jp.job_posted_date,
-            jp.job_url,
+            jp.url as job_url,
             COALESCE(jsc.skills_count, 0) as skills_count
         FROM `{DATASET_ID}.job_postings` jp
         LEFT JOIN job_skill_counts jsc ON jp.job_posting_id = jsc.job_posting_id
@@ -166,7 +166,7 @@ class BigQueryJobRepository(JobRepository):
             jp.job_summary,
             jp.job_description_formatted,
             jp.job_posted_date,
-            jp.job_url,
+            jp.url as job_url,
             COALESCE(jsc.skills_count, 0) as skills_count
         FROM `{DATASET_ID}.job_postings` jp
         LEFT JOIN job_skill_counts jsc ON jp.job_posting_id = jsc.job_posting_id
