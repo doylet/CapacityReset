@@ -336,14 +336,48 @@ export default function JobDetailPage() {
                 <div
                   onMouseUp={handleTextSelection}
                   dangerouslySetInnerHTML={{ __html: highlightSkillsInText(job.job_description_formatted) }}
-                  className="prose prose-sm max-w-none
-                    prose-ul:list-disc prose-ul:ml-6 prose-ul:space-y-1
-                    prose-ol:list-decimal prose-ol:ml-6 prose-ol:space-y-1
-                    prose-li:text-gray-700
-                    prose-strong:text-gray-900 prose-strong:font-semibold
-                    prose-p:mb-3
-                    prose-headings:font-semibold prose-headings:text-gray-900"
+                  className="job-description"
+                  style={{
+                    // CSS for HTML list rendering
+                  }}
                 />
+                <style jsx>{`
+                  .job-description :global(ul) {
+                    list-style-type: disc;
+                    margin-left: 1.5rem;
+                    margin-bottom: 1rem;
+                  }
+                  .job-description :global(ol) {
+                    list-style-type: decimal;
+                    margin-left: 1.5rem;
+                    margin-bottom: 1rem;
+                  }
+                  .job-description :global(li) {
+                    margin-bottom: 0.25rem;
+                    color: #374151;
+                  }
+                  .job-description :global(strong) {
+                    font-weight: 600;
+                    color: #111827;
+                  }
+                  .job-description :global(p) {
+                    margin-bottom: 0.75rem;
+                  }
+                  .job-description :global(br) {
+                    display: block;
+                    content: "";
+                    margin-top: 0.5rem;
+                  }
+                  .job-description :global(h1),
+                  .job-description :global(h2),
+                  .job-description :global(h3),
+                  .job-description :global(h4) {
+                    font-weight: 600;
+                    color: #111827;
+                    margin-top: 1rem;
+                    margin-bottom: 0.5rem;
+                  }
+                `}</style>
               </div>
             </div>
           </div>
