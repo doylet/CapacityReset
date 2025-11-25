@@ -8,8 +8,8 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime
 import json
 from google.cloud import bigquery
-from domain.entities import Job, Skill, Cluster, SkillLexiconEntry, SkillType
-from domain.repositories import JobRepository, SkillRepository, ClusterRepository, SkillLexiconRepository
+from domain.entities import Job, Skill, Cluster, SkillLexiconEntry, SkillType, SectionAnnotation, AnnotationLabel
+from domain.repositories import JobRepository, SkillRepository, ClusterRepository, SkillLexiconRepository, SectionAnnotationRepository
 
 
 PROJECT_ID = "sylvan-replica-478802-p4"
@@ -621,3 +621,248 @@ class BigQuerySkillLexiconRepository(SkillLexiconRepository):
             })
         
         return categories
+
+
+class BigQuerySectionAnnotationRepository(SectionAnnotationRepository):
+    """BigQuery implementation of SectionAnnotationRepository."""
+    
+    def __init__(self):
+        self.client = bigquery.Client()
+    
+    async def create_annotation(self, annotation: SectionAnnotation) -> SectionAnnotation:
+        """Store annotation in BigQuery."""
+        query = f"""
+        INSERT INTO `{DATASET_ID}.job_section_annotations` (
+            annotation_id,
+            job_posting_id,
+            section_text,
+            section_start_index,
+            section_end_index,
+            label,
+            contains_skills,
+            annotator_id,
+            notes,
+            created_at
+        ) VALUES (
+            @annotation_id,
+            @job_posting_id,
+            @section_text,
+            @section_start_index,
+            @section_end_index,
+            @label,
+            @contains_skills,
+            @annotator_id,
+            @notes,
+            CURRENT_TIMESTAMP()
+        )
+        """
+        
+        job_config = bigquery.QueryJobConfig(
+            query_parameters=[
+                bigquery.ScalarQueryParameter("annotation_id", "STRING", annotation.annotation_id),
+                bigquery.ScalarQueryParameter("job_posting_id", "STRING", annotation.job_posting_id),
+                bigquery.ScalarQueryParameter("section_text", "STRING", annotation.section_text),
+                bigquery.ScalarQueryParameter("section_start_index", "INT64", annotation.section_start_index),
+                bigquery.ScalarQueryParameter("section_end_index", "INT64", annotation.section_end_index),
+                bigquery.ScalarQueryParameter("label", "STRING", annotation.label.value),
+                bigquery.ScalarQueryParameter("contains_skills", "BOOL", annotation.contains_skills),
+                bigquery.ScalarQueryParameter("annotator_id", "STRING", annotation.annotator_id),
+                bigquery.ScalarQueryParameter("notes", "STRING", annotation.notes),
+            ]
+        )
+        
+        query_job = self.client.query(query, job_config=job_config)
+        query_job.result()  # Wait for completion
+        
+        return annotation
+    
+    async def get_annotation_by_id(self, annotation_id: str) -> Optional[SectionAnnotation]:
+        """Get a single annotation by ID."""
+        query = f"""
+        SELECT
+            annotation_id,
+            job_posting_id,
+            section_text,
+            section_start_index,
+            section_end_index,
+            label,
+            contains_skills,
+            annotator_id,
+            notes,
+            created_at
+        FROM `{DATASET_ID}.job_section_annotations`
+        WHERE annotation_id = @annotation_id
+        LIMIT 1
+        """
+        
+        job_config = bigquery.QueryJobConfig(
+            query_parameters=[
+                bigquery.ScalarQueryParameter("annotation_id", "STRING", annotation_id)
+            ]
+        )
+        
+        query_job = self.client.query(query, job_config=job_config)
+        results = query_job.result()
+        
+        for row in results:
+            return SectionAnnotation(
+                annotation_id=row.annotation_id,
+                job_posting_id=row.job_posting_id,
+                section_text=row.section_text,
+                section_start_index=row.section_start_index,
+                section_end_index=row.section_end_index,
+                label=AnnotationLabel(row.label),
+                contains_skills=row.contains_skills,
+                annotator_id=row.annotator_id,
+                notes=row.notes,
+                created_at=row.created_at
+            )
+        
+        return None
+    
+    async def list_annotations(
+        self,
+        limit: int = 100,
+        offset: int = 0
+    ) -> List[SectionAnnotation]:
+        """List all annotations with pagination."""
+        query = f"""
+        SELECT
+            annotation_id,
+            job_posting_id,
+            section_text,
+            section_start_index,
+            section_end_index,
+            label,
+            contains_skills,
+            annotator_id,
+            notes,
+            created_at
+        FROM `{DATASET_ID}.job_section_annotations`
+        ORDER BY created_at DESC
+        LIMIT {limit}
+        OFFSET {offset}
+        """
+        
+        query_job = self.client.query(query)
+        results = query_job.result()
+        
+        annotations = []
+        for row in results:
+            annotations.append(
+                SectionAnnotation(
+                    annotation_id=row.annotation_id,
+                    job_posting_id=row.job_posting_id,
+                    section_text=row.section_text,
+                    section_start_index=row.section_start_index,
+                    section_end_index=row.section_end_index,
+                    label=AnnotationLabel(row.label),
+                    contains_skills=row.contains_skills,
+                    annotator_id=row.annotator_id,
+                    notes=row.notes,
+                    created_at=row.created_at
+                )
+            )
+        
+        return annotations
+    
+    async def get_annotations_for_job(self, job_id: str) -> List[SectionAnnotation]:
+        """Get all annotations for a specific job."""
+        query = f"""
+        SELECT
+            annotation_id,
+            job_posting_id,
+            section_text,
+            section_start_index,
+            section_end_index,
+            label,
+            contains_skills,
+            annotator_id,
+            notes,
+            created_at
+        FROM `{DATASET_ID}.job_section_annotations`
+        WHERE job_posting_id = @job_id
+        ORDER BY created_at DESC
+        """
+        
+        job_config = bigquery.QueryJobConfig(
+            query_parameters=[
+                bigquery.ScalarQueryParameter("job_id", "STRING", job_id)
+            ]
+        )
+        
+        query_job = self.client.query(query, job_config=job_config)
+        results = query_job.result()
+        
+        annotations = []
+        for row in results:
+            annotations.append(
+                SectionAnnotation(
+                    annotation_id=row.annotation_id,
+                    job_posting_id=row.job_posting_id,
+                    section_text=row.section_text,
+                    section_start_index=row.section_start_index,
+                    section_end_index=row.section_end_index,
+                    label=AnnotationLabel(row.label),
+                    contains_skills=row.contains_skills,
+                    annotator_id=row.annotator_id,
+                    notes=row.notes,
+                    created_at=row.created_at
+                )
+            )
+        
+        return annotations
+    
+    async def delete_annotation(self, annotation_id: str) -> bool:
+        """Delete an annotation."""
+        query = f"""
+        DELETE FROM `{DATASET_ID}.job_section_annotations`
+        WHERE annotation_id = @annotation_id
+        """
+        
+        job_config = bigquery.QueryJobConfig(
+            query_parameters=[
+                bigquery.ScalarQueryParameter("annotation_id", "STRING", annotation_id)
+            ]
+        )
+        
+        query_job = self.client.query(query, job_config=job_config)
+        query_job.result()
+        
+        return True  # BigQuery doesn't return affected rows easily
+    
+    async def export_training_data(self) -> List[Dict[str, Any]]:
+        """Export all annotations as training data format."""
+        query = f"""
+        SELECT
+            job_posting_id as job_id,
+            section_text as text,
+            label,
+            contains_skills as should_extract_skills,
+            section_start_index as start_index,
+            section_end_index as end_index,
+            annotator_id,
+            notes,
+            created_at
+        FROM `{DATASET_ID}.job_section_annotations`
+        ORDER BY created_at DESC
+        """
+        
+        query_job = self.client.query(query)
+        results = query_job.result()
+        
+        training_data = []
+        for row in results:
+            training_data.append({
+                'job_id': row.job_id,
+                'text': row.text,
+                'label': row.label,
+                'should_extract_skills': row.should_extract_skills,
+                'start_index': row.start_index,
+                'end_index': row.end_index,
+                'annotator_id': row.annotator_id,
+                'notes': row.notes,
+                'created_at': row.created_at.isoformat() if row.created_at else None
+            })
+        
+        return training_data

@@ -90,3 +90,41 @@ class SkillLexiconEntry:
     added_by_user: bool = False
     usage_count: int = 0
     created_at: Optional[datetime] = None
+
+
+class AnnotationLabel(str, Enum):
+    """Categories for annotated sections of job postings."""
+    SKILLS_SECTION = "skills_section"          # Explicit skills list
+    RESPONSIBILITIES = "responsibilities"      # Role duties (contains skills)
+    QUALIFICATIONS = "qualifications"          # Required/preferred qualifications
+    REQUIREMENTS = "requirements"              # Technical requirements
+    EXPERIENCE = "experience"                  # Experience requirements
+    NICE_TO_HAVE = "nice_to_have"             # Optional skills
+    COMPANY_INFO = "company_info"              # About company (exclude from extraction)
+    BENEFITS = "benefits"                      # Benefits section (exclude)
+    LOCATION = "location"                      # Location info (exclude)
+    OTHER = "other"                           # Uncategorized
+
+
+@dataclass
+class SectionAnnotation:
+    """Developer annotation of a job posting section for ML training."""
+    annotation_id: str
+    job_posting_id: str
+    section_text: str              # The actual text selected
+    section_start_index: int       # Character position in full text
+    section_end_index: int         # Character position in full text
+    label: AnnotationLabel         # Category of this section
+    contains_skills: bool          # Whether ML should extract from this
+    annotator_id: str             # Developer who created annotation
+    notes: Optional[str] = None    # Optional notes about annotation
+    created_at: Optional[datetime] = None
+    
+    def __post_init__(self):
+        """Validate annotation data."""
+        if self.section_end_index <= self.section_start_index:
+            raise ValueError("End index must be greater than start index")
+        if not self.section_text.strip():
+            raise ValueError("Section text cannot be empty")
+        if len(self.section_text) < 10:
+            raise ValueError("Section must be at least 10 characters")

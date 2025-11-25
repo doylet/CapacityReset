@@ -6,8 +6,8 @@ Separate DTOs from domain entities for clean API contracts.
 
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
-from datetime import date
-from domain.entities import SkillType
+from datetime import date, datetime
+from domain.entities import SkillType, AnnotationLabel
 
 
 class SkillResponse(BaseModel):
@@ -60,3 +60,35 @@ class UpdateSkillRequest(BaseModel):
 
 class GenerateReportRequest(BaseModel):
     job_ids: List[str]
+
+
+# === Section Annotation Schemas ===
+
+class CreateAnnotationRequest(BaseModel):
+    job_id: str
+    section_text: str
+    section_start_index: int
+    section_end_index: int
+    label: AnnotationLabel
+    annotator_id: str
+    notes: Optional[str] = None
+
+
+class AnnotationResponse(BaseModel):
+    annotation_id: str
+    job_posting_id: str
+    section_text: str
+    section_start_index: int
+    section_end_index: int
+    label: str
+    contains_skills: bool
+    annotator_id: str
+    notes: Optional[str]
+    created_at: Optional[str]
+
+
+class ExportTrainingDataResponse(BaseModel):
+    format: str
+    total_annotations: int
+    annotations: List[Dict[str, Any]]
+    label_distribution: Dict[str, int]

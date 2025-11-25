@@ -6,8 +6,9 @@ These orchestrate domain entities and call repositories through ports.
 
 from typing import List, Optional, Dict, Any
 from datetime import datetime
-from domain.entities import Job, Skill, SkillLexiconEntry, SkillType
-from domain.repositories import JobRepository, SkillRepository, SkillLexiconRepository, ClusterRepository
+import uuid
+from domain.entities import Job, Skill, SkillLexiconEntry, SkillType, SectionAnnotation, AnnotationLabel
+from domain.repositories import JobRepository, SkillRepository, SkillLexiconRepository, ClusterRepository, SectionAnnotationRepository
 
 
 class ListJobsUseCase:
@@ -295,3 +296,139 @@ class RejectSkillUseCase:
         This teaches the ML model that this extraction was incorrect.
         """
         return await self.skill_repo.reject_skill(skill_id)
+
+
+class CreateAnnotationUseCase:
+    """Use case: Create a new section annotation for ML training."""
+    
+    def __init__(
+        self,
+        annotation_repo: SectionAnnotationRepository,
+        job_repo: JobRepository
+    ):
+        self.annotation_repo = annotation_repo
+        self.job_repo = job_repo
+    
+    async def execute(
+        self,
+        job_id: str,
+        section_text: str,
+        section_start_index: int,
+        section_end_index: int,
+        label: AnnotationLabel,
+        annotator_id: str,
+        notes: Optional[str] = None
+    ) -> SectionAnnotation:
+        """Create and store a new annotation."""
+        
+        # Validate job exists
+        job = await self.job_repo.get_job_by_id(job_id)
+        if not job:
+            raise ValueError(f"Job {job_id} not found")
+        
+        # Determine if this section should be used for skill extraction
+        contains_skills = label in [
+            AnnotationLabel.SKILLS_SECTION,
+            AnnotationLabel.RESPONSIBILITIES,
+            AnnotationLabel.QUALIFICATIONS,
+            AnnotationLabel.REQUIREMENTS,
+            AnnotationLabel.EXPERIENCE,
+            AnnotationLabel.NICE_TO_HAVE
+        ]
+        
+        # Create annotation
+        annotation = SectionAnnotation(
+            annotation_id=str(uuid.uuid4()),
+            job_posting_id=job_id,
+            section_text=section_text,
+            section_start_index=section_start_index,
+            section_end_index=section_end_index,
+            label=label,
+            contains_skills=contains_skills,
+            annotator_id=annotator_id,
+            notes=notes
+        )
+        
+        return await self.annotation_repo.create_annotation(annotation)
+
+
+class GetAnnotationsByJobUseCase:
+    """Use case: Get all annotations for a job."""
+    
+    def __init__(self, annotation_repo: SectionAnnotationRepository):
+        self.annotation_repo = annotation_repo
+    
+    async def execute(self, job_id: str) -> List[SectionAnnotation]:
+        """Get all annotations for a specific job posting."""
+        return await self.annotation_repo.get_annotations_for_job(job_id)
+
+
+class ListAnnotationsUseCase:
+    """Use case: List all annotations with pagination."""
+    
+    def __init__(self, annotation_repo: SectionAnnotationRepository):
+        self.annotation_repo = annotation_repo
+    
+    async def execute(self, limit: int = 100, offset: int = 0) -> Dict[str, Any]:
+        """List annotations with pagination."""
+        annotations = await self.annotation_repo.list_annotations(
+            limit=limit + 1,
+            offset=offset
+        )
+        
+        has_more = len(annotations) > limit
+        if has_more:
+            annotations = annotations[:limit]
+        
+        return {
+            'annotations': annotations,
+            'total': len(annotations),
+            'has_more': has_more
+        }
+
+
+class DeleteAnnotationUseCase:
+    """Use case: Delete an annotation."""
+    
+    def __init__(self, annotation_repo: SectionAnnotationRepository):
+        self.annotation_repo = annotation_repo
+    
+    async def execute(self, annotation_id: str) -> bool:
+        """Delete an annotation by ID."""
+        return await self.annotation_repo.delete_annotation(annotation_id)
+
+
+class ExportTrainingDataUseCase:
+    """Use case: Export annotations as ML training data."""
+    
+    def __init__(self, annotation_repo: SectionAnnotationRepository):
+        self.annotation_repo = annotation_repo
+    
+    async def execute(self) -> Dict[str, Any]:
+        """
+        Export all annotations in ML training format.
+        
+        Returns:
+            {
+                'format': 'section_classification_v1',
+                'total_annotations': int,
+                'annotations': List[dict],
+                'label_distribution': Dict[str, int]
+            }
+        """
+        annotations = await self.annotation_repo.export_training_data()
+        
+        return {
+            'format': 'section_classification_v1',
+            'total_annotations': len(annotations),
+            'annotations': annotations,
+            'label_distribution': self._calculate_label_distribution(annotations)
+        }
+    
+    def _calculate_label_distribution(self, annotations: List[Dict[str, Any]]) -> Dict[str, int]:
+        """Calculate how many annotations per label."""
+        distribution = {}
+        for ann in annotations:
+            label = ann['label']
+            distribution[label] = distribution.get(label, 0) + 1
+        return distribution

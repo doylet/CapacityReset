@@ -15,7 +15,10 @@ from api.schemas import (
     ClusterResponse,
     AddSkillRequest,
     UpdateSkillRequest,
-    GenerateReportRequest
+    GenerateReportRequest,
+    CreateAnnotationRequest,
+    AnnotationResponse,
+    ExportTrainingDataResponse
 )
 from api.dependencies import (
     get_list_jobs_uc,
@@ -53,6 +56,9 @@ lexicon_router = APIRouter(prefix="/lexicon", tags=["lexicon"])
 
 # Router for clusters
 clusters_router = APIRouter(prefix="/clusters", tags=["clusters"])
+
+# Router for annotations
+annotations_router = APIRouter(prefix="/annotations", tags=["annotations"])
 
 
 # === Job Routes ===
@@ -329,3 +335,129 @@ async def list_clusters(
         )
         for c in clusters
     ]
+
+
+# === Annotation Routes ===
+
+@annotations_router.post("", response_model=AnnotationResponse)
+async def create_annotation(
+    request: CreateAnnotationRequest
+):
+    """Create a new section annotation for ML training."""
+    from api.dependencies import get_create_annotation_uc
+    from application.use_cases import CreateAnnotationUseCase
+    
+    use_case = get_create_annotation_uc()
+    
+    try:
+        annotation = await use_case.execute(
+            job_id=request.job_id,
+            section_text=request.section_text,
+            section_start_index=request.section_start_index,
+            section_end_index=request.section_end_index,
+            label=request.label,
+            annotator_id=request.annotator_id,
+            notes=request.notes
+        )
+        
+        return AnnotationResponse(
+            annotation_id=annotation.annotation_id,
+            job_posting_id=annotation.job_posting_id,
+            section_text=annotation.section_text,
+            section_start_index=annotation.section_start_index,
+            section_end_index=annotation.section_end_index,
+            label=annotation.label.value,
+            contains_skills=annotation.contains_skills,
+            annotator_id=annotation.annotator_id,
+            notes=annotation.notes,
+            created_at=annotation.created_at.isoformat() if annotation.created_at else None
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@jobs_router.get("/{job_id}/annotations", response_model=List[AnnotationResponse])
+async def get_job_annotations(job_id: str):
+    """Get all annotations for a specific job."""
+    from api.dependencies import get_annotations_by_job_uc
+    from application.use_cases import GetAnnotationsByJobUseCase
+    
+    use_case = get_annotations_by_job_uc()
+    annotations = await use_case.execute(job_id)
+    
+    return [
+        AnnotationResponse(
+            annotation_id=ann.annotation_id,
+            job_posting_id=ann.job_posting_id,
+            section_text=ann.section_text,
+            section_start_index=ann.section_start_index,
+            section_end_index=ann.section_end_index,
+            label=ann.label.value,
+            contains_skills=ann.contains_skills,
+            annotator_id=ann.annotator_id,
+            notes=ann.notes,
+            created_at=ann.created_at.isoformat() if ann.created_at else None
+        )
+        for ann in annotations
+    ]
+
+
+@annotations_router.get("", response_model=List[AnnotationResponse])
+async def list_annotations(
+    limit: int = Query(100, le=200),
+    offset: int = Query(0, ge=0)
+):
+    """List all annotations with pagination."""
+    from api.dependencies import get_list_annotations_uc
+    from application.use_cases import ListAnnotationsUseCase
+    
+    use_case = get_list_annotations_uc()
+    result = await use_case.execute(limit=limit, offset=offset)
+    
+    return [
+        AnnotationResponse(
+            annotation_id=ann.annotation_id,
+            job_posting_id=ann.job_posting_id,
+            section_text=ann.section_text,
+            section_start_index=ann.section_start_index,
+            section_end_index=ann.section_end_index,
+            label=ann.label.value,
+            contains_skills=ann.contains_skills,
+            annotator_id=ann.annotator_id,
+            notes=ann.notes,
+            created_at=ann.created_at.isoformat() if ann.created_at else None
+        )
+        for ann in result['annotations']
+    ]
+
+
+@annotations_router.delete("/{annotation_id}")
+async def delete_annotation(annotation_id: str):
+    """Delete an annotation."""
+    from api.dependencies import get_delete_annotation_uc
+    from application.use_cases import DeleteAnnotationUseCase
+    
+    use_case = get_delete_annotation_uc()
+    success = await use_case.execute(annotation_id)
+    
+    if not success:
+        raise HTTPException(status_code=404, detail="Annotation not found")
+    
+    return {"status": "deleted", "annotation_id": annotation_id}
+
+
+@annotations_router.get("/export/training-data", response_model=ExportTrainingDataResponse)
+async def export_training_data():
+    """Export all annotations as ML training data."""
+    from api.dependencies import get_export_training_data_uc
+    from application.use_cases import ExportTrainingDataUseCase
+    
+    use_case = get_export_training_data_uc()
+    data = await use_case.execute()
+    
+    return ExportTrainingDataResponse(
+        format=data['format'],
+        total_annotations=data['total_annotations'],
+        annotations=data['annotations'],
+        label_distribution=data['label_distribution']
+    )

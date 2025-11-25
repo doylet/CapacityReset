@@ -8,7 +8,7 @@ All routing logic separated into api/routes.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api.routes import jobs_router, skills_router, lexicon_router, clusters_router
+from api.routes import jobs_router, skills_router, lexicon_router, clusters_router, annotations_router
 
 
 def create_app() -> FastAPI:
@@ -41,6 +41,7 @@ def create_app() -> FastAPI:
     app.include_router(skills_router)
     app.include_router(lexicon_router)
     app.include_router(clusters_router)
+    app.include_router(annotations_router)
     
     # Health check
     @app.get("/")

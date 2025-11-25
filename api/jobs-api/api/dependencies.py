@@ -10,7 +10,8 @@ from adapters.bigquery_repository import (
     BigQueryJobRepository,
     BigQuerySkillRepository,
     BigQueryClusterRepository,
-    BigQuerySkillLexiconRepository
+    BigQuerySkillLexiconRepository,
+    BigQuerySectionAnnotationRepository
 )
 from application.use_cases import (
     ListJobsUseCase,
@@ -18,13 +19,19 @@ from application.use_cases import (
     UpdateSkillUseCase,
     AddSkillToJobUseCase,
     GenerateJobsReportUseCase,
-    ReinforceLexiconUseCase
+    ReinforceLexiconUseCase,
+    CreateAnnotationUseCase,
+    GetAnnotationsByJobUseCase,
+    ListAnnotationsUseCase,
+    DeleteAnnotationUseCase,
+    ExportTrainingDataUseCase
 )
 from domain.repositories import (
     JobRepository,
     SkillRepository,
     ClusterRepository,
-    SkillLexiconRepository
+    SkillLexiconRepository,
+    SectionAnnotationRepository
 )
 
 
@@ -52,6 +59,12 @@ def get_cluster_repo() -> ClusterRepository:
 def get_lexicon_repo() -> SkillLexiconRepository:
     """Get lexicon repository singleton."""
     return BigQuerySkillLexiconRepository()
+
+
+@lru_cache()
+def get_annotation_repo() -> SectionAnnotationRepository:
+    """Get annotation repository singleton."""
+    return BigQuerySectionAnnotationRepository()
 
 
 # === Use Case Factories ===
@@ -84,3 +97,30 @@ def get_generate_report_uc() -> GenerateJobsReportUseCase:
 def get_reinforce_lexicon_uc() -> ReinforceLexiconUseCase:
     """Get ReinforceLexiconUseCase with dependencies."""
     return ReinforceLexiconUseCase(get_lexicon_repo())
+
+
+# === Annotation Use Case Factories ===
+
+def get_create_annotation_uc() -> CreateAnnotationUseCase:
+    """Get CreateAnnotationUseCase with dependencies."""
+    return CreateAnnotationUseCase(get_annotation_repo(), get_job_repo())
+
+
+def get_annotations_by_job_uc() -> GetAnnotationsByJobUseCase:
+    """Get GetAnnotationsByJobUseCase with dependencies."""
+    return GetAnnotationsByJobUseCase(get_annotation_repo())
+
+
+def get_list_annotations_uc() -> ListAnnotationsUseCase:
+    """Get ListAnnotationsUseCase with dependencies."""
+    return ListAnnotationsUseCase(get_annotation_repo())
+
+
+def get_delete_annotation_uc() -> DeleteAnnotationUseCase:
+    """Get DeleteAnnotationUseCase with dependencies."""
+    return DeleteAnnotationUseCase(get_annotation_repo())
+
+
+def get_export_training_data_uc() -> ExportTrainingDataUseCase:
+    """Get ExportTrainingDataUseCase with dependencies."""
+    return ExportTrainingDataUseCase(get_annotation_repo())

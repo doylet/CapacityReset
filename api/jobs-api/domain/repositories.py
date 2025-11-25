@@ -8,7 +8,7 @@ The domain layer depends on these abstractions, not concrete implementations.
 from abc import ABC, abstractmethod
 from typing import List, Optional, Dict, Any
 from datetime import datetime
-from domain.entities import Job, Skill, Cluster, SkillLexiconEntry, SkillType
+from domain.entities import Job, Skill, Cluster, SkillLexiconEntry, SkillType, SectionAnnotation
 
 
 class JobRepository(ABC):
@@ -104,4 +104,42 @@ class ClusterRepository(ABC):
     @abstractmethod
     async def list_all_clusters(self) -> List[Cluster]:
         """Get all available clusters."""
+        pass
+
+
+class SectionAnnotationRepository(ABC):
+    """Port for section annotation data access."""
+    
+    @abstractmethod
+    async def create_annotation(self, annotation: SectionAnnotation) -> SectionAnnotation:
+        """Store a new section annotation."""
+        pass
+    
+    @abstractmethod
+    async def get_annotation_by_id(self, annotation_id: str) -> Optional[SectionAnnotation]:
+        """Get a single annotation."""
+        pass
+    
+    @abstractmethod
+    async def list_annotations(
+        self,
+        limit: int = 100,
+        offset: int = 0
+    ) -> List[SectionAnnotation]:
+        """List all annotations with pagination."""
+        pass
+    
+    @abstractmethod
+    async def get_annotations_for_job(self, job_id: str) -> List[SectionAnnotation]:
+        """Get all annotations for a specific job."""
+        pass
+    
+    @abstractmethod
+    async def delete_annotation(self, annotation_id: str) -> bool:
+        """Delete an annotation."""
+        pass
+    
+    @abstractmethod
+    async def export_training_data(self) -> List[Dict[str, Any]]:
+        """Export all annotations as training data format."""
         pass
