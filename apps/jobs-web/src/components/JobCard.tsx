@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { MapPin, Calendar, Briefcase, Star, EyeOff, Tag } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { Job, Cluster } from '@/types';
+import ViewOriginalJobLink from './ViewOriginalJobLink';
 
 interface JobCardProps {
   job: Job;
@@ -88,6 +89,12 @@ export default function JobCard({
               
               {/* Action buttons */}
               <div className="flex items-center gap-1">
+                {job.job_url && (
+                  <ViewOriginalJobLink 
+                    href={job.job_url} 
+                    variant="link" 
+                  />
+                )}
                 <button
                   onClick={() => onToggleFavorite(job.job_posting_id)}
                   className={`p-2 rounded-full hover:bg-gray-100 transition-colors ${

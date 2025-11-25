@@ -1,5 +1,8 @@
 'use client';
 
+import { Button } from '@/components/ui/Button';
+import { FileText } from 'lucide-react';
+
 interface SelectionActionBarProps {
   selectedCount: number;
   onGenerateReport: () => void;
@@ -13,12 +16,14 @@ export default function SelectionActionBar({ selectedCount, onGenerateReport }: 
       <span className="text-sm font-medium text-blue-900">
         {selectedCount} job(s) selected
       </span>
-      <button
+      <Button
         onClick={onGenerateReport}
-        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
+        variant="primary"
+        size="sm"
+        leftIcon={<FileText className="w-4 h-4" />}
       >
         Generate ML Report
-      </button>
+      </Button>
     </div>
   );
 }

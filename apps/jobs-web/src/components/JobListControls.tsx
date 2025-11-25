@@ -1,6 +1,8 @@
 'use client';
 
 import { Grid, List, SortAsc, SortDesc } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
+import { Select } from '@/components/ui/Select';
 import Pagination from './Pagination';
 
 export type SortField = 'date' | 'title' | 'skills' | 'company';
@@ -48,50 +50,47 @@ export default function JobListControls({
           {/* Sort Dropdown */}
           <div className="flex items-center gap-2">
             <label className="text-sm font-medium text-gray-700">Sort by:</label>
-            <select
+            <Select
               value={sortField}
-              onChange={(e) => handleSortFieldChange(e.target.value as SortField)}
-              className="px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="date">Date Posted</option>
-              <option value="title">Job Title</option>
-              <option value="skills">Skills Count</option>
-              <option value="company">Company</option>
-            </select>
+              onChange={(value) => handleSortFieldChange(value as SortField)}
+              options={[
+                { value: 'date', label: 'Date Posted' },
+                { value: 'title', label: 'Job Title' },
+                { value: 'skills', label: 'Skills Count' },
+                { value: 'company', label: 'Company' }
+              ]}
+            />
             
-            <button
+            <Button
               onClick={() => onSortChange(sortField, sortOrder === 'asc' ? 'desc' : 'asc')}
-              className="p-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded"
+              variant="ghost"
+              size="sm"
               title={sortOrder === 'asc' ? 'Ascending' : 'Descending'}
             >
               {sortOrder === 'asc' ? <SortAsc className="w-4 h-4" /> : <SortDesc className="w-4 h-4" />}
-            </button>
+            </Button>
           </div>
 
           {/* View Mode Toggle */}
           <div className="flex items-center gap-1 border border-gray-300 rounded-md p-0.5">
-            <button
+            <Button
               onClick={() => onViewModeChange('list')}
-              className={`p-1.5 rounded ${
-                viewMode === 'list'
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-              }`}
+              variant={viewMode === 'list' ? 'primary' : 'ghost'}
+              size="sm"
               title="List View"
+              className="!p-1.5"
             >
               <List className="w-4 h-4" />
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={() => onViewModeChange('grid')}
-              className={`p-1.5 rounded ${
-                viewMode === 'grid'
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-              }`}
+              variant={viewMode === 'grid' ? 'primary' : 'ghost'}
+              size="sm"
               title="Grid View"
+              className="!p-1.5"
             >
               <Grid className="w-4 h-4" />
-            </button>
+            </Button>
           </div>
         </div>
 

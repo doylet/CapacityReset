@@ -1,5 +1,7 @@
 'use client';
 
+import { Button } from '@/components/ui/Button';
+
 interface PaginationProps {
   currentPage: number;
   totalJobs: number;
@@ -26,13 +28,14 @@ export default function Pagination({
       </span>
       
       <div className="flex items-center gap-1">
-        <button
+        <Button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className="px-3 py-1 text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+          variant="outline"
+          size="sm"
         >
           Previous
-        </button>
+        </Button>
         
         <div className="flex items-center gap-1">
           {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
@@ -48,28 +51,26 @@ export default function Pagination({
             }
             
             return (
-              <button
+              <Button
                 key={pageNum}
                 onClick={() => onPageChange(pageNum)}
-                className={`px-3 py-1 text-sm border rounded-md ${
-                  currentPage === pageNum
-                    ? 'bg-blue-600 text-white border-blue-600'
-                    : 'border-gray-300 hover:bg-gray-50'
-                }`}
+                variant={currentPage === pageNum ? 'primary' : 'outline'}
+                size="sm"
               >
                 {pageNum}
-              </button>
+              </Button>
             );
           })}
         </div>
         
-        <button
+        <Button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className="px-3 py-1 text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+          variant="outline"
+          size="sm"
         >
           Next
-        </button>
+        </Button>
       </div>
     </div>
   );

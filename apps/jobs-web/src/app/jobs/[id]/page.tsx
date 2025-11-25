@@ -1,296 +1,117 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Calendar, MapPin, Tag, Edit2, Plus, Save, X, ExternalLink } from 'lucide-react';
-import { HandThumbUpIcon, HandThumbDownIcon } from '@heroicons/react/24/solid';
-import { format, formatDistanceToNow } from 'date-fns';
-
-interface Skill {
-  skill_id: string;
-  skill_name: string;
-  skill_category: string;
-  confidence_score: number;
-  context_snippet: string;
-  extraction_method: string;
-  skill_type?: 'GENERAL' | 'SPECIALISED' | 'TRANSFERRABLE';
-  is_approved?: boolean | null; // null=pending, true=approved, false=rejected
-}
-
-interface Cluster {
-  cluster_id: number;
-  cluster_name: string;
-  cluster_keywords: string[];
-  cluster_size: number;
-}
-
-interface JobDetail {
-  job_posting_id: string;
-  job_title: string;
-  company_name: string;
-  company_url?: string | null;
-  company_logo?: string | null;
-  job_location: string;
-  job_summary: string;
-  job_posted_date: string;
-  job_url?: string | null;
-  job_description_formatted: string;
-  skills: Skill[];
-  cluster?: Cluster;
-}
+import JobHeader from './components/JobHeader';
+import JobDescription from './components/JobDescription';
+import SkillsList from './components/SkillsList';
+import SkillModal from './components/SkillModal';
+import { useJobSkills } from './hooks/useJobSkills';
+import { useSkillHighlighting } from './hooks/useSkillHighlighting';
+import { useJobNavigation } from './hooks/useJobNavigation';
+import { SkillType } from '@/types/skills';
 
 interface EditingSkill {
   skill_id: string;
-  skill_type: 'GENERAL' | 'SPECIALISED' | 'TRANSFERRABLE';
+  skill_type: SkillType;
 }
 
-interface SkillCategory {
-  category: string;
-  display_name: string;
-  skill_count: number;
-}
+type ModalMode = 'add' | 'edit' | null;
 
 export default function JobDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const jobId = params.id as string;
 
-  const [job, setJob] = useState<JobDetail | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [modalMode, setModalMode] = useState<ModalMode>(null);
   const [editingSkill, setEditingSkill] = useState<EditingSkill | null>(null);
-  const [showAddSkill, setShowAddSkill] = useState(false);
   const [selectedText, setSelectedText] = useState('');
-  const [skillCategories, setSkillCategories] = useState<SkillCategory[]>([]);
-  const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [newSkill, setNewSkill] = useState({
     skill_name: '',
     skill_category: 'technical_skills',
-    skill_type: 'GENERAL' as 'GENERAL' | 'SPECIALISED' | 'TRANSFERRABLE',
+    skill_type: 'General' as SkillType,
   });
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
-  useEffect(() => {
-    fetchJobDetail();
-    fetchSkillCategories();
-  }, [jobId]);
+  const {
+    job,
+    loading,
+    skillCategories,
+    categoriesLoading,
+    updateSkillType,
+    addSkillToJob,
+    approveSkill,
+    rejectSkill,
+    getSkillsByCategory,
+  } = useJobSkills(jobId, API_URL);
 
-  const fetchJobDetail = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch(`${API_URL}/jobs/${jobId}`);
-      const data = await response.json();
-      setJob(data);
-    } catch (error) {
-      console.error('Error fetching job detail:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const highlightedDescription = useSkillHighlighting(
+    job?.skills,
+    job?.job_description_formatted
+  );
 
-  const fetchSkillCategories = async () => {
-    setCategoriesLoading(true);
-    try {
-      const response = await fetch(`${API_URL}/skills/categories`);
-      const data = await response.json();
-      setSkillCategories(data.categories || []);
-    } catch (error) {
-      console.error('Error fetching skill categories:', error);
-      // Fallback to default categories if API fails
-      setSkillCategories([
-        { category: 'technical_skills', display_name: 'Technical Skills', skill_count: 0 },
-        { category: 'communicating', display_name: 'Communicating', skill_count: 0 },
-        { category: 'creative_skills', display_name: 'Creative Skills', skill_count: 0 },
-      ]);
-    } finally {
-      setCategoriesLoading(false);
-    }
-  };
+  const { previousJobId, nextJobId } = useJobNavigation(jobId, API_URL);
 
   const handleTextSelection = () => {
     const selection = window.getSelection();
     const text = selection?.toString().trim();
     if (text && text.length > 2) {
       setSelectedText(text);
-      setNewSkill(prev => ({ ...prev, skill_name: text }));
-      setShowAddSkill(true);
+      setNewSkill({ ...newSkill, skill_name: text });
+      setModalMode('add');
     }
   };
 
-  const updateSkillType = async (skillId: string, skillType: 'GENERAL' | 'SPECIALISED' | 'TRANSFERRABLE') => {
+  const handleBatchApprove = async (skillIds: string[]) => {
     try {
-      await fetch(`${API_URL}/jobs/${jobId}/skills/${skillId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ skill_type: skillType }),
-      });
-      
-      // Refresh job data
-      fetchJobDetail();
-      setEditingSkill(null);
+      await Promise.all(skillIds.map(skillId => approveSkill(skillId)));
     } catch (error) {
-      console.error('Error updating skill:', error);
+      console.error('Batch approve failed:', error);
     }
   };
 
-  const addSkillToJob = async () => {
-    if (!newSkill.skill_name) return;
-
+  const handleBatchReject = async (skillIds: string[]) => {
     try {
-      await fetch(`${API_URL}/jobs/${jobId}/skills`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          skill_name: newSkill.skill_name,
-          skill_category: newSkill.skill_category,
-          context_snippet: selectedText,
-          skill_type: newSkill.skill_type,
-        }),
-      });
-
-      // Refresh and reset
-      fetchJobDetail();
-      setShowAddSkill(false);
-      setNewSkill({
-        skill_name: '',
-        skill_category: 'technical_skills',
-        skill_type: 'GENERAL',
-      });
-      setSelectedText('');
+      await Promise.all(skillIds.map(skillId => rejectSkill(skillId)));
     } catch (error) {
-      console.error('Error adding skill:', error);
+      console.error('Batch reject failed:', error);
     }
   };
 
-  const approveSkill = async (skillId: string) => {
-    try {
-      await fetch(`${API_URL}/jobs/${jobId}/skills/${skillId}/approve`, {
-        method: 'POST',
-      });
-      
-      // Refresh job data
-      fetchJobDetail();
-    } catch (error) {
-      console.error('Error approving skill:', error);
-    }
-  };
-
-  const rejectSkill = async (skillId: string) => {
-    try {
-      await fetch(`${API_URL}/jobs/${jobId}/skills/${skillId}/reject`, {
-        method: 'POST',
-      });
-      
-      // Refresh job data
-      fetchJobDetail();
-    } catch (error) {
-      console.error('Error rejecting skill:', error);
-    }
-  };
-
-  const normalizeWhitespace = (text: string): string => {
-    if (!text) return '';
-    
-    // If it's HTML content (contains tags), clean up HTML whitespace
-    if (text.includes('<') && text.includes('>')) {
-      return text
-        // Remove excessive whitespace between HTML tags
-        .replace(/>\s+</g, '><')
-        // Remove empty paragraphs and divs
-        .replace(/<(p|div)[^>]*>\s*<\/(p|div)>/gi, '')
-        // Normalize whitespace within text nodes
-        .replace(/\s{2,}/g, ' ')
-        .trim();
-    }
-    
-    // For plain text, aggressive whitespace normalization
-    return text
-      // Replace multiple spaces/tabs with single space
-      .replace(/[ \t]{2,}/g, ' ')
-      // Replace 3+ newlines with just 2 (paragraph break)
-      .replace(/\n{3,}/g, '\n\n')
-      // Remove spaces before newlines
-      .replace(/ +\n/g, '\n')
-      // Remove spaces after newlines
-      .replace(/\n +/g, '\n')
-      // Remove trailing/leading whitespace from each line
-      .split('\n')
-      .map(line => line.trim())
-      .filter(line => line.length > 0) // Remove empty lines
-      .join('\n')
-      .trim();
-  };
-
-  // Optimize: Memoize highlighted text so it's only recalculated when skills or description change
-  const highlightedDescription = useMemo(() => {
-    if (!job?.skills || job.skills.length === 0 || !job.job_description_formatted) {
-      return normalizeWhitespace(job?.job_description_formatted || '');
-    }
-
-    const text = job.job_description_formatted;
-    const isHTML = text.includes('<') && text.includes('>');
-    let highlightedText = isHTML ? text : normalizeWhitespace(text);
-    
-    // Highlight all skills (both approved and pending suggestions)
-    // Only exclude explicitly rejected ones (is_approved === false)
-    const skillsToHighlight = job.skills.filter(skill => skill.is_approved !== false);
-    
-    // Sort skills by length (longest first) to avoid partial matches
-    const sortedSkills = [...skillsToHighlight].sort((a, b) => 
-      b.skill_name.length - a.skill_name.length
+  const handleAddSkill = async () => {
+    await addSkillToJob(
+      newSkill.skill_name,
+      newSkill.skill_category,
+      newSkill.skill_type,
+      selectedText
     );
-
-    // Build a single regex pattern for all skills (more efficient than looping)
-    skillsToHighlight.forEach(skill => {
-      const escapedSkill = skill.skill_name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      
-      if (isHTML) {
-        const regex = new RegExp(`(?<!<[^>]*)\\b${escapedSkill}\\b(?![^<]*>)`, 'gi');
-        const skillTypeClass = skill.skill_type ? skill.skill_type.toLowerCase() : '';
-        highlightedText = highlightedText.replace(
-          regex,
-          `<span class="skill-highlight ${skillTypeClass}" data-skill-id="${skill.skill_id}" title="${skill.skill_category} (${skill.confidence_score.toFixed(2)})">${skill.skill_name}</span>`
-        );
-      } else {
-        const regex = new RegExp(`\\b${escapedSkill}\\b`, 'gi');
-        const skillTypeClass = skill.skill_type ? skill.skill_type.toLowerCase() : '';
-        highlightedText = highlightedText.replace(
-          regex,
-          `<span class="skill-highlight ${skillTypeClass}" data-skill-id="${skill.skill_id}" title="${skill.skill_category} (${skill.confidence_score.toFixed(2)})">${skill.skill_name}</span>`
-        );
-      }
+    
+    setModalMode(null);
+    setNewSkill({
+      skill_name: '',
+      skill_category: 'technical_skills',
+      skill_type: 'General',
     });
-
-    return highlightedText;
-  }, [job?.skills, job?.job_description_formatted]); // Only recalculate when these change
-
-  const highlightSkillsInText = (text: string) => {
-    // This function is now deprecated in favor of the memoized version
-    // Kept for backward compatibility but should use highlightedDescription instead
-    return highlightedDescription;
+    setSelectedText('');
   };
 
-  const getSkillsByCategory = () => {
-    if (!job?.skills) return {};
-    // Show approved skills in the categorized view
-    // If no skills are approved yet, show all skills (backward compatibility)
-    const approvedSkills = job.skills.filter(skill => skill.is_approved === true);
-    const skillsToShow = approvedSkills.length > 0 ? approvedSkills : job.skills;
-    
-    return skillsToShow.reduce((acc, skill) => {
-      if (!acc[skill.skill_category]) {
-        acc[skill.skill_category] = [];
-      }
-      acc[skill.skill_category].push(skill);
-      return acc;
-    }, {} as Record<string, Skill[]>);
+  const handleUpdateSkillType = async () => {
+    if (!editingSkill) return;
+    await updateSkillType(editingSkill.skill_id, editingSkill.skill_type);
+    setEditingSkill(null);
+    setModalMode(null);
+  };
+
+  const handleEditSkill = (skillId: string, skillType: SkillType) => {
+    setEditingSkill({ skill_id: skillId, skill_type: skillType });
+    setModalMode('edit');
   };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
       </div>
     );
   }
@@ -309,326 +130,79 @@ export default function JobDetailPage() {
   }
 
   const skillsByCategory = getSkillsByCategory();
+  const suggestedSkills = job?.skills.filter(s => s.is_approved !== true) || [];
+  const approvedSkillsCount = job?.skills.filter(s => s.is_approved === true).length || 0;
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <Link href="/" className="inline-flex items-center text-sm text-gray-600 hover:text-blue-700 mb-4">
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            Back to Jobs
-          </Link>
-          
-          <div className="flex items-start gap-4">
-            {/* Company Logo */}
-            {job.company_logo && (
-              <img 
-                src={job.company_logo} 
-                alt={`${job.company_name} logo`}
-                className="h-16 w-16 object-contain flex-shrink-0"
-              />
-            )}
-            
-            <div className="flex-1">
-              {/* Job Title and External Link */}
-              <div className="flex items-start justify-between gap-4 mb-1">
-                <h1 className="text-2xl font-semibold text-gray-900">{job.job_title}</h1>
-                
-                {/* View Original Link */}
-                {job.job_url && (
-                  <a 
-                    href={job.job_url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-blue-700 bg-white border border-blue-700 rounded-full hover:bg-blue-50 transition-colors flex-shrink-0"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                    View Original Job Posting
-                  </a>
-                )}
-              </div>
-              
-              {/* Company Name */}
-              {job.company_url ? (
-                <a 
-                  href={job.company_url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-base text-gray-900 hover:text-blue-700 hover:underline inline-block mb-2"
-                >
-                  {job.company_name}
-                </a>
-              ) : (
-                <p className="text-base text-gray-900 mb-2">{job.company_name}</p>
-              )}
-              
-              {/* Job Metadata */}
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <span className="flex items-center gap-1">
-                  <MapPin className="w-4 h-4" />
-                  {job.job_location}
-                </span>
-                <span className="text-gray-400">·</span>
-                <span>{formatDistanceToNow(new Date(job.job_posted_date), { addSuffix: true })}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
+      <JobHeader job={job} previousJobId={previousJobId} nextJobId={nextJobId} />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Cluster Badge */}
-            {job.cluster && (
-              <div>
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
-                  {job.cluster.cluster_name}
-                </span>
-              </div>
-            )}
-
-            {/* Job Description with Highlighted Skills */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">Job Description</h2>
-                <button
-                  onClick={() => setShowAddSkill(true)}
-                  className="flex items-center gap-2 px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                >
-                  <Plus className="w-4 h-4" />
-                  Add Skill
-                </button>
-              </div>
-              
-              <div className="text-gray-700 leading-relaxed">
-                <p className="text-sm text-gray-500 mb-4 italic">
-                  Select text to add as a new skill, or click highlighted skills to edit
-                </p>
-                <div
-                  onMouseUp={handleTextSelection}
-                  dangerouslySetInnerHTML={{ __html: highlightedDescription }}
-                  className="prose prose-sm max-w-none 
-                    prose-headings:font-semibold prose-headings:text-gray-900 prose-headings:mt-6 prose-headings:mb-3
-                    prose-p:text-gray-700 prose-p:my-3 prose-p:leading-relaxed
-                    prose-li:text-gray-700 prose-li:my-1
-                    prose-ul:my-3 prose-ol:my-3
-                    prose-strong:text-gray-900 prose-strong:font-semibold
-                    [&>*:first-child]:mt-0"
-                />
-              </div>
-            </div>
-          </div>
+          <JobDescription
+            highlightedDescription={highlightedDescription}
+            onTextSelection={handleTextSelection}
+            clusterName={job.cluster?.cluster_name}
+            previousJobId={previousJobId} 
+            nextJobId={nextJobId}
+          />
 
           {/* Sidebar - Skills */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg shadow-sm p-6 sticky top-6">
-              {/* Suggested Skills (Pending Approval) */}
-              {job.skills.filter(s => s.is_approved !== true).length > 0 && (
-                <div className="mb-6 pb-6 border-b border-gray-200">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                    <Tag className="w-5 h-5 text-gray-500" />
-                    Suggested Skills ({job.skills.filter(s => s.is_approved !== true).length})
-                  </h2>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Smart skills. <HandThumbUpIcon className="w-3 h-3 inline text-green-600" /> approves & adds to lexicon. <HandThumbDownIcon className="w-3 h-3 inline text-red-600" /> rejects & deletes permanently.
-                  </p>
-                  <div className="space-y-2">
-                    {job.skills.filter(s => s.is_approved !== true).map(skill => (
-                      <div
-                        key={skill.skill_id}
-                        className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition-colors"
-                      >
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-gray-900">{skill.skill_name}</p>
-                          <p className="text-xs text-gray-500">
-                            {skill.skill_category.replace(/_/g, ' ')} • Confidence: {(skill.confidence_score * 100).toFixed(0)}%
-                          </p>
-                        </div>
-                        <div className="flex gap-2 ml-2">
-                          <button
-                            onClick={() => approveSkill(skill.skill_id)}
-                            className="ghost p-2 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                            title="Approve skill"
-                          >
-                            <HandThumbUpIcon className="w-5 h-5" />
-                          </button>
-                          <button
-                            onClick={() => rejectSkill(skill.skill_id)}
-                            className="ghost p-2 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                            title="Reject skill"
-                          >
-                            <HandThumbDownIcon className="w-5 h-5" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Approved Skills */}
-              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <Tag className="w-5 h-5" />
-                Approved Skills ({job.skills.filter(s => s.is_approved === true).length})
-              </h2>
-
-              <div className="space-y-4">
-                {Object.entries(skillsByCategory).map(([category, skills]) => (
-                  <div key={category}>
-                    <h3 className="text-sm font-medium text-gray-700 mb-2 capitalize">
-                      {category.replace(/_/g, ' ')}
-                    </h3>
-                    <div className="space-y-2">
-                      {skills.map(skill => (
-                        <div
-                          key={skill.skill_id}
-                          className="flex items-center justify-between p-2 bg-gray-50 rounded hover:bg-gray-100 transition-colors"
-                        >
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-gray-900">{skill.skill_name}</p>
-                            <p className="text-xs text-gray-500">
-                              Confidence: {(skill.confidence_score * 100).toFixed(0)}%
-                              {skill.skill_type && ` • ${skill.skill_type}`}
-                            </p>
-                          </div>
-                          <button
-                            onClick={() => setEditingSkill({ skill_id: skill.skill_id, skill_type: skill.skill_type || 'GENERAL' })}
-                            className="ml-2 p-1 text-gray-400 hover:text-gray-600"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <SkillsList
+                mode="suggested"
+                skills={suggestedSkills}
+                onApprove={approveSkill}
+                onReject={rejectSkill}
+                onBatchApprove={handleBatchApprove}
+                onBatchReject={handleBatchReject}
+              />
+              
+              <SkillsList
+                mode="approved"
+                skillsByCategory={skillsByCategory}
+                totalCount={approvedSkillsCount}
+                onEditSkill={handleEditSkill}
+                onAddSkill={() => setModalMode('add')}
+              />
             </div>
           </div>
         </div>
       </main>
 
-      {/* Edit Skill Modal */}
-      {editingSkill && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Edit Skill Type</h3>
-            <div className="space-y-3">
-              {(['GENERAL', 'SPECIALISED', 'TRANSFERRABLE'] as const).map(type => (
-                <label key={type} className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
-                  <input
-                    type="radio"
-                    name="skill_type"
-                    value={type}
-                    checked={editingSkill.skill_type === type}
-                    onChange={(e) => setEditingSkill({ ...editingSkill, skill_type: e.target.value as any })}
-                    className="h-4 w-4 text-blue-600"
-                  />
-                  <span className="text-sm font-medium text-gray-900">{type}</span>
-                </label>
-              ))}
-            </div>
-            <div className="flex gap-3 mt-6">
-              <button
-                onClick={() => updateSkillType(editingSkill.skill_id, editingSkill.skill_type)}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center justify-center gap-2"
-              >
-                <Save className="w-4 h-4" />
-                Save
-              </button>
-              <button
-                onClick={() => setEditingSkill(null)}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </div>
+      {modalMode === 'edit' && editingSkill && (
+        <SkillModal
+          isOpen={true}
+          mode="edit"
+          skillType={editingSkill.skill_type}
+          onSkillTypeChange={(type) => setEditingSkill({ ...editingSkill, skill_type: type })}
+          onSubmit={handleUpdateSkillType}
+          onCancel={() => {
+            setEditingSkill(null);
+            setModalMode(null);
+          }}
+        />
       )}
 
-      {/* Add Skill Modal */}
-      {showAddSkill && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Add New Skill</h3>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Skill Name</label>
-                <input
-                  type="text"
-                  value={newSkill.skill_name}
-                  onChange={(e) => setNewSkill({ ...newSkill, skill_name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="e.g., Python"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
-                {categoriesLoading ? (
-                  <div className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-400">
-                    Loading categories...
-                  </div>
-                ) : (
-                  <select
-                    value={newSkill.skill_category}
-                    onChange={(e) => setNewSkill({ ...newSkill, skill_category: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    {skillCategories.map((cat) => (
-                      <option key={cat.category} value={cat.category}>
-                        {cat.display_name} ({cat.skill_count})
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Skill Type</label>
-                <div className="space-y-2">
-                  {(['GENERAL', 'SPECIALISED', 'TRANSFERRABLE'] as const).map(type => (
-                    <label key={type} className="flex items-center gap-3 p-2 border rounded cursor-pointer hover:bg-gray-50">
-                      <input
-                        type="radio"
-                        name="new_skill_type"
-                        value={type}
-                        checked={newSkill.skill_type === type}
-                        onChange={(e) => setNewSkill({ ...newSkill, skill_type: e.target.value as any })}
-                        className="h-4 w-4 text-blue-600"
-                      />
-                      <span className="text-sm text-gray-900">{type}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex gap-3 mt-6">
-              <button
-                onClick={addSkillToJob}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center justify-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Add Skill
-              </button>
-              <button
-                onClick={() => {
-                  setShowAddSkill(false);
-                  setSelectedText('');
-                }}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
+      {modalMode === 'add' && (
+        <SkillModal
+          isOpen={true}
+          mode="add"
+          skillName={newSkill.skill_name}
+          skillCategory={newSkill.skill_category}
+          skillType={newSkill.skill_type}
+          skillCategories={skillCategories}
+          categoriesLoading={categoriesLoading}
+          onSkillNameChange={(name) => setNewSkill({ ...newSkill, skill_name: name })}
+          onSkillCategoryChange={(category) => setNewSkill({ ...newSkill, skill_category: category })}
+          onSkillTypeChange={(type) => setNewSkill({ ...newSkill, skill_type: type })}
+          onSubmit={handleAddSkill}
+          onCancel={() => {
+            setModalMode(null);
+            setSelectedText('');
+          }}
+        />
       )}
     </div>
   );

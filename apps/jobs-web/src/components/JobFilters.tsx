@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { Search, Filter, MapPin, Tag } from 'lucide-react';
+import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
+import { Button } from '@/components/ui/Button';
 
 interface Cluster {
   cluster_id: number;
@@ -72,12 +75,11 @@ export default function JobFilters({
             <MapPin className="w-4 h-4 inline mr-1" />
             Location
           </label>
-          <input
-            type="text"
+          <Input
             placeholder="e.g., Sydney"
             value={localLocation}
-            onChange={(e) => setLocalLocation(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalLocation(e.target.value)}
+            leftIcon={<MapPin className="w-4 h-4" />}
           />
         </div>
 
@@ -86,12 +88,11 @@ export default function JobFilters({
             <Search className="w-4 h-4 inline mr-1" />
             Skill Name
           </label>
-          <input
-            type="text"
+          <Input
             placeholder="e.g., Python"
             value={localSkill}
-            onChange={(e) => setLocalSkill(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalSkill(e.target.value)}
+            leftIcon={<Search className="w-4 h-4" />}
           />
         </div>
 
@@ -100,29 +101,29 @@ export default function JobFilters({
             <Tag className="w-4 h-4 inline mr-1" />
             Cluster
           </label>
-          <select
+          <Select
             value={filters.cluster_id}
-            onChange={(e) => onFilterChange('cluster_id', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">All Clusters</option>
-            {clusters.map(cluster => (
-              <option key={cluster.cluster_id} value={cluster.cluster_id}>
-                {cluster.cluster_name} ({cluster.cluster_size})
-              </option>
-            ))}
-          </select>
+            onChange={(value) => onFilterChange('cluster_id', value)}
+            options={[
+              { value: '', label: 'All Clusters' },
+              ...clusters.map(cluster => ({
+                value: cluster.cluster_id.toString(),
+                label: `${cluster.cluster_name} (${cluster.cluster_size})`
+              }))
+            ]}
+          />
         </div>
       </div>
 
       {(filters.location || filters.skill_name || filters.cluster_id) && (
         <div className="mt-4">
-          <button
+          <Button
             onClick={onClearFilters}
-            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
+            variant="secondary"
+            size="sm"
           >
             Clear Filters
-          </button>
+          </Button>
         </div>
       )}
     </div>
