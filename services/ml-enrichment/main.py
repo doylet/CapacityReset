@@ -16,7 +16,7 @@ Architecture:
 import functions_framework
 import json
 from datetime import datetime
-from lib.enrichment.skills_extractor import SkillsExtractor
+from lib.enrichment.skills import SkillsExtractor, SkillsConfig
 from lib.enrichment.embeddings_generator import EmbeddingsGenerator
 from lib.enrichment.job_clusterer import JobClusterer
 from lib.utils.enrichment_utils import get_jobs_needing_enrichment, get_logger
