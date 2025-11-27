@@ -284,19 +284,21 @@ class SkillsExtractor:
     """
     
     def __init__(self):
-        self.version = "v2.4-section-filtered"
+        self.version = "v2.5-balanced-filtering"
         self.bigquery_client = bigquery.Client()
         self.project_id = "sylvan-replica-478802-p4"
         self.dataset_id = f"{self.project_id}.brightdata_jobs"
         
-        # Section headers that typically contain skills
+        # Section headers that typically contain skills (expanded list)
         self.skill_relevant_sections = [
             'responsibilities', 'requirements', 'qualifications', 'required qualifications',
             'preferred qualifications', 'what you\'ll do', 'what we\'re looking for',
             'about you', 'about the role', 'key responsibilities', 'your role',
             'essential skills', 'required skills', 'desired skills', 'technical skills',
             'experience', 'must have', 'nice to have', 'ideal candidate',
-            'you will', 'job description', 'role overview', 'duties'
+            'you will', 'job description', 'role overview', 'duties',
+            'what you bring', 'what you need', 'position', 'job requirements',
+            'skills and experience', 'core competencies', 'minimum requirements'
         ]
         
         # Section headers to exclude (non-skill content)
@@ -362,7 +364,7 @@ class SkillsExtractor:
             # Extract section content
             section_content = text[start_pos:end_pos].strip()
             
-            # Skip if too small or excluded
+            # Skip if too small
             if len(section_content) < 50:
                 continue
             
@@ -372,15 +374,23 @@ class SkillsExtractor:
                 'relevant': relevance == 'relevant'
             })
         
-        # If we found sections but none are relevant, return first section as fallback
+        # Be less aggressive with filtering - include both relevant and some non-excluded content
         relevant_sections = [s for s in sections if s['relevant']]
-        if not relevant_sections and sections:
-            # No relevant sections found, but we have sections - take the longest one
-            longest_section = max(sections, key=lambda s: len(s['content']))
-            longest_section['relevant'] = True
-            return [longest_section]
         
-        return relevant_sections if relevant_sections else [{'type': 'full_text', 'content': text, 'relevant': True}]
+        # If we have few relevant sections, also include sections that aren't explicitly excluded
+        if len(relevant_sections) < 3 and sections:
+            # Add sections that don't match excluded patterns
+            for section in sections:
+                if not section['relevant'] and section not in relevant_sections:
+                    # Check if it's long enough to likely contain skills
+                    if len(section['content']) > 200:
+                        relevant_sections.append(section)
+        
+        # If still no relevant sections, use all sections
+        if not relevant_sections:
+            relevant_sections = sections if sections else [{'type': 'full_text', 'content': text, 'relevant': True}]
+        
+        return relevant_sections
     
     def extract_skills(self, job_summary: str, job_description: str) -> List[Dict[str, Any]]:
         """
@@ -451,9 +461,9 @@ class SkillsExtractor:
             if key not in unique_skills or skill['confidence_score'] > unique_skills[key]['confidence_score']:
                 unique_skills[key] = skill
         
-        # Filter by confidence threshold (0.65) to reduce noise
-        # This filters out ~40% of low-quality extractions
-        CONFIDENCE_THRESHOLD = 0.65
+        # Filter by confidence threshold (0.5) to reduce noise while keeping more valid skills
+        # This is more balanced than v2.4's 0.65 threshold
+        CONFIDENCE_THRESHOLD = 0.5
         filtered_skills = [s for s in unique_skills.values() if s['confidence_score'] >= CONFIDENCE_THRESHOLD]
         
         print(f"📊 Extracted {len(unique_skills)} unique skills, filtered to {len(filtered_skills)} above {CONFIDENCE_THRESHOLD} confidence")
