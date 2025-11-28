@@ -34,8 +34,3 @@ CREATE TABLE IF NOT EXISTS `sylvan-replica-478802-p4.brightdata_jobs.request_que
 )
 PARTITION BY DATE(timestamp)
 CLUSTER BY location, keyword, processed;
-
--- Index for common queries
-CREATE INDEX IF NOT EXISTS idx_unprocessed 
-ON `sylvan-replica-478802-p4.brightdata_jobs.request_queries` (processed, timestamp)
-WHERE processed = FALSE;
