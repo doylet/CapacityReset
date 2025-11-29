@@ -10,109 +10,110 @@ from lib.gcloud_env_client import (
 
 bq = bigquery.Client()
 
-def log_queries_to_bigquery(
-    queries: List[dict],
-    response_body,
-    status,
-    request_id: str
-):
+def get_unscraped_queries(limit: int = 10) -> List[dict]:
     """
-    Log individual query records to BigQuery.
+    Fetch unscraped queries from request_queries table.
     
     Args:
-        queries: List of query dictionaries from JobSearchQuery.to_dict()
-        response_body: API response body
-        status: HTTP status code
-        request_id: Unique request identifier
+        limit: Maximum number of queries to fetch
+        
+    Returns:
+        List of query dictionaries with query_id and search parameters
     """
     try:
-        table_id = "sylvan-replica-478802-p4.brightdata_jobs.request_queries"
+        query = f"""
+        SELECT 
+            query_id,
+            location,
+            keyword,
+            country,
+            time_range,
+            job_type,
+            remote,
+            experience_level,
+            company,
+            location_radius
+        FROM `sylvan-replica-478802-p4.brightdata_jobs.request_queries`
+        WHERE scraped = FALSE
+          AND (scheduled_for IS NULL OR scheduled_for <= CURRENT_TIMESTAMP())
+        ORDER BY created_at ASC
+        LIMIT {limit}
+        """
         
-        # Convert response_body to JSON string
-        if isinstance(response_body, str):
-            response_json = response_body
-        else:
-            response_json = json.dumps(response_body)
+        query_job = bq.query(query)
+        results = query_job.result()
         
-        timestamp = datetime.utcnow().isoformat()
-        gcs_prefix = f"raw/{request_id}/"
+        queries = []
+        for row in results:
+            queries.append({
+                "query_id": row.query_id,
+                "location": row.location,
+                "keyword": row.keyword,
+                "country": row.country or "",
+                "time_range": row.time_range or "",
+                "job_type": row.job_type or "",
+                "remote": row.remote or "",
+                "experience_level": row.experience_level or "",
+                "company": row.company or "",
+                "location_radius": row.location_radius or "",
+            })
         
-        # Create a row for each query
-        rows = []
-        for idx, query in enumerate(queries):
-            row = {
-                "request_id": request_id,
-                "query_index": idx,
-                "timestamp": timestamp,
-                "location": query.get("location", ""),
-                "keyword": query.get("keyword", ""),
-                "country": query.get("country", ""),
-                "time_range": query.get("time_range", ""),
-                "job_type": query.get("job_type", ""),
-                "remote": query.get("remote", ""),
-                "experience_level": query.get("experience_level", ""),
-                "company": query.get("company", ""),
-                "location_radius": query.get("location_radius", ""),
-                "dataset_id": BRIGHTDATA_DATASET_ID,
-                "gcs_prefix": gcs_prefix,
-                "brightdata_response": response_json,
-                "status": str(status),
-                "processed": False,
-            }
-            rows.append(row)
-        
-        # Use load_table_from_json with WRITE_APPEND for immediate queryability
-        job_config = bigquery.LoadJobConfig(
-            write_disposition=bigquery.WriteDisposition.WRITE_APPEND,
-        )
-        
-        load_job = bq.load_table_from_json(rows, table_id, job_config=job_config)
-        load_job.result()  # Wait for job to complete
-        
-        print(f"Successfully logged {len(rows)} queries to BigQuery: {request_id}")
+        print(f"Found {len(queries)} unscraped queries")
+        return queries
     except Exception as e:
-        print(f"Failed to log queries to BigQuery: {e}")
+        print(f"Failed to fetch unscraped queries: {e}")
+        return []
 
 
-def log_request_to_bigquery(response_body, status, request_id, queries: Optional[List[dict]] = None):
+def mark_queries_scraped(query_ids: List[str], scrape_request_id: str):
     """
-    Legacy function for backward compatibility. Logs to the old execution_logs table.
+    Mark queries as scraped in request_queries table.
+    
+    Args:
+        query_ids: List of query IDs that were scraped
+        scrape_request_id: The request_id from scraper_execution_logs
+    """
+    try:
+        if not query_ids:
+            return
+        
+        query_ids_str = "', '".join(query_ids)
+        update_query = f"""
+        UPDATE `sylvan-replica-478802-p4.brightdata_jobs.request_queries`
+        SET 
+            scraped = TRUE,
+            scraped_at = CURRENT_TIMESTAMP(),
+            scrape_request_id = '{scrape_request_id}'
+        WHERE query_id IN ('{query_ids_str}')
+        """
+        
+        bq.query(update_query).result()
+        print(f"Marked {len(query_ids)} queries as scraped (request_id: {scrape_request_id})")
+    except Exception as e:
+        print(f"Failed to mark queries as scraped: {e}")
+
+
+def log_request_to_bigquery(response_body, status, request_id):
+    """
+    Log scraper execution to BigQuery.
     
     Args:
         response_body: API response body
         status: HTTP status code
         request_id: Unique request identifier
-        queries: Optional list of query dictionaries (for new table logging)
     """
-    # If queries are provided, log to new table
-    if queries:
-        log_queries_to_bigquery(queries, response_body, status, request_id)
-    
-    # Also log to legacy table for backward compatibility
     try:
         table_id = "sylvan-replica-478802-p4.brightdata_jobs.scraper_execution_logs"
         
-        # Keep response_body as JSON string for the JSON column type
         if isinstance(response_body, str):
             response_json = response_body
         else:
             response_json = json.dumps(response_body)
-        
-        # Extract cities and keyword from queries if provided, otherwise use defaults
-        if queries:
-            cities = list(set(q.get("location", "") for q in queries if q.get("location")))
-            keywords = list(set(q.get("keyword", "") for q in queries if q.get("keyword")))
-            keyword = keywords[0] if keywords else "product management"
-        else:
-            cities = ["brisbane", "sydney", "melbourne"]
-            keyword = "product management"
         
         row = {
             "request_id": request_id,
             "timestamp": datetime.utcnow().isoformat(),
             "dataset_id": BRIGHTDATA_DATASET_ID,
-            "cities": cities,
-            "keyword": keyword,
             "brightdata_response": response_json,
             "status": str(status),
             "gcs_prefix": f"raw/{request_id}/",
@@ -126,6 +127,6 @@ def log_request_to_bigquery(response_body, status, request_id, queries: Optional
         load_job = bq.load_table_from_json([row], table_id, job_config=job_config)
         load_job.result()
         
-        print(f"Successfully logged request to BigQuery (legacy table): {row['request_id']}")
+        print(f"Successfully logged scrape execution to BigQuery: {row['request_id']}")
     except Exception as e:
-        print(f"Failed to log to BigQuery (legacy table): {e}")
+        print(f"Failed to log scrape execution to BigQuery: {e}")

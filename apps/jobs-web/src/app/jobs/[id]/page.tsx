@@ -7,6 +7,7 @@ import JobHeader from './components/JobHeader';
 import JobDescription from './components/JobDescription';
 import SkillsList from './components/SkillsList';
 import SkillModal from './components/SkillModal';
+// import SectionAnnotator from './components/SectionAnnotator';
 import { useJobSkills } from './hooks/useJobSkills';
 import { useSkillHighlighting } from './hooks/useSkillHighlighting';
 import { useJobNavigation } from './hooks/useJobNavigation';
@@ -169,6 +170,15 @@ export default function JobDetailPage() {
             </div>
           </div>
         </div>
+
+        {/* Section Annotations - TODO: Enable after testing */}
+        {/* <div className="mt-8">
+          <SectionAnnotator
+            jobId={jobId}
+            jobDescription={job.job_description}
+            apiUrl={API_URL}
+          />
+        </div> */}
       </main>
 
       {modalMode === 'edit' && editingSkill && (
