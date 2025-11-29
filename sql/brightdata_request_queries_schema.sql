@@ -1,10 +1,8 @@
 -- Table to store individual BrightData search queries
--- Each payload object becomes a separate record
+-- Each query is a unique search that needs to be scraped
 CREATE TABLE IF NOT EXISTS `sylvan-replica-478802-p4.brightdata_jobs.request_queries` (
-  -- Request identification
-  request_id STRING NOT NULL,
-  query_index INT64 NOT NULL,
-  timestamp TIMESTAMP NOT NULL,
+  -- Primary key
+  query_id STRING NOT NULL,
   
   -- Search parameters
   location STRING NOT NULL,
@@ -17,20 +15,24 @@ CREATE TABLE IF NOT EXISTS `sylvan-replica-478802-p4.brightdata_jobs.request_que
   company STRING,
   location_radius STRING,
   
-  -- Request metadata
-  dataset_id STRING NOT NULL,
-  gcs_prefix STRING NOT NULL,
+  -- Metadata
+  created_at TIMESTAMP NOT NULL,
+  created_by STRING,
   
-  -- API response
-  brightdata_response JSON,
-  status STRING NOT NULL,
+  -- Scheduling
+  scheduled_for TIMESTAMP,
   
-  -- Processing status
-  processed BOOLEAN DEFAULT FALSE,
-  processed_at TIMESTAMP,
+  -- Scraping status
+  scraped BOOLEAN NOT NULL DEFAULT FALSE,
+  scraped_at TIMESTAMP,
+  scrape_request_id STRING,
   
-  -- Composite primary key
-  PRIMARY KEY (request_id, query_index) NOT ENFORCED
+  -- Error tracking
+  last_error STRING,
+  retry_count INT64,
+  
+  -- Primary key
+  PRIMARY KEY (query_id) NOT ENFORCED
 )
-PARTITION BY DATE(timestamp)
-CLUSTER BY location, keyword, processed;
+PARTITION BY DATE(created_at)
+CLUSTER BY scraped, location, keyword;
