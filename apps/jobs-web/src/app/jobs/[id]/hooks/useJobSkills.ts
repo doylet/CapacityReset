@@ -142,12 +142,10 @@ export function useJobSkills(jobId: string, apiUrl: string, initialJob?: JobDeta
 
   const getSkillsByCategory = () => {
     if (!job?.skills) return {};
-    // Show approved skills in the categorized view
-    // If no skills are approved yet, show all skills (backward compatibility)
+    // Show only approved skills in the categorized view
     const approvedSkills = job.skills.filter(skill => skill.is_approved === true);
-    const skillsToShow = approvedSkills.length > 0 ? approvedSkills : job.skills;
     
-    return skillsToShow.reduce((acc, skill) => {
+    return approvedSkills.reduce((acc, skill) => {
       if (!acc[skill.skill_category]) {
         acc[skill.skill_category] = [];
       }
