@@ -1,25 +1,22 @@
 <!--
 Sync Impact Report - Constitution Amendment
-Version: 1.0.0 → 2.0.0 (MAJOR)
-Date: 2025-11-30
-Rationale: Initial constitution creation based on comprehensive project audit
+Version: 2.0.0 → 2.1.0 (MINOR)
+Date: 2025-12-01
+Rationale: Added new principle VIII (Code Clarity & Maintainability) explicitly forbidding HEREDOCs and similar string construction methods
 
 Modified Principles:
-- All principles: Newly defined based on existing patterns
+- None
 
 Added Sections:
-- Core Principles (7 principles)
-- Technology Stack Standards
-- Development Workflow
-- Governance
+- Principle VIII: Code Clarity & Maintainability
 
 Removed Sections:
-- None (new constitution)
+- None
 
 Templates Requiring Updates:
-✅ plan-template.md - Updated constitution check references
-✅ spec-template.md - Aligned with architecture principles
-✅ tasks-template.md - Aligned with testing and deployment principles
+✅ plan-template.md - Already references constitution checks
+✅ spec-template.md - Already enforces architecture compliance
+✅ tasks-template.md - Already includes code quality checks
 
 Follow-up TODOs:
 - None
@@ -118,6 +115,60 @@ Follow-up TODOs:
 
 **Rationale**: Ensures reproducibility, auditability, and disaster recovery. All infrastructure changes tracked in git.
 
+### VIII. Code Clarity & Maintainability
+
+**No HEREDOCs**: HEREDOC syntax (`<<EOF`, `<<-EOF`, etc.) and similar multi-line string construction methods are EXPRESSLY FORBIDDEN in all codebases.
+
+**String Construction Standards**:
+- **Python**: Use triple-quoted strings (`"""..."""` or `'''...'''`) for multi-line text
+- **SQL Queries**: Define in separate `.sql` files or use triple-quoted strings with proper indentation
+- **Shell Scripts**: Use arrays or proper quoting instead of HEREDOCs
+- **Configuration**: Use JSON, YAML, or TOML files instead of inline string templates
+
+**File-Based Approaches**:
+- **SQL**: Place queries in `queries/` or `sql/` directories, load with file I/O
+- **Templates**: Use template engines (Jinja2, handlebars) with separate template files
+- **Large Text**: Store in dedicated files and read programmatically
+
+**Rationale**: HEREDOCs obscure code structure, break syntax highlighting, complicate version control diffs, and reduce maintainability. Modern languages provide superior alternatives with better tooling support, linting, and formatting.
+
+**Forbidden Patterns**:
+```bash
+# ❌ FORBIDDEN - Shell HEREDOC
+cat <<EOF > file.txt
+content here
+EOF
+
+# ❌ FORBIDDEN - Python subprocess with HEREDOC-style strings
+subprocess.run(['bash', '-c', '''
+  command1
+  command2
+'''])
+```
+
+**Approved Patterns**:
+```python
+# ✅ APPROVED - Triple-quoted Python string
+query = """
+    SELECT id, name
+    FROM table
+    WHERE status = 'active'
+"""
+
+# ✅ APPROVED - SQL file
+with open('queries/get_active_records.sql', 'r') as f:
+    query = f.read()
+
+# ✅ APPROVED - Shell array
+commands=(
+    "command1"
+    "command2"
+)
+for cmd in "${commands[@]}"; do
+    eval "$cmd"
+done
+```
+
 ## Technology Stack Standards
 
 **Languages**:
@@ -177,6 +228,7 @@ Follow-up TODOs:
 - Service isolation: No cross-service imports except through APIs
 - Idempotency: Can operations safely retry?
 - Observability: Are errors logged with context?
+- Code clarity: No HEREDOCs or similar forbidden patterns?
 
 ## Governance
 
@@ -205,4 +257,4 @@ Follow-up TODOs:
 
 **Review Cadence**: Constitution reviewed quarterly or when major architectural decisions arise.
 
-**Version**: 2.0.0 | **Ratified**: 2025-11-30 | **Last Amended**: 2025-11-30
+**Version**: 2.1.0 | **Ratified**: 2025-11-30 | **Last Amended**: 2025-12-01

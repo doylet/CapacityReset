@@ -29,14 +29,16 @@ interface SkillCategory {
   skill_count: number;
 }
 
-export function useJobSkills(jobId: string, apiUrl: string) {
-  const [job, setJob] = useState<JobDetail | null>(null);
-  const [loading, setLoading] = useState(true);
+export function useJobSkills(jobId: string, apiUrl: string, initialJob?: JobDetail | null) {
+  const [job, setJob] = useState<JobDetail | null>(initialJob || null);
+  const [loading, setLoading] = useState(!initialJob);
   const [skillCategories, setSkillCategories] = useState<SkillCategory[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
 
   const fetchJobDetail = async () => {
-    setLoading(true);
+    if (!initialJob) {
+      setLoading(true);
+    }
     try {
       const response = await fetch(`${apiUrl}/jobs/${jobId}`);
       const data = await response.json();
@@ -68,9 +70,11 @@ export function useJobSkills(jobId: string, apiUrl: string) {
   };
 
   useEffect(() => {
-    fetchJobDetail();
+    if (!initialJob) {
+      fetchJobDetail();
+    }
     fetchSkillCategories();
-  }, [jobId]);
+  }, [jobId, initialJob]);
 
   const updateSkillType = async (skillId: string, skillType: SkillType) => {
     try {

@@ -103,8 +103,8 @@ export default function SkillsList({
     >
       {({ open }) => (
         <>
-          <div className="flex flex-1 items-center mb-4">
-            <DisclosureButton className="flex items-center gap-2 text-left group">
+          <div className="mb-4">
+            <DisclosureButton className="flex items-center gap-2 text-left group mb-3">
               <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                 <Tag className="w-5 h-5 text-gray-500" />
                 {title}
@@ -186,29 +186,30 @@ export default function SkillsList({
                     </Transition>
                   </Menu>
                   
-                  {/* Batch approve high confidence */}
+                  {/* Batch operations */}
                   {highConfidenceSkills.length > 0 && (
                     <Button
                       onClick={handleBatchApproveHigh}
                       variant="success"
                       size="sm"
-                      leftIcon={<CheckCheck className="w-4 h-4" />}
+                      leftIcon={<CheckCheck className="w-3 h-3" />}
                       title={`Approve ${highConfidenceSkills.length} skills with ≥85% confidence`}
+                      className="text-xs px-2"
                     >
-                      Approve High ({highConfidenceSkills.length})
+                      +{highConfidenceSkills.length}
                     </Button>
                   )}
                   
-                  {/* Batch reject low confidence */}
                   {lowConfidenceSkills.length > 0 && (
                     <Button
                       onClick={handleBatchRejectLow}
                       variant="danger"
                       size="sm"
-                      leftIcon={<XCircle className="w-4 h-4" />}
+                      leftIcon={<XCircle className="w-3 h-3" />}
                       title={`Reject ${lowConfidenceSkills.length} skills with <75% confidence`}
+                      className="text-xs px-2"
                     >
-                      Reject Low ({lowConfidenceSkills.length})
+                      -{lowConfidenceSkills.length}
                     </Button>
                   )}
                 </>
@@ -237,7 +238,9 @@ export default function SkillsList({
           >
             <DisclosurePanel>
               {description && (
-                <p className="text-sm text-gray-600 mb-4">{description}</p>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                  <p className="text-sm text-blue-800">{description}</p>
+                </div>
               )}
 
               {/* Suggested Mode - Flat list */}
@@ -248,7 +251,7 @@ export default function SkillsList({
                     return (
                       <div
                         key={skill.skill_id}
-                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                        className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg hover:border-gray-300 hover:shadow-sm transition-all"
                       >
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
@@ -263,20 +266,20 @@ export default function SkillsList({
                             {skill.skill_category.replace(/_/g, ' ')}
                           </p>
                         </div>
-                        <div className="flex gap-2 ml-4">
+                        <div className="flex gap-1 ml-4">
                           <HeadlessButton
                             onClick={() => onApprove?.(skill.skill_id)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 active:bg-blue-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                            className="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 active:bg-green-100 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1"
                             title="Approve skill"
                           >
-                            <HandThumbUpIcon className="w-5 h-5" />
+                            <HandThumbUpIcon className="w-4 h-4" />
                           </HeadlessButton>
                           <HeadlessButton
                             onClick={() => onReject?.(skill.skill_id)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 active:bg-blue-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                            className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 active:bg-red-100 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
                             title="Reject skill"
                           >
-                            <HandThumbDownIcon className="w-5 h-5" />
+                            <HandThumbDownIcon className="w-4 h-4" />
                           </HeadlessButton>
                         </div>
                       </div>
