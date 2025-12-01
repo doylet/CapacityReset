@@ -234,6 +234,7 @@ class BigQuerySkillRepository(SkillRepository):
                 context_snippet=row['context_snippet'],
                 extraction_method=row['extraction_method'],
                 is_approved=row.get('is_approved'),
+                skill_type='general',  # Default skill type since it's not in DB schema yet
                 created_at=row['created_at']
             )
             skills.append(skill)
@@ -248,32 +249,58 @@ class BigQuerySkillRepository(SkillRepository):
     
     async def add_skill_to_job(self, job_id: str, skill: Skill) -> Skill:
         """Add user-defined skill to job."""
-        query = f"""
+        import uuid
+        enrichment_id = str(uuid.uuid4())
+        
+        # First create an enrichment record
+        enrichment_query = f"""
+        INSERT INTO `{DATASET_ID}.job_enrichments` (
+            enrichment_id,
+            job_posting_id,
+            enrichment_type,
+            enrichment_version,
+            created_at,
+            status,
+            metadata
+        ) VALUES (
+            '{enrichment_id}',
+            '{job_id}',
+            'user_skill_addition',
+            'manual_v1',
+            CURRENT_TIMESTAMP(),
+            'success',
+            JSON_OBJECT('user_added', true, 'skill_name', '{skill.skill_name}')
+        )
+        """
+        self.client.query(enrichment_query).result()
+        
+        # Then add the skill record
+        skill_query = f"""
         INSERT INTO `{DATASET_ID}.job_skills` (
             skill_id,
             job_posting_id,
+            enrichment_id,
             skill_name,
             skill_category,
+            source_field,
             confidence_score,
             context_snippet,
-            extraction_method,
-            skill_type,
             is_approved,
             created_at
         ) VALUES (
             '{skill.skill_id}',
             '{skill.job_posting_id}',
+            '{enrichment_id}',
             '{skill.skill_name}',
             '{skill.skill_category}',
+            'user_defined',
             {skill.confidence_score},
             '{skill.context_snippet.replace("'", "''")}',
-            '{skill.extraction_method}',
-            '{skill.skill_type.value if skill.skill_type else 'general'}',
             TRUE,
-            '{skill.created_at.isoformat() if skill.created_at else "CURRENT_TIMESTAMP()"}' 
+            CURRENT_TIMESTAMP()
         )
         """
-        self.client.query(query).result()
+        self.client.query(skill_query).result()
         
         # Set is_approved to True since user-defined skills are automatically approved
         skill.is_approved = True
@@ -328,7 +355,9 @@ class BigQuerySkillRepository(SkillRepository):
             context_snippet=row['context_snippet'],
             extraction_method=row['extraction_method'],
             is_approved=row.get('is_approved'),
+            skill_type='general',  # Default skill type since it's not in DB schema yet
             created_at=row['created_at']
+        )
         )
     
     async def reject_skill(self, skill_id: str) -> bool:
