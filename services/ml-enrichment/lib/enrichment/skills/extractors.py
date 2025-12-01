@@ -2,11 +2,13 @@
 Extraction strategies for skills.
 
 Implements Strategy pattern for different skill extraction methods.
+Note: This module is kept for backward compatibility but the main
+extraction logic has been moved to unified_extractor.py
 """
 
 from abc import ABC, abstractmethod
 from typing import List, Dict, Any
-from .config import SkillsConfig
+from .unified_config import UnifiedSkillsConfig
 from .filters import SkillFilter
 from .scorer import SkillScorer
 from .normalizer import TextNormalizer

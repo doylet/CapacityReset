@@ -1,20 +1,17 @@
 """
-Utilities for loading spaCy model and skills lexicon with enhanced features.
+Utilities for loading spaCy model and skills lexicon with unified configuration.
 """
 
 import spacy
 from typing import Optional, Dict, List, Union
 from spacy.matcher import PhraseMatcher
 from google.cloud import bigquery
-from .config import SkillsConfig
+from .unified_config import UnifiedSkillsConfig
 
-# Import enhanced config if available
-try:
-    from .enhanced_config import EnhancedSkillsConfig
-    ENHANCED_AVAILABLE = True
-except ImportError:
-    EnhancedSkillsConfig = None
-    ENHANCED_AVAILABLE = False
+# Backward compatibility aliases
+SkillsConfig = UnifiedSkillsConfig
+EnhancedSkillsConfig = UnifiedSkillsConfig
+ENHANCED_AVAILABLE = True  # Always available now
 
 # Global caches for lazy loading
 _nlp = None

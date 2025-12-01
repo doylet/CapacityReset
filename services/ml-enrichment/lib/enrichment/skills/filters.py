@@ -4,7 +4,10 @@ Filtering logic for skills extraction.
 
 import re
 from typing import List, Dict
-from .config import SkillsConfig
+from .unified_config import UnifiedSkillsConfig
+
+# Backward compatibility
+SkillsConfig = UnifiedSkillsConfig
 
 
 class SkillFilter:

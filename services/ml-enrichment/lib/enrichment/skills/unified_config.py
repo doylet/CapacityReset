@@ -1,12 +1,15 @@
 """
-Enhanced configuration with modern ML parameters.
+Unified configuration for skills extraction with backward compatibility.
+
+This consolidates both the original and enhanced configurations,
+providing graceful fallback when enhanced ML features are not available.
 """
 
 from dataclasses import dataclass, field
 from typing import List, Dict, Set, Optional
 
 
-# Comprehensive tech skills lexicon (400+ modern skills)
+# Enhanced tech skills lexicon (400+ modern skills)
 ENHANCED_SKILLS_LEXICON = {
     'programming_languages': [
         'python', 'javascript', 'typescript', 'java', 'c++', 'c#', 'go', 'rust',
@@ -73,7 +76,72 @@ ENHANCED_SKILLS_LEXICON = {
     ]
 }
 
-# Modern job-specific keywords that indicate skill requirements
+# Original skills lexicon (175 general skills) for backward compatibility
+ORIGINAL_SKILLS_LEXICON = {
+    'communicating': [
+        'corresponding', 'editing', 'facilitating', 'interviewing', 'listening',
+        'negotiating', 'persuading', 'presenting', 'public speaking', 'reporting',
+        'translating', 'writing'
+    ],
+    'creative_skills': [
+        'composing', 'conceiving', 'conceptualising', 'creating', 'devising',
+        'designing', 'drawing', 'illustrating', 'innovating', 'painting',
+        'performing', 'photographing', 'sculpting', 'styling'
+    ],
+    'developing_people': [
+        'advising', 'assessing performance', 'coaching', 'collaborating', 'building teams',
+        'consulting', 'counselling', 'demonstrating', 'facilitating', 'group dynamics',
+        'instructing', 'mediating', 'motivating', 'teaching'
+    ],
+    'financial_skills': [
+        'analysing', 'appraising', 'estimating', 'assessing', 'auditing',
+        'budgeting', 'calculating', 'costing', 'evaluating', 'forecasting',
+        'investing'
+    ],
+    'interpersonal_skills': [
+        'advising skills', 'facilitating', 'formulating', 'group participation', 'working autonomously',
+        'influencing', 'leading', 'liaising', 'motivating', 'negotiating skills',
+        'networking', 'relationship building', 'teamwork', 'trust building'
+    ],
+    'managing_directing': [
+        'appraising', 'approving', 'coaching', 'coordinating', 'delegating',
+        'developing others', 'executing', 'facilitating', 'formulating', 'influencing',
+        'interviewing', 'hiring', 'leading meetings', 'making decisions', 'managing',
+        'managing projects', 'mentoring', 'planning', 'team building'
+    ],
+    'organising': [
+        'general administration', 'quality control', 'time management', 'filing', 'categorising',
+        'classifying', 'compiling', 'coordinating', 'distributing', 'documenting',
+        'expediting', 'implementing', 'maintaining', 'monitoring', 'office management',
+        'planning', 'scheduling', 'systematising'
+    ],
+    'planning': [
+        'analysing', 'conceptualising', 'designing', 'developing policy', 'developing strategy',
+        'establishing goals', 'identifying problems', 'strategic thinking'
+    ],
+    'researching_analysing': [
+        'assessing', 'calculating', 'classifying', 'critiquing', 'developing',
+        'diagnosing', 'evaluating', 'examining', 'experimenting', 'extracting',
+        'interpreting', 'interrogating', 'investigating', 'measuring', 'organising',
+        'researching', 'reviewing', 'solving problems', 'summarising', 'surveying',
+        'synthesising', 'testing', 'troubleshooting'
+    ],
+    'selling_marketing': [
+        'advertising', 'analysing markets', 'building rapport', 'building relationships', 'delivering',
+        'demonstrating', 'developing', 'editing', 'identifying', 'influencing',
+        'marketing', 'merchandising', 'promoting', 'prospecting', 'publicising',
+        'sales', 'selling', 'servicing', 'social media', 'writing copy'
+    ],
+    'technical_skills': [
+        'assembling', 'building', 'calibrating', 'configuring', 'constructing',
+        'designing', 'developing', 'diagnosing', 'engineering', 'fabricating',
+        'installing', 'maintaining', 'manufacturing', 'operating', 'programming',
+        'repairing', 'setting up', 'technical writing', 'testing', 'training',
+        'troubleshooting', 'upgrading', 'using technology'
+    ]
+}
+
+# Advanced skill context indicators
 SKILL_CONTEXT_INDICATORS = {
     'strong_indicators': {
         'experience with', 'proficient in', 'expertise in', 'skilled in',
@@ -96,7 +164,7 @@ SKILL_CONTEXT_INDICATORS = {
     }
 }
 
-# Patterns for extracting version numbers and specific technologies
+# Technology patterns for extraction
 TECH_PATTERNS = {
     'versions': [
         r'\\b(?:python|node|java|php|ruby|go|rust)\\s+(?:v?\\d+\\.\\d+(?:\\.\\d+)?)\\b',
@@ -116,7 +184,7 @@ TECH_PATTERNS = {
 
 
 @dataclass
-class AdvancedMLConfig:
+class MLConfig:
     """Configuration for advanced ML features."""
     
     # Semantic similarity settings
@@ -128,7 +196,7 @@ class AdvancedMLConfig:
     use_pattern_extraction: bool = True
     pattern_confidence_boost: float = 0.1
     
-    # Confidence scoring
+    # Confidence scoring with ML features
     use_ml_confidence_scoring: bool = True
     ensemble_weights: Dict[str, float] = field(default_factory=lambda: {
         'extraction_method': 0.25,
@@ -147,8 +215,8 @@ class AdvancedMLConfig:
 
 
 @dataclass
-class EnhancedExtractionWeights:
-    """Enhanced weights for different extraction methods."""
+class ExtractionWeights:
+    """Weights for different extraction methods."""
     enhanced_lexicon: float = 1.0
     semantic_similarity: float = 0.9
     pattern_based: float = 0.8
@@ -172,82 +240,137 @@ class CategoryWeights:
     design_tools: float = 0.7
     blockchain: float = 0.8
     soft_skills: float = 0.6
+    # Legacy categories (for backward compatibility)
+    technical_skills: float = 0.9
+    communicating: float = 0.6
+    creative_skills: float = 0.6
+    developing_people: float = 0.6
+    financial_skills: float = 0.7
+    interpersonal_skills: float = 0.6
+    managing_directing: float = 0.7
+    organising: float = 0.6
+    planning: float = 0.7
+    researching_analysing: float = 0.8
+    selling_marketing: float = 0.6
 
 
 @dataclass
-class EnhancedSkillsConfig:
+class FilterConfig:
+    """Configuration for skill filtering."""
+    min_skill_length: int = 2
+    max_skill_length: int = 40
+    min_chunk_words: int = 2
+    max_chunk_words: int = 4
+    min_section_length: int = 50
+    fallback_section_length: int = 200
+    confidence_threshold: float = 0.6
+
+
+@dataclass
+class UnifiedSkillsConfig:
     """
-    Enhanced configuration with modern ML capabilities.
+    Unified configuration that supports both original and enhanced extraction.
     
-    This extends the original configuration with advanced features
-    for better skill extraction and confidence scoring.
+    This configuration automatically adapts based on available dependencies,
+    providing enhanced features when possible while maintaining backward compatibility.
     """
     
     # Version identifier
-    version: str = "v3.0-enhanced-ml-extraction"
+    version: str = "v4.0-unified-config"
     
     # BigQuery configuration
     project_id: str = "sylvan-replica-478802-p4"
     dataset_id: str = "brightdata_jobs"
     
-    # Enhanced lexicons
+    # Mode selection (auto-detected based on available dependencies)
+    enhanced_mode: bool = True
+    fallback_to_original: bool = True
+    
+    # Skills lexicons (enhanced is preferred, original as fallback)
     enhanced_skills_lexicon: Dict[str, List[str]] = field(default_factory=lambda: ENHANCED_SKILLS_LEXICON)
+    original_skills_lexicon: Dict[str, List[str]] = field(default_factory=lambda: ORIGINAL_SKILLS_LEXICON)
+    
+    # Context indicators for advanced extraction
     skill_context_indicators: Dict[str, Set[str]] = field(default_factory=lambda: {
         k: set(v) for k, v in SKILL_CONTEXT_INDICATORS.items()
     })
     tech_patterns: Dict[str, List[str]] = field(default_factory=lambda: TECH_PATTERNS)
     
     # Advanced ML configuration
-    ml_config: AdvancedMLConfig = field(default_factory=AdvancedMLConfig)
+    ml_config: MLConfig = field(default_factory=MLConfig)
     
-    # Enhanced weights
-    extraction_weights: EnhancedExtractionWeights = field(default_factory=EnhancedExtractionWeights)
+    # Extraction and scoring weights
+    extraction_weights: ExtractionWeights = field(default_factory=ExtractionWeights)
     category_weights: CategoryWeights = field(default_factory=CategoryWeights)
     
+    # Filtering configuration
+    filter_config: FilterConfig = field(default_factory=FilterConfig)
+    
     # Context extraction
-    context_window: int = 60  # Increased for better context
+    context_window: int = 60
     max_context_length: int = 200
     
-    # Filtering configuration
-    min_skill_length: int = 2
-    max_skill_length: int = 40
-    confidence_threshold: float = 0.6
-    
-    # Section filtering (improved)
+    # Section filtering (comprehensive list)
     relevant_sections: List[str] = field(default_factory=lambda: [
-        'responsibilities', 'requirements', 'qualifications', 'skills',
-        'experience', 'technical requirements', 'must have', 'nice to have',
-        'what you will do', 'what we are looking for', 'about you',
-        'key responsibilities', 'role overview', 'technical skills',
+        'responsibilities', 'requirements', 'qualifications', 'required qualifications',
+        'preferred qualifications', 'skills', 'experience', 'technical requirements',
+        'must have', 'nice to have', 'what you will do', 'what we are looking for',
+        'about you', 'key responsibilities', 'role overview', 'technical skills',
         'required skills', 'preferred skills', 'core competencies',
-        'technologies used', 'tech stack', 'tools and technologies'
+        'technologies used', 'tech stack', 'tools and technologies',
+        'what you\'ll do', 'what we\'re looking for', 'about the role',
+        'your role', 'essential skills', 'desired skills', 'ideal candidate',
+        'you will', 'job description', 'duties', 'what you bring',
+        'what you need', 'position', 'job requirements', 'skills and experience',
+        'minimum requirements'
     ])
     
     excluded_sections: List[str] = field(default_factory=lambda: [
         'benefits', 'compensation', 'salary', 'perks', 'about us',
         'company culture', 'our mission', 'equal opportunity', 'diversity',
-        'how to apply', 'application process', 'contact us', 'location'
+        'how to apply', 'application process', 'contact us', 'location',
+        'about the company', 'our values', 'why join us', 'work environment'
     ])
     
-    # Noise filtering
+    # Noise filtering (comprehensive)
     noise_words: Set[str] = field(default_factory=lambda: {
         'new york', 'san francisco', 'los angeles', 'london', 'berlin',
-        'remote', 'hybrid', 'full time', 'part time', 'contract',
-        'competitive salary', 'health insurance', 'work life balance',
+        'remote', 'hybrid', 'full time', 'part time', 'contract', 'permanent',
+        'temporary', 'competitive salary', 'health insurance', 'work life balance',
         'team player', 'fast paced', 'dynamic environment', 'startup',
-        'unicorn', 'scale up', 'growth company', 'innovative', 'cutting edge'
+        'unicorn', 'scale up', 'growth company', 'innovative', 'cutting edge',
+        'job description', 'about us', 'apply now', 'click here',
+        'professional development', 'career growth', 'team member',
+        'job posting', 'united states', 'north america'
+    })
+    
+    # Context indicators (legacy support)
+    strong_indicators: Set[str] = field(default_factory=lambda: {
+        'required', 'must have', 'essential', 'proficient', 'expert',
+        'experience with', 'expertise in', 'skilled in', 'advanced knowledge'
+    })
+    
+    medium_indicators: Set[str] = field(default_factory=lambda: {
+        'experience', 'knowledge', 'familiar', 'understanding', 'ability',
+        'exposure to', 'basic knowledge', 'some experience'
     })
     
     # Skill prioritization
     high_priority_categories: Set[str] = field(default_factory=lambda: {
         'programming_languages', 'web_frameworks', 'cloud_platforms',
-        'machine_learning', 'devops_tools', 'databases'
+        'machine_learning', 'devops_tools', 'databases', 'technical_skills'
     })
     
     @property
     def full_dataset_id(self) -> str:
         """Return fully qualified dataset ID."""
         return f"{self.project_id}.{self.dataset_id}"
+    
+    def get_skills_lexicon(self) -> Dict[str, List[str]]:
+        """Get the appropriate skills lexicon based on mode."""
+        if self.enhanced_mode:
+            return self.enhanced_skills_lexicon
+        return self.original_skills_lexicon
     
     def get_category_weight(self, category: str) -> float:
         """Get weight for a specific category."""
@@ -256,3 +379,14 @@ class EnhancedSkillsConfig:
     def is_high_priority_category(self, category: str) -> bool:
         """Check if category is high priority."""
         return category in self.high_priority_categories
+    
+    def get_confidence_threshold(self) -> float:
+        """Get the appropriate confidence threshold."""
+        if self.enhanced_mode:
+            return self.ml_config.min_confidence_threshold
+        return self.filter_config.confidence_threshold
+
+
+# Aliases for backward compatibility
+SkillsConfig = UnifiedSkillsConfig  # Original name
+EnhancedSkillsConfig = UnifiedSkillsConfig  # Enhanced name

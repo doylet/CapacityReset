@@ -2,7 +2,10 @@
 Confidence scoring for extracted skills.
 """
 
-from .config import SkillsConfig
+from .unified_config import UnifiedSkillsConfig
+
+# Backward compatibility
+SkillsConfig = UnifiedSkillsConfig
 
 
 class SkillScorer:
