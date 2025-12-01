@@ -248,7 +248,35 @@ class BigQuerySkillRepository(SkillRepository):
     
     async def add_skill_to_job(self, job_id: str, skill: Skill) -> Skill:
         """Add user-defined skill to job."""
-        # TODO: Insert into job_skills table
+        query = f"""
+        INSERT INTO `{DATASET_ID}.job_skills` (
+            skill_id,
+            job_posting_id,
+            skill_name,
+            skill_category,
+            confidence_score,
+            context_snippet,
+            extraction_method,
+            skill_type,
+            is_approved,
+            created_at
+        ) VALUES (
+            '{skill.skill_id}',
+            '{skill.job_posting_id}',
+            '{skill.skill_name}',
+            '{skill.skill_category}',
+            {skill.confidence_score},
+            '{skill.context_snippet.replace("'", "''")}',
+            '{skill.extraction_method}',
+            '{skill.skill_type.value if skill.skill_type else 'general'}',
+            TRUE,
+            '{skill.created_at.isoformat() if skill.created_at else "CURRENT_TIMESTAMP()"}' 
+        )
+        """
+        self.client.query(query).result()
+        
+        # Set is_approved to True since user-defined skills are automatically approved
+        skill.is_approved = True
         return skill
     
     async def delete_skill(self, skill_id: str) -> bool:

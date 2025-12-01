@@ -153,6 +153,7 @@ class AddSkillToJobUseCase:
             context_snippet=context_snippet,
             extraction_method='user_defined',
             skill_type=skill_type,
+            is_approved=True,  # User-defined skills are automatically approved
             created_at=datetime.utcnow()
         )
         
