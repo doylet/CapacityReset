@@ -10,6 +10,7 @@ import JobGridCard from '@/components/JobGridCard';
 import JobListControls, { SortField, SortOrder, ViewMode } from '@/components/JobListControls';
 import Pagination from '@/components/Pagination';
 import { Job, Cluster, JobFilters as JobFiltersType } from '@/types';
+import { Spinner } from '@/components/ui';
 
 function JobListContent() {
   const router = useRouter();
@@ -297,8 +298,7 @@ function JobListContent() {
 
         {loading ? (
           <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-            <p className="mt-2 text-gray-600">Loading jobs...</p>
+            <Spinner size="lg" label="Loading jobs..." />
           </div>
         ) : (
           <>
@@ -360,7 +360,7 @@ export default function Home() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        <Spinner size="lg" />
       </div>
     }>
       <JobListContent />
