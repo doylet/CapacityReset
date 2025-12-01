@@ -51,6 +51,12 @@ export function useSkillHighlighting(
     // Only exclude explicitly rejected ones (is_approved === false)
     const skillsToHighlight = skills.filter(skill => skill.is_approved !== false);
     
+    // Debug logging to understand highlighting behavior
+    if (process.env.NODE_ENV === 'development') {
+      console.log('All skills:', skills.map(s => ({ name: s.skill_name, approved: s.is_approved })));
+      console.log('Skills to highlight:', skillsToHighlight.map(s => ({ name: s.skill_name, approved: s.is_approved })));
+    }
+    
     // Sort skills by length (longest first) to avoid partial matches
     const sortedSkills = [...skillsToHighlight].sort((a, b) => 
       b.skill_name.length - a.skill_name.length

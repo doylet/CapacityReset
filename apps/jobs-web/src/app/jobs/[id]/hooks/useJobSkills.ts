@@ -123,6 +123,11 @@ export function useJobSkills(jobId: string, apiUrl: string, initialJob?: JobDeta
       });
       
       await fetchJobDetail();
+      
+      // Debug logging to check if approval was successful
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`Approved skill ${skillId}, refetching job details...`);
+      }
     } catch (error) {
       console.error('Error approving skill:', error);
     }
