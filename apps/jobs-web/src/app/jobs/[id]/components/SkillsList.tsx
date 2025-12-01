@@ -136,6 +136,7 @@ export default function SkillsList({
                           <MenuItem>
                             {({ active }) => (
                               <button
+                                type="button"
                                 onClick={() => setSortOrder('confidence-desc')}
                                 className={`${
                                   active ? 'bg-gray-100' : ''
@@ -148,6 +149,7 @@ export default function SkillsList({
                           <MenuItem>
                             {({ active }) => (
                               <button
+                                type="button"
                                 onClick={() => setSortOrder('confidence-asc')}
                                 className={`${
                                   active ? 'bg-gray-100' : ''
@@ -160,6 +162,7 @@ export default function SkillsList({
                           <MenuItem>
                             {({ active }) => (
                               <button
+                                type="button"
                                 onClick={() => setSortOrder('name-asc')}
                                 className={`${
                                   active ? 'bg-gray-100' : ''
@@ -172,6 +175,7 @@ export default function SkillsList({
                           <MenuItem>
                             {({ active }) => (
                               <button
+                                type="button"
                                 onClick={() => setSortOrder('name-desc')}
                                 className={`${
                                   active ? 'bg-gray-100' : ''
@@ -268,6 +272,7 @@ export default function SkillsList({
                         </div>
                         <div className="flex gap-1 ml-4">
                           <HeadlessButton
+                            type="button"
                             onClick={() => onApprove?.(skill.skill_id)}
                             className="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 active:bg-green-100 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1"
                             title="Approve skill"
@@ -275,6 +280,7 @@ export default function SkillsList({
                             <HandThumbUpIcon className="w-4 h-4" />
                           </HeadlessButton>
                           <HeadlessButton
+                            type="button"
                             onClick={() => onReject?.(skill.skill_id)}
                             className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 active:bg-red-100 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
                             title="Reject skill"
@@ -344,6 +350,7 @@ export default function SkillsList({
                                           <MenuItem>
                                             {({ active }) => (
                                               <button
+                                                type="button"
                                                 onClick={() => onEditSkill?.(skill.skill_id, skill.skill_type || 'General')}
                                                 className={`${
                                                   active ? 'bg-gray-100' : ''
