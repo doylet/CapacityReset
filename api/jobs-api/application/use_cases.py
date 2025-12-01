@@ -299,6 +299,21 @@ class RejectSkillUseCase:
         return await self.skill_repo.reject_skill(skill_id)
 
 
+class UnapproveSkillUseCase:
+    """Use case: Return an approved skill to pending state."""
+    
+    def __init__(self, skill_repo: SkillRepository):
+        self.skill_repo = skill_repo
+    
+    async def execute(self, skill_id: str) -> Skill:
+        """
+        Unapprove a skill by setting is_approved back to null.
+        
+        This returns the skill to pending state for re-review.
+        """
+        return await self.skill_repo.unapprove_skill(skill_id)
+
+
 class CreateAnnotationUseCase:
     """Use case: Create a new section annotation for ML training."""
     

@@ -22,6 +22,7 @@ interface SkillsListProps {
   totalCount?: number;
   onEditSkill?: (skillId: string, skillType: SkillType) => void;
   onAddSkill?: () => void;
+  onUnapprove?: (skillId: string) => void;
 }
 
 export default function SkillsList({
@@ -35,6 +36,7 @@ export default function SkillsList({
   totalCount = 0,
   onEditSkill,
   onAddSkill,
+  onUnapprove,
 }: SkillsListProps) {
   const isSuggestedMode = mode === 'suggested';
   const [sortOrder, setSortOrder] = useState<SortOrder>('confidence-desc');
@@ -360,6 +362,21 @@ export default function SkillsList({
                                               </button>
                                             )}
                                           </MenuItem>
+                                          {onUnapprove && (
+                                            <MenuItem>
+                                              {({ active }) => (
+                                                <button
+                                                  type="button"
+                                                  onClick={() => onUnapprove(skill.skill_id)}
+                                                  className={`${
+                                                    active ? 'bg-gray-100' : ''
+                                                  } block w-full text-left px-4 py-2 text-sm text-gray-700 hover:text-orange-600`}
+                                                >
+                                                  Unapprove
+                                                </button>
+                                              )}
+                                            </MenuItem>
+                                          )}
                                         </div>
                                       </MenuItems>
                                     </Transition>

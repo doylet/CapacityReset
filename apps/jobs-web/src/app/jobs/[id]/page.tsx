@@ -45,6 +45,7 @@ export default function JobDetailPage() {
     addSkillToJob,
     approveSkill,
     rejectSkill,
+    unapproveSkill,
     getSkillsByCategory,
   } = useJobSkills(jobId, API_URL);
 
@@ -167,6 +168,7 @@ export default function JobDetailPage() {
                 totalCount={approvedSkillsCount}
                 onEditSkill={handleEditSkill}
                 onAddSkill={() => setModalMode('add')}
+                onUnapprove={unapproveSkill}
               />
             </div>
           </div>

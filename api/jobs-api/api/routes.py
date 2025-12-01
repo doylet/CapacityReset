@@ -25,6 +25,7 @@ from api.dependencies import (
     get_job_detail_uc,
     get_update_skill_uc,
     get_add_skill_uc,
+    get_unapprove_skill_uc,
     get_generate_report_uc,
     get_reinforce_lexicon_uc,
     get_skill_repo,
@@ -37,6 +38,7 @@ from application.use_cases import (
     GetJobDetailUseCase,
     UpdateSkillUseCase,
     AddSkillToJobUseCase,
+    UnapproveSkillUseCase,
     GenerateJobsReportUseCase,
     ReinforceLexiconUseCase,
     ApproveSkillUseCase,
@@ -247,6 +249,23 @@ async def reject_skill(
     
     return {
         "message": "Skill rejected and removed"
+    }
+
+
+@jobs_router.post("/{job_id}/skills/{skill_id}/unapprove")
+async def unapprove_skill(
+    job_id: str,
+    skill_id: str,
+    unapprove_uc: UnapproveSkillUseCase = Depends(get_unapprove_skill_uc)
+):
+    """Unapprove an approved skill (return to pending state)."""
+    skill = await unapprove_uc.execute(skill_id)
+    
+    return {
+        "skill_id": skill.skill_id,
+        "skill_name": skill.skill_name,
+        "is_approved": skill.is_approved,
+        "message": "Skill unapproved and returned to pending"
     }
 
 

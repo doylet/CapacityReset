@@ -145,6 +145,23 @@ export function useJobSkills(jobId: string, apiUrl: string, initialJob?: JobDeta
     }
   };
 
+  const unapproveSkill = async (skillId: string) => {
+    try {
+      await fetch(`${apiUrl}/jobs/${jobId}/skills/${skillId}/unapprove`, {
+        method: 'POST',
+      });
+      
+      await fetchJobDetail();
+      
+      // Debug logging to check if unapproval was successful
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`Unapproved skill ${skillId}, refetching job details...`);
+      }
+    } catch (error) {
+      console.error('Error unapproving skill:', error);
+    }
+  };
+
   const getSkillsByCategory = () => {
     if (!job?.skills) return {};
     // Show only approved skills in the categorized view
@@ -168,6 +185,7 @@ export function useJobSkills(jobId: string, apiUrl: string, initialJob?: JobDeta
     addSkillToJob,
     approveSkill,
     rejectSkill,
+    unapproveSkill,
     getSkillsByCategory,
   };
 }

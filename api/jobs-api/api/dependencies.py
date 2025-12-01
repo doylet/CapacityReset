@@ -18,6 +18,7 @@ from application.use_cases import (
     GetJobDetailUseCase,
     UpdateSkillUseCase,
     AddSkillToJobUseCase,
+    UnapproveSkillUseCase,
     GenerateJobsReportUseCase,
     ReinforceLexiconUseCase,
     CreateAnnotationUseCase,
@@ -87,6 +88,11 @@ def get_update_skill_uc() -> UpdateSkillUseCase:
 def get_add_skill_uc() -> AddSkillToJobUseCase:
     """Get AddSkillToJobUseCase with dependencies."""
     return AddSkillToJobUseCase(get_skill_repo(), get_lexicon_repo())
+
+
+def get_unapprove_skill_uc() -> UnapproveSkillUseCase:
+    """Get UnapproveSkillUseCase with dependencies."""
+    return UnapproveSkillUseCase(get_skill_repo())
 
 
 def get_generate_report_uc() -> GenerateJobsReportUseCase:
