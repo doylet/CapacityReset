@@ -5,3 +5,8 @@ google-cloud-logging==3.*
 spacy==3.*
 scikit-learn==1.*
 numpy==1.*
+
+# Enhanced ML features (optional but recommended)
+sentence-transformers==2.*
+transformers==4.*
+torch==2.*

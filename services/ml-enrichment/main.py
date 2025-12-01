@@ -17,6 +17,14 @@ import functions_framework
 import json
 from datetime import datetime
 from lib.enrichment.skills import SkillsExtractor, SkillsConfig
+
+# Try to import enhanced extractor
+try:
+    from lib.enrichment.skills.enhanced_extractor import EnhancedSkillsExtractor
+    from lib.enrichment.skills.enhanced_config import EnhancedSkillsConfig
+    ENHANCED_AVAILABLE = True
+except ImportError:
+    ENHANCED_AVAILABLE = False
 from lib.enrichment.embeddings_generator import EmbeddingsGenerator
 from lib.enrichment.job_clusterer import JobClusterer
 from lib.utils.enrichment_utils import get_jobs_needing_enrichment, get_logger
@@ -35,10 +43,21 @@ _embeddings_generator = None
 _job_clusterer = None
 
 def get_skills_extractor():
-    """Lazy load skills extractor."""
+    """Lazy load skills extractor with enhanced features if available."""
     global _skills_extractor
     if _skills_extractor is None:
-        _skills_extractor = SkillsExtractor()
+        if ENHANCED_AVAILABLE:
+            # Use enhanced extractor with modern ML features
+            _skills_extractor = EnhancedSkillsExtractor(
+                config=EnhancedSkillsConfig(),
+                enable_semantic=True,  # Enable semantic similarity
+                enable_patterns=True   # Enable pattern extraction
+            )
+            logger.log_text("Using Enhanced Skills Extractor v3.0 with ML features", severity="INFO")
+        else:
+            # Fall back to original extractor
+            _skills_extractor = SkillsExtractor()
+            logger.log_text("Using Original Skills Extractor (enhanced version not available)", severity="WARNING")
     return _skills_extractor
 
 def get_embeddings_generator():
