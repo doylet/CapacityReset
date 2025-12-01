@@ -551,7 +551,7 @@ class BigQuerySkillLexiconRepository(SkillLexiconRepository):
                 "skill_name": normalized_name,
                 "skill_name_original": entry.skill_name,
                 "skill_category": entry.skill_category,
-                "skill_type": entry.skill_type.value if entry.skill_type else "GENERAL",
+                "skill_type": entry.skill_type.value if hasattr(entry.skill_type, 'value') else (entry.skill_type or "GENERAL"),
                 "source": "USER_ADDED" if entry.added_by_user else "ML_EXTRACTED",
                 "usage_count": 1,
                 "confidence_sum": 1.0,
