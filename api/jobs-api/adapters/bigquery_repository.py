@@ -358,7 +358,6 @@ class BigQuerySkillRepository(SkillRepository):
             skill_type='general',  # Default skill type since it's not in DB schema yet
             created_at=row['created_at']
         )
-        )
     
     async def reject_skill(self, skill_id: str) -> bool:
         """Reject a suggested skill (deletes it)."""
