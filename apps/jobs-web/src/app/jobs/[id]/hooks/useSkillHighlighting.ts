@@ -39,6 +39,13 @@ export function useSkillHighlighting(
   description: string | undefined
 ): string {
   return useMemo(() => {
+    // Debug logging
+    console.log('useSkillHighlighting called with:', {
+      skillsCount: skills?.length || 0,
+      descriptionLength: description?.length || 0,
+      skills: skills?.map(s => ({ name: s.skill_name, approved: s.is_approved })),
+    });
+
     if (!skills || skills.length === 0 || !description) {
       return normalizeWhitespace(description || '');
     }
@@ -51,29 +58,41 @@ export function useSkillHighlighting(
     // Only exclude explicitly rejected ones (is_approved === false)
     const skillsToHighlight = skills.filter(skill => skill.is_approved !== false);
     
+    console.log('Skills to highlight:', skillsToHighlight.length, 'out of', skills.length);
+    
     // Sort skills by length (longest first) to avoid partial matches
     const sortedSkills = [...skillsToHighlight].sort((a, b) => 
       b.skill_name.length - a.skill_name.length
     );
 
-    // Build a single regex pattern for all skills (more efficient than looping)
-    skillsToHighlight.forEach(skill => {
+    // Process skills in sorted order to avoid partial matches
+    sortedSkills.forEach(skill => {
       const escapedSkill = skill.skill_name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       
       if (isHTML) {
         const regex = new RegExp(`(?<!<[^>]*)\\b${escapedSkill}\\b(?![^<]*>)`, 'gi');
         const skillTypeClass = skill.skill_type ? skill.skill_type.toLowerCase() : '';
+        const beforeReplace = highlightedText;
         highlightedText = highlightedText.replace(
           regex,
           `<span class="skill-highlight ${skillTypeClass}" data-skill-id="${skill.skill_id}" title="${skill.skill_category} (${skill.confidence_score.toFixed(2)})">${skill.skill_name}</span>`
         );
+        
+        if (beforeReplace !== highlightedText) {
+          console.log(`Highlighted "${skill.skill_name}" in HTML content`);
+        }
       } else {
         const regex = new RegExp(`\\b${escapedSkill}\\b`, 'gi');
         const skillTypeClass = skill.skill_type ? skill.skill_type.toLowerCase() : '';
+        const beforeReplace = highlightedText;
         highlightedText = highlightedText.replace(
           regex,
           `<span class="skill-highlight ${skillTypeClass}" data-skill-id="${skill.skill_id}" title="${skill.skill_category} (${skill.confidence_score.toFixed(2)})">${skill.skill_name}</span>`
         );
+        
+        if (beforeReplace !== highlightedText) {
+          console.log(`Highlighted "${skill.skill_name}" in plain text content`);
+        }
       }
     });
 
