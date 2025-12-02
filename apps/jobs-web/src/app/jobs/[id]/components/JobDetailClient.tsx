@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import JobHeader from './JobHeader';
 import JobDescription from './JobDescription';
@@ -31,7 +31,7 @@ export default function JobDetailClient({ jobId, initialJob }: JobDetailClientPr
   const [selectedText, setSelectedText] = useState('');
   const [newSkill, setNewSkill] = useState({
     skill_name: '',
-    skill_category: 'technical_skills',
+    skill_category: 'technical_skills', // This will be updated once skillCategories load
     skill_type: 'General' as SkillType,
   });
 
@@ -48,6 +48,18 @@ export default function JobDetailClient({ jobId, initialJob }: JobDetailClientPr
     rejectSkill,
     getSkillsByCategory,
   } = useJobSkills(jobId, API_URL, initialJob);
+
+  // Update default skill category when categories are loaded
+  React.useEffect(() => {
+    if (skillCategories.length > 0 && newSkill.skill_category === 'technical_skills') {
+      const communicatingCategory = skillCategories.find(cat => cat.category === 'communicating');
+      if (communicatingCategory) {
+        setNewSkill(prev => ({ ...prev, skill_category: 'communicating' }));
+      } else if (skillCategories[0]) {
+        setNewSkill(prev => ({ ...prev, skill_category: skillCategories[0].category }));
+      }
+    }
+  }, [skillCategories]);
 
   const highlightedDescription = useSkillHighlighting(
     job?.skills,
@@ -83,6 +95,13 @@ export default function JobDetailClient({ jobId, initialJob }: JobDetailClientPr
   };
 
   const handleAddSkill = async () => {
+    console.log('=== handleAddSkill Debug ===');
+    console.log('newSkill.skill_name:', newSkill.skill_name);
+    console.log('newSkill.skill_category:', newSkill.skill_category);
+    console.log('newSkill.skill_type:', newSkill.skill_type);
+    console.log('selectedText:', selectedText);
+    console.log('skillCategories:', skillCategories);
+    
     await addSkillToJob(
       newSkill.skill_name,
       newSkill.skill_category,

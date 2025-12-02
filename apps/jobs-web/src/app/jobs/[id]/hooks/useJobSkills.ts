@@ -98,17 +98,37 @@ export function useJobSkills(jobId: string, apiUrl: string, initialJob?: JobDeta
   ) => {
     if (!skillName) return;
 
+    // Convert frontend SkillType to backend format
+    const backendSkillType = skillType.toLowerCase();
+
+    const payload = {
+      skill_name: skillName,
+      skill_category: skillCategory,
+      context_snippet: contextSnippet,
+      skill_type: backendSkillType,
+    };
+
+    console.log('=== addSkillToJob Debug ===');
+    console.log('API URL:', `${apiUrl}/jobs/${jobId}/skills`);
+    console.log('Frontend SkillType:', skillType);
+    console.log('Backend SkillType:', backendSkillType);
+    console.log('Payload:', JSON.stringify(payload, null, 2));
+
     try {
-      await fetch(`${apiUrl}/jobs/${jobId}/skills`, {
+      const response = await fetch(`${apiUrl}/jobs/${jobId}/skills`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          skill_name: skillName,
-          skill_category: skillCategory,
-          context_snippet: contextSnippet,
-          skill_type: skillType,
-        }),
+        body: JSON.stringify(payload),
       });
+
+      const result = await response.json();
+      console.log('API Response Status:', response.status);
+      console.log('API Response:', result);
+
+      if (!response.ok) {
+        console.error('API Error:', result);
+        throw new Error(`API Error: ${response.status} ${response.statusText}`);
+      }
 
       await fetchJobDetail();
     } catch (error) {
