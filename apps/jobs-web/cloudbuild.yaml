@@ -46,7 +46,7 @@ steps:
       - 'NEXT_PUBLIC_API_URL=${_API_URL}'
 
 substitutions:
-  _API_URL: 'https://jobs-api-e3b7ctuuxa-ts.a.run.app'
+  _API_URL: 'https://jobs-api-785693222332.australia-southeast1.run.app'
 
 options:
   logging: CLOUD_LOGGING_ONLY
