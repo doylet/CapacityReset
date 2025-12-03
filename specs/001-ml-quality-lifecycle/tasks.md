@@ -28,11 +28,11 @@ Based on plan.md structure:
 
 **Purpose**: Project initialization, configuration structure, and model version foundation
 
-- [ ] T001 Create config directory structure at services/ml-enrichment/config/
-- [ ] T002 [P] Create model_versions.yaml configuration file at services/ml-enrichment/config/model_versions.yaml
-- [ ] T003 [P] Create skill_aliases.yaml configuration file at services/ml-enrichment/config/skill_aliases.yaml
-- [ ] T004 [P] Create ModelConfig dataclass in services/ml-enrichment/lib/config/model_config.py
-- [ ] T005 Add YAML configuration loading utility in services/ml-enrichment/lib/config/__init__.py
+- [X] T001 Create config directory structure at services/ml-enrichment/config/
+- [X] T002 [P] Create model_versions.yaml configuration file at services/ml-enrichment/config/model_versions.yaml
+- [X] T003 [P] Create skill_aliases.yaml configuration file at services/ml-enrichment/config/skill_aliases.yaml
+- [X] T004 [P] Create ModelConfig dataclass in services/ml-enrichment/lib/config/model_config.py
+- [X] T005 Add YAML configuration loading utility in services/ml-enrichment/lib/config/__init__.py
 
 ---
 
@@ -44,35 +44,35 @@ Based on plan.md structure:
 
 ### Schema Extensions
 
-- [ ] T006 Create job_enrichments_v2_schema.sql with enrichment_version fields at sql/job_enrichments_v2_schema.sql
-- [ ] T007 [P] Create skill_aliases_schema.sql BigQuery table definition at sql/skill_aliases_schema.sql
-- [ ] T008 [P] Create evaluation_results_schema.sql BigQuery table definition at sql/evaluation_results_schema.sql
-- [ ] T009 [P] Create section_classifications_schema.sql BigQuery table definition at sql/section_classifications_schema.sql
-- [ ] T010 Create migration script for existing enrichments (legacy version tagging) at sql/migrations/001_add_version_fields.sql
+- [X] T006 Create job_enrichments_v2_schema.sql with enrichment_version fields at sql/job_enrichments_v2_schema.sql
+- [X] T007 [P] Create skill_aliases_schema.sql BigQuery table definition at sql/skill_aliases_schema.sql
+- [X] T008 [P] Create evaluation_results_schema.sql BigQuery table definition at sql/evaluation_results_schema.sql
+- [X] T009 [P] Create section_classifications_schema.sql BigQuery table definition at sql/section_classifications_schema.sql
+- [X] T010 Create migration script for existing enrichments (legacy version tagging) at sql/migrations/001_add_version_fields.sql
 
 ### Domain Entities
 
-- [ ] T011 [P] Implement SkillAlias entity dataclass in services/ml-enrichment/lib/domain/entities/skill_alias.py
-- [ ] T012 [P] Implement ExtractedSkill entity dataclass (extended) in services/ml-enrichment/lib/domain/entities/extracted_skill.py
-- [ ] T013 [P] Implement SectionClassification entity dataclass in services/ml-enrichment/lib/domain/entities/section_classification.py
-- [ ] T014 [P] Implement ClusterAssignment entity dataclass (extended) in services/ml-enrichment/lib/domain/entities/cluster_assignment.py
-- [ ] T015 [P] Implement EvaluationResult entity dataclass in services/ml-enrichment/lib/domain/entities/evaluation_result.py
-- [ ] T016 Implement JobEnrichment entity dataclass (extended with version fields) in services/ml-enrichment/lib/domain/entities/job_enrichment.py
-- [ ] T017 Create domain entities __init__.py exporting all entities at services/ml-enrichment/lib/domain/entities/__init__.py
+- [X] T011 [P] Implement SkillAlias entity dataclass in services/ml-enrichment/lib/domain/entities/skill_alias.py
+- [X] T012 [P] Implement ExtractedSkill entity dataclass (extended) in services/ml-enrichment/lib/domain/entities/extracted_skill.py
+- [X] T013 [P] Implement SectionClassification entity dataclass in services/ml-enrichment/lib/domain/entities/section_classification.py
+- [X] T014 [P] Implement ClusterAssignment entity dataclass (extended) in services/ml-enrichment/lib/domain/entities/cluster_assignment.py
+- [X] T015 [P] Implement EvaluationResult entity dataclass in services/ml-enrichment/lib/domain/entities/evaluation_result.py
+- [X] T016 Implement JobEnrichment entity dataclass (extended with version fields) in services/ml-enrichment/lib/domain/entities/job_enrichment.py
+- [X] T017 Create domain entities __init__.py exporting all entities at services/ml-enrichment/lib/domain/entities/__init__.py
 
 ### Repository Interfaces (Ports)
 
-- [ ] T018 [P] Define SkillAliasRepository interface in services/ml-enrichment/lib/domain/repositories/skill_alias_repository.py
-- [ ] T019 [P] Define EvaluationResultRepository interface in services/ml-enrichment/lib/domain/repositories/evaluation_repository.py
-- [ ] T020 [P] Define SectionClassificationRepository interface in services/ml-enrichment/lib/domain/repositories/section_classification_repository.py
-- [ ] T021 Update domain repositories __init__.py at services/ml-enrichment/lib/domain/repositories/__init__.py
+- [X] T018 [P] Define SkillAliasRepository interface in services/ml-enrichment/lib/domain/repositories/skill_alias_repository.py
+- [X] T019 [P] Define EvaluationResultRepository interface in services/ml-enrichment/lib/domain/repositories/evaluation_repository.py
+- [X] T020 [P] Define SectionClassificationRepository interface in services/ml-enrichment/lib/domain/repositories/section_classification_repository.py
+- [X] T021 Update domain repositories __init__.py at services/ml-enrichment/lib/domain/repositories/__init__.py
 
 ### BigQuery Adapters (Implementations)
 
-- [ ] T022 [P] Implement BigQuerySkillAliasRepository in services/ml-enrichment/lib/adapters/bigquery/skill_alias_adapter.py
-- [ ] T023 [P] Implement BigQueryEvaluationRepository in services/ml-enrichment/lib/adapters/bigquery/evaluation_adapter.py
-- [ ] T024 [P] Implement BigQuerySectionClassificationRepository in services/ml-enrichment/lib/adapters/bigquery/section_classification_adapter.py
-- [ ] T025 Update BigQuery adapters __init__.py at services/ml-enrichment/lib/adapters/bigquery/__init__.py
+- [X] T022 [P] Implement BigQuerySkillAliasRepository in services/ml-enrichment/lib/adapters/bigquery/skill_alias_adapter.py
+- [X] T023 [P] Implement BigQueryEvaluationRepository in services/ml-enrichment/lib/adapters/bigquery/evaluation_adapter.py
+- [X] T024 [P] Implement BigQuerySectionClassificationRepository in services/ml-enrichment/lib/adapters/bigquery/section_classification_adapter.py
+- [X] T025 Update BigQuery adapters __init__.py at services/ml-enrichment/lib/adapters/bigquery/__init__.py
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -86,19 +86,19 @@ Based on plan.md structure:
 
 ### Tests for User Story 1
 
-- [ ] T026 [P] [US1] Contract test for model version tracking in services/ml-enrichment/tests/contract/test_model_version_tracking.py
-- [ ] T027 [P] [US1] Integration test for enrichment version queries in services/ml-enrichment/tests/integration/test_enrichment_versioning.py
+- [X] T026 [P] [US1] Contract test for model version tracking in services/ml-enrichment/tests/contract/test_model_version_tracking.py
+- [X] T027 [P] [US1] Integration test for enrichment version queries in services/ml-enrichment/tests/integration/test_enrichment_versioning.py
 
 ### Implementation for User Story 1
 
-- [ ] T028 [US1] Implement get_version() method in UnifiedSkillsExtractor at services/ml-enrichment/lib/enrichment/skills/unified_extractor.py
-- [ ] T029 [US1] Implement get_model_config() singleton loader in services/ml-enrichment/lib/config/model_config.py
+- [X] T028 [US1] Implement get_version() method in UnifiedSkillsExtractor at services/ml-enrichment/lib/enrichment/skills/unified_extractor.py
+- [X] T029 [US1] Implement get_model_config() singleton loader in services/ml-enrichment/lib/config/model_config.py
 - [ ] T030 [US1] Add enrichment_version field to enrichment storage in services/ml-enrichment/lib/utils/enrichment_utils.py
 - [ ] T031 [US1] Implement version-based job query function in services/ml-enrichment/lib/utils/enrichment_utils.py
 - [ ] T032 [US1] Add version tracking to job_enrichments insert operations in services/ml-enrichment/lib/adapters/bigquery/enrichment_adapter.py
-- [ ] T033 [US1] Create query for jobs needing re-enrichment in services/ml-enrichment/queries/version_queries.sql
+- [X] T033 [US1] Create query for jobs needing re-enrichment in services/ml-enrichment/queries/version_queries.sql
 - [ ] T034 [US1] Update main.py to include version in enrichment response at services/ml-enrichment/main.py
-- [ ] T035 [US1] Add logging for version tracking operations in services/ml-enrichment/lib/config/model_config.py
+- [X] T035 [US1] Add logging for version tracking operations in services/ml-enrichment/lib/config/model_config.py
 
 **Checkpoint**: User Story 1 should be fully functional - enrichments include version identifiers (SC-001)
 
