@@ -122,10 +122,17 @@ def main(request):
                     jobs=jobs,
                     extractor=extractor
                 )
+                # Add extractor version to response
+                skills_stats['extractor_version'] = extractor.get_version()
                 results['skills_extraction'] = skills_stats
                 logger.log_text(f"Skills extraction complete: {skills_stats}", severity="INFO")
             else:
-                results['skills_extraction'] = {'processed': 0, 'failed': 0, 'total_skills': 0}
+                results['skills_extraction'] = {
+                    'processed': 0, 
+                    'failed': 0, 
+                    'total_skills': 0,
+                    'extractor_version': extractor.get_version()
+                }
         
         # Process embeddings
         if 'embeddings' in enrichment_types:
@@ -142,19 +149,29 @@ def main(request):
                     jobs=jobs,
                     generator=generator
                 )
+                # Add generator version to response
+                embeddings_stats['generator_version'] = generator.get_version()
                 results['embeddings'] = embeddings_stats
                 logger.log_text(f"Embeddings generation complete: {embeddings_stats}", severity="INFO")
             else:
-                results['embeddings'] = {'processed': 0, 'failed': 0, 'total_embeddings': 0}
+                results['embeddings'] = {
+                    'processed': 0, 
+                    'failed': 0, 
+                    'total_embeddings': 0,
+                    'generator_version': generator.get_version()
+                }
         
         # Process clustering (operates on all jobs with embeddings)
         if 'clustering' in enrichment_types:
+            clusterer = get_job_clusterer()
             logger.log_text(f"Starting job clustering: method={clustering_method}, n_clusters={n_clusters}", severity="INFO")
             clustering_stats = process_clustering(
-                job_clusterer=get_job_clusterer(),
+                job_clusterer=clusterer,
                 n_clusters=n_clusters,
                 method=clustering_method
             )
+            # Add clusterer version to response
+            clustering_stats['cluster_model_id'] = clusterer.get_version()
             results['clustering'] = clustering_stats
             logger.log_text(f"Job clustering complete: {clustering_stats}", severity="INFO")
         

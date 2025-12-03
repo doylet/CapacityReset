@@ -28,11 +28,11 @@ Based on plan.md structure:
 
 **Purpose**: Project initialization, configuration structure, and model version foundation
 
-- [ ] T001 Create config directory structure at services/ml-enrichment/config/
-- [ ] T002 [P] Create model_versions.yaml configuration file at services/ml-enrichment/config/model_versions.yaml
-- [ ] T003 [P] Create skill_aliases.yaml configuration file at services/ml-enrichment/config/skill_aliases.yaml
-- [ ] T004 [P] Create ModelConfig dataclass in services/ml-enrichment/lib/config/model_config.py
-- [ ] T005 Add YAML configuration loading utility in services/ml-enrichment/lib/config/__init__.py
+- [X] T001 Create config directory structure at services/ml-enrichment/config/
+- [X] T002 [P] Create model_versions.yaml configuration file at services/ml-enrichment/config/model_versions.yaml
+- [X] T003 [P] Create skill_aliases.yaml configuration file at services/ml-enrichment/config/skill_aliases.yaml
+- [X] T004 [P] Create ModelConfig dataclass in services/ml-enrichment/lib/config/model_config.py
+- [X] T005 Add YAML configuration loading utility in services/ml-enrichment/lib/config/__init__.py
 
 ---
 
@@ -44,35 +44,35 @@ Based on plan.md structure:
 
 ### Schema Extensions
 
-- [ ] T006 Create job_enrichments_v2_schema.sql with enrichment_version fields at sql/job_enrichments_v2_schema.sql
-- [ ] T007 [P] Create skill_aliases_schema.sql BigQuery table definition at sql/skill_aliases_schema.sql
-- [ ] T008 [P] Create evaluation_results_schema.sql BigQuery table definition at sql/evaluation_results_schema.sql
-- [ ] T009 [P] Create section_classifications_schema.sql BigQuery table definition at sql/section_classifications_schema.sql
-- [ ] T010 Create migration script for existing enrichments (legacy version tagging) at sql/migrations/001_add_version_fields.sql
+- [X] T006 Create job_enrichments_v2_schema.sql with enrichment_version fields at sql/job_enrichments_v2_schema.sql
+- [X] T007 [P] Create skill_aliases_schema.sql BigQuery table definition at sql/skill_aliases_schema.sql
+- [X] T008 [P] Create evaluation_results_schema.sql BigQuery table definition at sql/evaluation_results_schema.sql
+- [X] T009 [P] Create section_classifications_schema.sql BigQuery table definition at sql/section_classifications_schema.sql
+- [X] T010 Create migration script for existing enrichments (legacy version tagging) at sql/migrations/001_add_version_fields.sql
 
 ### Domain Entities
 
-- [ ] T011 [P] Implement SkillAlias entity dataclass in services/ml-enrichment/lib/domain/entities/skill_alias.py
-- [ ] T012 [P] Implement ExtractedSkill entity dataclass (extended) in services/ml-enrichment/lib/domain/entities/extracted_skill.py
-- [ ] T013 [P] Implement SectionClassification entity dataclass in services/ml-enrichment/lib/domain/entities/section_classification.py
-- [ ] T014 [P] Implement ClusterAssignment entity dataclass (extended) in services/ml-enrichment/lib/domain/entities/cluster_assignment.py
-- [ ] T015 [P] Implement EvaluationResult entity dataclass in services/ml-enrichment/lib/domain/entities/evaluation_result.py
-- [ ] T016 Implement JobEnrichment entity dataclass (extended with version fields) in services/ml-enrichment/lib/domain/entities/job_enrichment.py
-- [ ] T017 Create domain entities __init__.py exporting all entities at services/ml-enrichment/lib/domain/entities/__init__.py
+- [X] T011 [P] Implement SkillAlias entity dataclass in services/ml-enrichment/lib/domain/entities/skill_alias.py
+- [X] T012 [P] Implement ExtractedSkill entity dataclass (extended) in services/ml-enrichment/lib/domain/entities/extracted_skill.py
+- [X] T013 [P] Implement SectionClassification entity dataclass in services/ml-enrichment/lib/domain/entities/section_classification.py
+- [X] T014 [P] Implement ClusterAssignment entity dataclass (extended) in services/ml-enrichment/lib/domain/entities/cluster_assignment.py
+- [X] T015 [P] Implement EvaluationResult entity dataclass in services/ml-enrichment/lib/domain/entities/evaluation_result.py
+- [X] T016 Implement JobEnrichment entity dataclass (extended with version fields) in services/ml-enrichment/lib/domain/entities/job_enrichment.py
+- [X] T017 Create domain entities __init__.py exporting all entities at services/ml-enrichment/lib/domain/entities/__init__.py
 
 ### Repository Interfaces (Ports)
 
-- [ ] T018 [P] Define SkillAliasRepository interface in services/ml-enrichment/lib/domain/repositories/skill_alias_repository.py
-- [ ] T019 [P] Define EvaluationResultRepository interface in services/ml-enrichment/lib/domain/repositories/evaluation_repository.py
-- [ ] T020 [P] Define SectionClassificationRepository interface in services/ml-enrichment/lib/domain/repositories/section_classification_repository.py
-- [ ] T021 Update domain repositories __init__.py at services/ml-enrichment/lib/domain/repositories/__init__.py
+- [X] T018 [P] Define SkillAliasRepository interface in services/ml-enrichment/lib/domain/repositories/skill_alias_repository.py
+- [X] T019 [P] Define EvaluationResultRepository interface in services/ml-enrichment/lib/domain/repositories/evaluation_repository.py
+- [X] T020 [P] Define SectionClassificationRepository interface in services/ml-enrichment/lib/domain/repositories/section_classification_repository.py
+- [X] T021 Update domain repositories __init__.py at services/ml-enrichment/lib/domain/repositories/__init__.py
 
 ### BigQuery Adapters (Implementations)
 
-- [ ] T022 [P] Implement BigQuerySkillAliasRepository in services/ml-enrichment/lib/adapters/bigquery/skill_alias_adapter.py
-- [ ] T023 [P] Implement BigQueryEvaluationRepository in services/ml-enrichment/lib/adapters/bigquery/evaluation_adapter.py
-- [ ] T024 [P] Implement BigQuerySectionClassificationRepository in services/ml-enrichment/lib/adapters/bigquery/section_classification_adapter.py
-- [ ] T025 Update BigQuery adapters __init__.py at services/ml-enrichment/lib/adapters/bigquery/__init__.py
+- [X] T022 [P] Implement BigQuerySkillAliasRepository in services/ml-enrichment/lib/adapters/bigquery/skill_alias_adapter.py
+- [X] T023 [P] Implement BigQueryEvaluationRepository in services/ml-enrichment/lib/adapters/bigquery/evaluation_adapter.py
+- [X] T024 [P] Implement BigQuerySectionClassificationRepository in services/ml-enrichment/lib/adapters/bigquery/section_classification_adapter.py
+- [X] T025 Update BigQuery adapters __init__.py at services/ml-enrichment/lib/adapters/bigquery/__init__.py
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -86,19 +86,19 @@ Based on plan.md structure:
 
 ### Tests for User Story 1
 
-- [ ] T026 [P] [US1] Contract test for model version tracking in services/ml-enrichment/tests/contract/test_model_version_tracking.py
-- [ ] T027 [P] [US1] Integration test for enrichment version queries in services/ml-enrichment/tests/integration/test_enrichment_versioning.py
+- [X] T026 [P] [US1] Contract test for model version tracking in services/ml-enrichment/tests/contract/test_model_version_tracking.py
+- [X] T027 [P] [US1] Integration test for enrichment version queries in services/ml-enrichment/tests/integration/test_enrichment_versioning.py
 
 ### Implementation for User Story 1
 
-- [ ] T028 [US1] Implement get_version() method in UnifiedSkillsExtractor at services/ml-enrichment/lib/enrichment/skills/unified_extractor.py
-- [ ] T029 [US1] Implement get_model_config() singleton loader in services/ml-enrichment/lib/config/model_config.py
+- [X] T028 [US1] Implement get_version() method in UnifiedSkillsExtractor at services/ml-enrichment/lib/enrichment/skills/unified_extractor.py
+- [X] T029 [US1] Implement get_model_config() singleton loader in services/ml-enrichment/lib/config/model_config.py
 - [ ] T030 [US1] Add enrichment_version field to enrichment storage in services/ml-enrichment/lib/utils/enrichment_utils.py
 - [ ] T031 [US1] Implement version-based job query function in services/ml-enrichment/lib/utils/enrichment_utils.py
 - [ ] T032 [US1] Add version tracking to job_enrichments insert operations in services/ml-enrichment/lib/adapters/bigquery/enrichment_adapter.py
-- [ ] T033 [US1] Create query for jobs needing re-enrichment in services/ml-enrichment/queries/version_queries.sql
-- [ ] T034 [US1] Update main.py to include version in enrichment response at services/ml-enrichment/main.py
-- [ ] T035 [US1] Add logging for version tracking operations in services/ml-enrichment/lib/config/model_config.py
+- [X] T033 [US1] Create query for jobs needing re-enrichment in services/ml-enrichment/queries/version_queries.sql
+- [X] T034 [US1] Update main.py to include version in enrichment response at services/ml-enrichment/main.py
+- [X] T035 [US1] Add logging for version tracking operations in services/ml-enrichment/lib/config/model_config.py
 
 **Checkpoint**: User Story 1 should be fully functional - enrichments include version identifiers (SC-001)
 
@@ -112,20 +112,20 @@ Based on plan.md structure:
 
 ### Tests for User Story 2
 
-- [ ] T036 [P] [US2] Unit test for AliasExtractionStrategy in services/ml-enrichment/tests/test_alias_extraction.py
+- [X] T036 [P] [US2] Unit test for AliasExtractionStrategy in services/ml-enrichment/tests/test_alias_extraction.py
 - [ ] T037 [P] [US2] Integration test for composite extractor in services/ml-enrichment/tests/integration/test_composite_extractor.py
-- [ ] T038 [P] [US2] Test for confidence scoring in services/ml-enrichment/tests/test_confidence_scoring.py
+- [X] T038 [P] [US2] Test for confidence scoring in services/ml-enrichment/tests/test_confidence_scoring.py
 
 ### Implementation for User Story 2
 
-- [ ] T039 [P] [US2] Implement AliasExtractionStrategy class in services/ml-enrichment/lib/enrichment/skills/alias_extractor.py
-- [ ] T040 [US2] Implement alias lookup index builder in services/ml-enrichment/lib/enrichment/skills/alias_extractor.py
+- [X] T039 [P] [US2] Implement AliasExtractionStrategy class in services/ml-enrichment/lib/config/__init__.py (AliasResolver)
+- [X] T040 [US2] Implement alias lookup index builder in services/ml-enrichment/lib/config/__init__.py
 - [ ] T041 [US2] Extend UnifiedSkillsConfig with alias_config_path in services/ml-enrichment/lib/enrichment/skills/unified_config.py
-- [ ] T042 [US2] Integrate AliasExtractionStrategy into composite extractor in services/ml-enrichment/lib/enrichment/skills/unified_extractor.py
-- [ ] T043 [US2] Implement strategy result merging with deduplication in services/ml-enrichment/lib/enrichment/skills/unified_extractor.py
-- [ ] T044 [US2] Add source_strategies field to skill output in services/ml-enrichment/lib/enrichment/skills/unified_extractor.py
-- [ ] T045 [US2] Implement enhanced confidence scoring using weighted ensemble in services/ml-enrichment/lib/enrichment/skills/unified_extractor.py
-- [ ] T046 [US2] Populate skill_aliases.yaml with initial common aliases in services/ml-enrichment/config/skill_aliases.yaml
+- [X] T042 [US2] Integrate AliasExtractionStrategy into composite extractor in services/ml-enrichment/lib/enrichment/skills/unified_extractor.py
+- [X] T043 [US2] Implement strategy result merging with deduplication in services/ml-enrichment/lib/enrichment/skills/unified_extractor.py
+- [X] T044 [US2] Add source_strategies field to skill output in services/ml-enrichment/lib/enrichment/skills/unified_extractor.py
+- [X] T045 [US2] Implement enhanced confidence scoring using weighted ensemble in services/ml-enrichment/lib/enrichment/skills/unified_extractor.py
+- [X] T046 [US2] Populate skill_aliases.yaml with initial common aliases in services/ml-enrichment/config/skill_aliases.yaml
 - [ ] T047 [US2] Add alias resolution statistics to extraction response in services/ml-enrichment/main.py
 
 **Checkpoint**: User Story 2 should be fully functional - alias resolution works (SC-003), confidence scores included
@@ -171,13 +171,13 @@ Based on plan.md structure:
 
 ### Implementation for User Story 4
 
-- [ ] T060 [P] [US4] Implement metrics calculation module in services/ml-enrichment/lib/evaluation/metrics.py
-- [ ] T061 [US4] Implement SkillsEvaluator class in services/ml-enrichment/lib/evaluation/evaluator.py
-- [ ] T062 [US4] Implement evaluation dataset loader (JSONL format) in services/ml-enrichment/lib/evaluation/evaluator.py
-- [ ] T063 [US4] Implement per-category metrics breakdown in services/ml-enrichment/lib/evaluation/evaluator.py
+- [X] T060 [P] [US4] Implement metrics calculation module in services/ml-enrichment/lib/evaluation/evaluator.py
+- [X] T061 [US4] Implement SkillsEvaluator class in services/ml-enrichment/lib/evaluation/evaluator.py
+- [X] T062 [US4] Implement evaluation dataset loader (JSONL format) in services/ml-enrichment/lib/evaluation/evaluator.py
+- [X] T063 [US4] Implement per-category metrics breakdown in services/ml-enrichment/lib/evaluation/evaluator.py
 - [ ] T064 [US4] Add evaluation result storage via BigQueryEvaluationRepository in services/ml-enrichment/lib/evaluation/evaluator.py
-- [ ] T065 [US4] Create evaluate_ci.py CI/CD script in services/ml-enrichment/scripts/evaluate_ci.py
-- [ ] T066 [US4] Add threshold checking and exit code logic to evaluate_ci.py in services/ml-enrichment/scripts/evaluate_ci.py
+- [X] T065 [US4] Create evaluate_ci.py CI/CD script in services/ml-enrichment/scripts/evaluate_ci.py
+- [X] T066 [US4] Add threshold checking and exit code logic to evaluate_ci.py in services/ml-enrichment/scripts/evaluate_ci.py
 - [ ] T067 [US4] Add evaluation queries to retrieve historical results in services/ml-enrichment/queries/evaluation_queries.sql
 - [ ] T068 [US4] Add /evaluate endpoint to main.py at services/ml-enrichment/main.py
 - [ ] T069 [US4] Add /evaluate/quick endpoint for CI in services/ml-enrichment/main.py
@@ -201,12 +201,12 @@ Based on plan.md structure:
 
 ### Implementation for User Story 5
 
-- [ ] T074 [US5] Implement rule-based SectionClassifier in services/ml-enrichment/lib/enrichment/skills/section_classifier.py
-- [ ] T075 [US5] Define RELEVANT_SECTIONS and EXCLUDED_SECTIONS patterns in services/ml-enrichment/lib/enrichment/skills/section_classifier.py
+- [X] T074 [US5] Implement rule-based SectionClassifier in services/ml-enrichment/lib/enrichment/section_classifier.py
+- [X] T075 [US5] Define RELEVANT_SECTIONS and EXCLUDED_SECTIONS patterns in services/ml-enrichment/lib/enrichment/section_classifier.py
 - [ ] T076 [US5] Add section_relevance_score to ExtractedSkill output in services/ml-enrichment/lib/enrichment/skills/unified_extractor.py
 - [ ] T077 [US5] Integrate SectionClassifier with UnifiedSkillsExtractor in services/ml-enrichment/lib/enrichment/skills/unified_extractor.py
 - [ ] T078 [US5] Implement confidence weighting based on section relevance in services/ml-enrichment/lib/enrichment/skills/unified_extractor.py
-- [ ] T079 [US5] Add section classification storage in services/ml-enrichment/lib/adapters/bigquery/section_classification_adapter.py
+- [X] T079 [US5] Add section classification storage in services/ml-enrichment/lib/adapters/bigquery/section_classification_adapter.py
 - [ ] T080 [US5] Add section_classification to enrichment_types in main.py at services/ml-enrichment/main.py
 - [ ] T081 [US5] Create placeholder for ML classifier training from annotation exports in services/ml-enrichment/lib/enrichment/skills/section_classifier.py
 

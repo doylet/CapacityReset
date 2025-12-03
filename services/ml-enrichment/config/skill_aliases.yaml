@@ -1,0 +1,414 @@
+# Skill Aliases Configuration
+# Maps common skill aliases to their canonical names.
+#
+# Format:
+#   - alias: The abbreviated or alternate name (case-insensitive match)
+#   - canonical: The standardized canonical skill name
+#   - category: Skill category for classification
+#   - source: "manual" | "user_feedback" | "auto_detected"
+#   - confidence: 0.0-1.0 confidence in this mapping
+
+aliases:
+  # Programming Languages
+  - alias: "JS"
+    canonical: "JavaScript"
+    category: "programming_languages"
+    source: "manual"
+    confidence: 1.0
+
+  - alias: "TS"
+    canonical: "TypeScript"
+    category: "programming_languages"
+    source: "manual"
+    confidence: 1.0
+
+  - alias: "Py"
+    canonical: "Python"
+    category: "programming_languages"
+    source: "manual"
+    confidence: 0.95
+
+  - alias: "C++"
+    canonical: "C++"
+    category: "programming_languages"
+    source: "manual"
+    confidence: 1.0
+
+  - alias: "C#"
+    canonical: "C#"
+    category: "programming_languages"
+    source: "manual"
+    confidence: 1.0
+
+  - alias: "Golang"
+    canonical: "Go"
+    category: "programming_languages"
+    source: "manual"
+    confidence: 1.0
+
+  # Cloud Platforms
+  - alias: "GCP"
+    canonical: "Google Cloud Platform"
+    category: "cloud_platforms"
+    source: "manual"
+    confidence: 1.0
+
+  - alias: "Google Cloud"
+    canonical: "Google Cloud Platform"
+    category: "cloud_platforms"
+    source: "manual"
+    confidence: 1.0
+
+  - alias: "AWS"
+    canonical: "Amazon Web Services"
+    category: "cloud_platforms"
+    source: "manual"
+    confidence: 1.0
+
+  - alias: "Amazon AWS"
+    canonical: "Amazon Web Services"
+    category: "cloud_platforms"
+    source: "manual"
+    confidence: 1.0
+
+  - alias: "Azure"
+    canonical: "Microsoft Azure"
+    category: "cloud_platforms"
+    source: "manual"
+    confidence: 1.0
+
+  - alias: "MS Azure"
+    canonical: "Microsoft Azure"
+    category: "cloud_platforms"
+    source: "manual"
+    confidence: 1.0
+
+  # DevOps Tools
+  - alias: "K8s"
+    canonical: "Kubernetes"
+    category: "devops_tools"
+    source: "manual"
+    confidence: 1.0
+
+  - alias: "k8"
+    canonical: "Kubernetes"
+    category: "devops_tools"
+    source: "manual"
+    confidence: 0.95
+
+  - alias: "kube"
+    canonical: "Kubernetes"
+    category: "devops_tools"
+    source: "manual"
+    confidence: 0.9
+
+  - alias: "GH Actions"
+    canonical: "GitHub Actions"
+    category: "devops_tools"
+    source: "manual"
+    confidence: 1.0
+
+  - alias: "GitHub CI"
+    canonical: "GitHub Actions"
+    category: "devops_tools"
+    source: "manual"
+    confidence: 0.9
+
+  - alias: "TF"
+    canonical: "Terraform"
+    category: "devops_tools"
+    source: "manual"
+    confidence: 0.85
+
+  - alias: "Ansible Playbooks"
+    canonical: "Ansible"
+    category: "devops_tools"
+    source: "manual"
+    confidence: 1.0
+
+  # Databases
+  - alias: "Postgres"
+    canonical: "PostgreSQL"
+    category: "databases"
+    source: "manual"
+    confidence: 1.0
+
+  - alias: "PG"
+    canonical: "PostgreSQL"
+    category: "databases"
+    source: "manual"
+    confidence: 0.85
+
+  - alias: "MySQL"
+    canonical: "MySQL"
+    category: "databases"
+    source: "manual"
+    confidence: 1.0
+
+  - alias: "Mongo"
+    canonical: "MongoDB"
+    category: "databases"
+    source: "manual"
+    confidence: 1.0
+
+  - alias: "BQ"
+    canonical: "BigQuery"
+    category: "databases"
+    source: "manual"
+    confidence: 0.9
+
+  - alias: "ES"
+    canonical: "Elasticsearch"
+    category: "databases"
+    source: "manual"
+    confidence: 0.8
+
+  - alias: "Elastic"
+    canonical: "Elasticsearch"
+    category: "databases"
+    source: "manual"
+    confidence: 0.95
+
+  - alias: "DynamoDB"
+    canonical: "Amazon DynamoDB"
+    category: "databases"
+    source: "manual"
+    confidence: 1.0
+
+  # Web Frameworks
+  - alias: "Vue"
+    canonical: "Vue.js"
+    category: "web_frameworks"
+    source: "manual"
+    confidence: 1.0
+
+  - alias: "VueJS"
+    canonical: "Vue.js"
+    category: "web_frameworks"
+    source: "manual"
+    confidence: 1.0
+
+  - alias: "ReactJS"
+    canonical: "React"
+    category: "web_frameworks"
+    source: "manual"
+    confidence: 1.0
+
+  - alias: "React.js"
+    canonical: "React"
+    category: "web_frameworks"
+    source: "manual"
+    confidence: 1.0
+
+  - alias: "AngularJS"
+    canonical: "Angular"
+    category: "web_frameworks"
+    source: "manual"
+    confidence: 0.9
+
+  - alias: "NextJS"
+    canonical: "Next.js"
+    category: "web_frameworks"
+    source: "manual"
+    confidence: 1.0
+
+  - alias: "NuxtJS"
+    canonical: "Nuxt.js"
+    category: "web_frameworks"
+    source: "manual"
+    confidence: 1.0
+
+  - alias: "ExpressJS"
+    canonical: "Express.js"
+    category: "web_frameworks"
+    source: "manual"
+    confidence: 1.0
+
+  - alias: "Express"
+    canonical: "Express.js"
+    category: "web_frameworks"
+    source: "manual"
+    confidence: 0.95
+
+  - alias: "Rails"
+    canonical: "Ruby on Rails"
+    category: "web_frameworks"
+    source: "manual"
+    confidence: 1.0
+
+  - alias: "RoR"
+    canonical: "Ruby on Rails"
+    category: "web_frameworks"
+    source: "manual"
+    confidence: 0.95
+
+  - alias: "Spring"
+    canonical: "Spring Boot"
+    category: "web_frameworks"
+    source: "manual"
+    confidence: 0.85
+
+  - alias: ".NET Core"
+    canonical: "ASP.NET Core"
+    category: "web_frameworks"
+    source: "manual"
+    confidence: 0.9
+
+  # Machine Learning
+  # Note: 'TF' alias removed due to ambiguity with Terraform - use full 'TensorFlow' instead
+
+  - alias: "PyTorch"
+    canonical: "PyTorch"
+    category: "machine_learning"
+    source: "manual"
+    confidence: 1.0
+
+  - alias: "sklearn"
+    canonical: "scikit-learn"
+    category: "machine_learning"
+    source: "manual"
+    confidence: 1.0
+
+  - alias: "sk-learn"
+    canonical: "scikit-learn"
+    category: "machine_learning"
+    source: "manual"
+    confidence: 1.0
+
+  - alias: "HF"
+    canonical: "Hugging Face"
+    category: "machine_learning"
+    source: "manual"
+    confidence: 0.85
+
+  - alias: "Huggingface"
+    canonical: "Hugging Face"
+    category: "machine_learning"
+    source: "manual"
+    confidence: 1.0
+
+  - alias: "LLM"
+    canonical: "Large Language Models"
+    category: "machine_learning"
+    source: "manual"
+    confidence: 1.0
+
+  - alias: "LLMs"
+    canonical: "Large Language Models"
+    category: "machine_learning"
+    source: "manual"
+    confidence: 1.0
+
+  - alias: "GPT"
+    canonical: "GPT Models"
+    category: "machine_learning"
+    source: "manual"
+    confidence: 0.95
+
+  - alias: "ChatGPT"
+    canonical: "GPT Models"
+    category: "machine_learning"
+    source: "manual"
+    confidence: 0.9
+
+  # Frontend Tools
+  - alias: "Tailwind"
+    canonical: "Tailwind CSS"
+    category: "frontend_tools"
+    source: "manual"
+    confidence: 1.0
+
+  - alias: "TailwindCSS"
+    canonical: "Tailwind CSS"
+    category: "frontend_tools"
+    source: "manual"
+    confidence: 1.0
+
+  - alias: "MUI"
+    canonical: "Material-UI"
+    category: "frontend_tools"
+    source: "manual"
+    confidence: 1.0
+
+  - alias: "SASS"
+    canonical: "Sass"
+    category: "frontend_tools"
+    source: "manual"
+    confidence: 1.0
+
+  - alias: "SCSS"
+    canonical: "Sass"
+    category: "frontend_tools"
+    source: "manual"
+    confidence: 1.0
+
+  # Testing
+  - alias: "E2E"
+    canonical: "End-to-End Testing"
+    category: "testing_frameworks"
+    source: "manual"
+    confidence: 0.85
+
+  - alias: "e2e testing"
+    canonical: "End-to-End Testing"
+    category: "testing_frameworks"
+    source: "manual"
+    confidence: 1.0
+
+  - alias: "Unit Testing"
+    canonical: "Unit Testing"
+    category: "testing_frameworks"
+    source: "manual"
+    confidence: 1.0
+
+  - alias: "TDD"
+    canonical: "Test-Driven Development"
+    category: "testing_frameworks"
+    source: "manual"
+    confidence: 1.0
+
+  # Mobile Development
+  - alias: "RN"
+    canonical: "React Native"
+    category: "mobile_development"
+    source: "manual"
+    confidence: 0.85
+
+  - alias: "SwiftUI"
+    canonical: "Swift UI"
+    category: "mobile_development"
+    source: "manual"
+    confidence: 1.0
+
+  # Version Control
+  - alias: "Git"
+    canonical: "Git"
+    category: "devops_tools"
+    source: "manual"
+    confidence: 1.0
+
+  - alias: "GitHub"
+    canonical: "GitHub"
+    category: "devops_tools"
+    source: "manual"
+    confidence: 1.0
+
+  - alias: "GitLab"
+    canonical: "GitLab"
+    category: "devops_tools"
+    source: "manual"
+    confidence: 1.0
+
+  - alias: "Bitbucket"
+    canonical: "Bitbucket"
+    category: "devops_tools"
+    source: "manual"
+    confidence: 1.0
+
+# Configuration for alias resolution
+config:
+  case_sensitive: false
+  min_alias_length: 2
+  max_alias_length: 50
+  prefer_higher_confidence: true
+  log_unmatched_aliases: true
