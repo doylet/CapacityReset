@@ -358,12 +358,14 @@ Maintain **<10% processing time increase** per job (SC-008).
 ### New Feature Overhead
 | Feature | Estimated Overhead | Mitigation |
 |---------|-------------------|------------|
-| Alias resolution | <50ms | Pre-built lookup index |
-| Confidence scoring | <100ms | Already in enhanced mode |
-| Section classification | <200ms | Rule-based first |
-| Version tracking | <10ms | Simple field additions |
+| Alias resolution | <50ms | Pre-built O(1) hash lookup index at startup |
+| Confidence scoring | <100ms | Already implemented in enhanced mode |
+| Section classification | <200ms | Rule-based regex pre-compiled at startup; ML classifier deferred |
+| Version tracking | <10ms | Simple string field additions |
 
 ### Total Expected: <360ms additional (~10-15% increase)
+
+**Note**: Estimates assume warm container (no cold start). Cold starts add ~500ms due to lazy model loading (Constitution Principle V). Section classification overhead is based on pre-compiled regex patterns matching ~15 relevant sections and ~10 excluded sections per job text.
 
 ### Rationale
 - **Lazy loading** prevents cold start regression

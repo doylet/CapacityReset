@@ -197,6 +197,8 @@ LIMIT 100;
 
 ### Local Evaluation
 
+> **Note**: `SkillsEvaluator` is a planned implementation from Phase 4. See `data-model.md` for the `EvaluationResult` entity definition.
+
 ```python
 from lib.evaluation.evaluator import SkillsEvaluator
 

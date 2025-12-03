@@ -22,6 +22,9 @@ paths:
       operationId: runEnrichment
       requestBody:
         required: false
+        description: |
+          Optional request body to configure enrichment. If omitted, defaults to
+          skills_extraction and embeddings enrichment with batch_size=50.
         content:
           application/json:
             schema:
