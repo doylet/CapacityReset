@@ -1,0 +1,289 @@
+openapi: 3.0.3
+info:
+  title: ML Enrichment Service - Skills Extraction API
+  description: |
+    API for extracting skills from job postings with enhanced confidence scoring,
+    alias resolution, and section-aware extraction.
+  version: 4.0.0
+  contact:
+    name: ML Enrichment Team
+
+servers:
+  - url: https://ml-enrichment-{hash}.a.run.app
+    description: Cloud Run deployment
+
+paths:
+  /:
+    post:
+      summary: Run ML enrichment on job postings
+      description: |
+        Triggers ML enrichment processing for job postings. Supports multiple
+        enrichment types including skills extraction, embeddings, and clustering.
+      operationId: runEnrichment
+      requestBody:
+        required: false
+        description: |
+          Optional request body to configure enrichment. If omitted, defaults to
+          skills_extraction and embeddings enrichment with batch_size=50.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnrichmentRequest'
+            examples:
+              skillsOnly:
+                summary: Extract skills only
+                value:
+                  enrichment_types: ["skills_extraction"]
+                  batch_size: 50
+              fullEnrichment:
+                summary: Full enrichment pipeline
+                value:
+                  enrichment_types: ["skills_extraction", "embeddings"]
+                  batch_size: 100
+              withClustering:
+                summary: Include clustering
+                value:
+                  enrichment_types: ["skills_extraction", "embeddings", "clustering"]
+                  batch_size: 50
+                  n_clusters: 10
+                  clustering_method: "kmeans"
+      responses:
+        '200':
+          description: Enrichment completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnrichmentResponse'
+              examples:
+                success:
+                  summary: Successful enrichment
+                  value:
+                    status: success
+                    execution_time_seconds: 12.5
+                    skills_extraction:
+                      processed: 50
+                      failed: 0
+                      total_skills: 245
+                      extractor_version: "v4.0-unified-config-enhanced"
+                    embeddings:
+                      processed: 50
+                      failed: 0
+                      total_embeddings: 150
+        '500':
+          description: Enrichment failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    EnrichmentRequest:
+      type: object
+      properties:
+        enrichment_types:
+          type: array
+          items:
+            type: string
+            enum:
+              - skills_extraction
+              - embeddings
+              - clustering
+              - section_classification
+          default: ["skills_extraction", "embeddings"]
+          description: Types of enrichment to perform
+        batch_size:
+          type: integer
+          minimum: 1
+          maximum: 500
+          default: 50
+          description: Number of jobs to process per batch
+        n_clusters:
+          type: integer
+          minimum: 2
+          maximum: 100
+          default: 10
+          description: Number of clusters for K-means (clustering only)
+        clustering_method:
+          type: string
+          enum: ["kmeans", "dbscan"]
+          default: "kmeans"
+          description: Clustering algorithm to use
+        force_reprocess:
+          type: boolean
+          default: false
+          description: Reprocess jobs even if already enriched
+        target_version:
+          type: string
+          description: Only process jobs not enriched with this version
+          example: "v4.0-unified-config-enhanced"
+
+    EnrichmentResponse:
+      type: object
+      required:
+        - status
+        - execution_time_seconds
+      properties:
+        status:
+          type: string
+          enum: ["success", "partial", "error"]
+        execution_time_seconds:
+          type: number
+          format: float
+        skills_extraction:
+          $ref: '#/components/schemas/SkillsExtractionResult'
+        embeddings:
+          $ref: '#/components/schemas/EmbeddingsResult'
+        clustering:
+          $ref: '#/components/schemas/ClusteringResult'
+        section_classification:
+          $ref: '#/components/schemas/SectionClassificationResult'
+
+    SkillsExtractionResult:
+      type: object
+      required:
+        - processed
+        - failed
+        - total_skills
+      properties:
+        processed:
+          type: integer
+          description: Number of jobs processed successfully
+        failed:
+          type: integer
+          description: Number of jobs that failed processing
+        total_skills:
+          type: integer
+          description: Total skills extracted across all jobs
+        extractor_version:
+          type: string
+          description: Version of the skills extractor used
+          example: "v4.0-unified-config-enhanced"
+        extraction_stats:
+          $ref: '#/components/schemas/ExtractionStats'
+
+    ExtractionStats:
+      type: object
+      properties:
+        strategies_used:
+          type: array
+          items:
+            type: string
+          description: Extraction strategies that were active
+          example: ["lexicon", "semantic", "pattern", "ner", "noun_chunk"]
+        aliases_resolved:
+          type: integer
+          description: Number of skill aliases resolved to canonical names
+        avg_confidence:
+          type: number
+          format: float
+          description: Average confidence score across all extracted skills
+        skills_by_category:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Count of skills per category
+          example:
+            programming_languages: 45
+            cloud_platforms: 23
+            devops_tools: 18
+
+    ExtractedSkill:
+      type: object
+      required:
+        - skill_name
+        - skill_category
+        - confidence_score
+      properties:
+        skill_id:
+          type: string
+          format: uuid
+        skill_name:
+          type: string
+          description: Canonical skill name
+          example: "Kubernetes"
+        skill_category:
+          type: string
+          description: Skill category
+          example: "devops_tools"
+        confidence_score:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Confidence in this extraction
+        source_strategies:
+          type: array
+          items:
+            type: string
+          description: Strategies that contributed to this extraction
+          example: ["lexicon", "pattern"]
+        context_snippet:
+          type: string
+          description: Surrounding text context
+          maxLength: 200
+        section_relevance_score:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Relevance of the section where skill was found
+        extracted_from_section:
+          type: string
+          description: Section name if identified
+          example: "requirements"
+
+    EmbeddingsResult:
+      type: object
+      properties:
+        processed:
+          type: integer
+        failed:
+          type: integer
+        total_embeddings:
+          type: integer
+        generator_version:
+          type: string
+
+    ClusteringResult:
+      type: object
+      properties:
+        total_jobs:
+          type: integer
+        clusters_created:
+          type: integer
+        method:
+          type: string
+        cluster_run_id:
+          type: string
+          format: uuid
+        cluster_model_id:
+          type: string
+
+    SectionClassificationResult:
+      type: object
+      properties:
+        processed:
+          type: integer
+        failed:
+          type: integer
+        sections_classified:
+          type: integer
+        classifier_version:
+          type: string
+
+    ErrorResponse:
+      type: object
+      required:
+        - status
+        - error
+      properties:
+        status:
+          type: string
+          enum: ["error"]
+        error:
+          type: string
+          description: Error message
+        details:
+          type: object
+          description: Additional error details
