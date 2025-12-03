@@ -1,0 +1,557 @@
+openapi: 3.0.3
+info:
+  title: ML Enrichment Service - Evaluation API
+  description: |
+    API for evaluating ML model performance against labeled test data.
+    Supports precision, recall, F1 metrics with per-category breakdown
+    and CI/CD integration.
+  version: 1.0.0
+  contact:
+    name: ML Enrichment Team
+
+servers:
+  - url: https://ml-enrichment-{hash}.a.run.app
+    description: Cloud Run deployment
+
+paths:
+  /evaluate:
+    post:
+      summary: Run model evaluation
+      description: |
+        Evaluates the current model against a labeled test dataset.
+        Returns precision, recall, and F1 metrics with per-category breakdown.
+      operationId: runEvaluation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvaluationRequest'
+            examples:
+              defaultEval:
+                summary: Evaluate with default dataset
+                value:
+                  model_id: "skills_extractor"
+              customDataset:
+                summary: Evaluate with custom dataset
+                value:
+                  model_id: "skills_extractor"
+                  dataset_path: "gs://bucket/custom_eval_data.jsonl"
+                  sample_limit: 100
+              ciPipeline:
+                summary: CI pipeline evaluation
+                value:
+                  model_id: "skills_extractor"
+                  is_ci_run: true
+                  ci_build_id: "build-12345"
+                  threshold_f1: 0.75
+                  fail_on_threshold: true
+      responses:
+        '200':
+          description: Evaluation completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvaluationResponse'
+              examples:
+                success:
+                  summary: Successful evaluation
+                  value:
+                    status: success
+                    evaluation_id: "550e8400-e29b-41d4-a716-446655440000"
+                    model_id: "skills_extractor"
+                    model_version: "v4.0-unified-config-enhanced"
+                    metrics:
+                      overall_precision: 0.85
+                      overall_recall: 0.82
+                      overall_f1: 0.83
+                    category_metrics:
+                      programming_languages:
+                        precision: 0.90
+                        recall: 0.88
+                        f1: 0.89
+                        support: 120
+                      cloud_platforms:
+                        precision: 0.82
+                        recall: 0.78
+                        f1: 0.80
+                        support: 45
+                    sample_count: 100
+                    execution_time_seconds: 45.2
+                    threshold_passed: true
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Evaluation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /evaluate/quick:
+    post:
+      summary: Quick evaluation for CI
+      description: |
+        Lightweight evaluation for CI/CD pipelines. Uses a small
+        held-out test set (10-50 samples) for fast feedback.
+      operationId: runQuickEvaluation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuickEvaluationRequest'
+      responses:
+        '200':
+          description: Quick evaluation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuickEvaluationResponse'
+        '422':
+          description: Threshold not met
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThresholdFailureResponse'
+
+  /evaluate/results:
+    get:
+      summary: List evaluation results
+      description: Returns historical evaluation results with optional filtering.
+      operationId: listEvaluationResults
+      parameters:
+        - name: model_id
+          in: query
+          schema:
+            type: string
+          description: Filter by model ID
+        - name: model_version
+          in: query
+          schema:
+            type: string
+          description: Filter by model version
+        - name: is_ci_run
+          in: query
+          schema:
+            type: boolean
+          description: Filter by CI run status
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Filter results after this date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Filter results before this date
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+          description: Maximum results to return
+      responses:
+        '200':
+          description: List of evaluation results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EvaluationResult'
+                  total_count:
+                    type: integer
+                  has_more:
+                    type: boolean
+
+  /evaluate/results/{evaluation_id}:
+    get:
+      summary: Get evaluation result details
+      description: Returns detailed results for a specific evaluation run.
+      operationId: getEvaluationResult
+      parameters:
+        - name: evaluation_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Evaluation result details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvaluationResult'
+        '404':
+          description: Evaluation not found
+
+  /evaluate/compare:
+    post:
+      summary: Compare evaluation results
+      description: Compares metrics between two evaluation runs or model versions.
+      operationId: compareEvaluations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ComparisonRequest'
+      responses:
+        '200':
+          description: Comparison results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComparisonResponse'
+
+  /evaluate/trends:
+    get:
+      summary: Get metric trends
+      description: Returns metric trends over time for a model.
+      operationId: getMetricTrends
+      parameters:
+        - name: model_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: metric
+          in: query
+          schema:
+            type: string
+            enum: [precision, recall, f1]
+            default: f1
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [7d, 30d, 90d, all]
+            default: 30d
+      responses:
+        '200':
+          description: Metric trend data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrendResponse'
+
+components:
+  schemas:
+    EvaluationRequest:
+      type: object
+      required:
+        - model_id
+      properties:
+        model_id:
+          type: string
+          description: Model to evaluate
+          example: "skills_extractor"
+        model_version:
+          type: string
+          description: Specific version to evaluate (defaults to active)
+        dataset_path:
+          type: string
+          description: GCS path to evaluation dataset (JSONL format)
+          example: "gs://ml-enrichment-data/eval/skills_test_v1.jsonl"
+        dataset_version:
+          type: string
+          description: Version identifier for the dataset
+        sample_limit:
+          type: integer
+          minimum: 10
+          maximum: 10000
+          description: Maximum samples to evaluate
+        categories:
+          type: array
+          items:
+            type: string
+          description: Limit evaluation to specific categories
+        is_ci_run:
+          type: boolean
+          default: false
+          description: Whether this is a CI/CD pipeline run
+        ci_build_id:
+          type: string
+          description: CI build identifier
+        threshold_f1:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Minimum F1 score threshold
+        fail_on_threshold:
+          type: boolean
+          default: false
+          description: Return error status if threshold not met
+
+    QuickEvaluationRequest:
+      type: object
+      required:
+        - model_id
+      properties:
+        model_id:
+          type: string
+        threshold_f1:
+          type: number
+          format: float
+          default: 0.7
+        ci_build_id:
+          type: string
+
+    EvaluationResponse:
+      type: object
+      required:
+        - status
+        - evaluation_id
+        - model_id
+        - metrics
+      properties:
+        status:
+          type: string
+          enum: [success, partial, failed]
+        evaluation_id:
+          type: string
+          format: uuid
+        model_id:
+          type: string
+        model_version:
+          type: string
+        dataset_version:
+          type: string
+        metrics:
+          $ref: '#/components/schemas/OverallMetrics'
+        category_metrics:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/CategoryMetrics'
+        sample_count:
+          type: integer
+        execution_time_seconds:
+          type: number
+          format: float
+        threshold_passed:
+          type: boolean
+        errors:
+          type: array
+          items:
+            type: string
+
+    QuickEvaluationResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [pass, fail]
+        f1_score:
+          type: number
+          format: float
+        threshold:
+          type: number
+          format: float
+        sample_count:
+          type: integer
+        execution_time_seconds:
+          type: number
+          format: float
+        message:
+          type: string
+
+    ThresholdFailureResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [threshold_not_met]
+        f1_score:
+          type: number
+          format: float
+        threshold:
+          type: number
+          format: float
+        message:
+          type: string
+
+    EvaluationResult:
+      type: object
+      properties:
+        evaluation_id:
+          type: string
+          format: uuid
+        model_id:
+          type: string
+        model_version:
+          type: string
+        dataset_version:
+          type: string
+        dataset_path:
+          type: string
+        sample_count:
+          type: integer
+        overall_precision:
+          type: number
+          format: float
+        overall_recall:
+          type: number
+          format: float
+        overall_f1:
+          type: number
+          format: float
+        category_metrics:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/CategoryMetrics'
+        evaluation_date:
+          type: string
+          format: date-time
+        execution_time_seconds:
+          type: number
+          format: float
+        is_ci_run:
+          type: boolean
+        ci_build_id:
+          type: string
+        threshold_passed:
+          type: boolean
+
+    OverallMetrics:
+      type: object
+      required:
+        - overall_precision
+        - overall_recall
+        - overall_f1
+      properties:
+        overall_precision:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+        overall_recall:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+        overall_f1:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+
+    CategoryMetrics:
+      type: object
+      properties:
+        precision:
+          type: number
+          format: float
+        recall:
+          type: number
+          format: float
+        f1:
+          type: number
+          format: float
+        support:
+          type: integer
+          description: Number of samples in this category
+
+    ComparisonRequest:
+      type: object
+      properties:
+        evaluation_id_a:
+          type: string
+          format: uuid
+        evaluation_id_b:
+          type: string
+          format: uuid
+        model_id:
+          type: string
+        version_a:
+          type: string
+        version_b:
+          type: string
+
+    ComparisonResponse:
+      type: object
+      properties:
+        comparison_type:
+          type: string
+          enum: [evaluation, version]
+        metrics_diff:
+          type: object
+          properties:
+            precision_diff:
+              type: number
+              format: float
+            recall_diff:
+              type: number
+              format: float
+            f1_diff:
+              type: number
+              format: float
+        category_diffs:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              precision_diff:
+                type: number
+              recall_diff:
+                type: number
+              f1_diff:
+                type: number
+        improvement_summary:
+          type: string
+          description: Human-readable summary of changes
+
+    TrendResponse:
+      type: object
+      properties:
+        model_id:
+          type: string
+        metric:
+          type: string
+        period:
+          type: string
+        data_points:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              value:
+                type: number
+                format: float
+              model_version:
+                type: string
+        trend_direction:
+          type: string
+          enum: [improving, stable, declining]
+        avg_value:
+          type: number
+          format: float
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: object

@@ -1,0 +1,318 @@
+openapi: 3.0.3
+info:
+  title: ML Enrichment Service - Model Configuration API
+  description: |
+    API for managing ML model configurations, versions, and metadata.
+    Supports model version tracking, performance metrics, and configuration overrides.
+  version: 1.0.0
+  contact:
+    name: ML Enrichment Team
+
+servers:
+  - url: https://ml-enrichment-{hash}.a.run.app
+    description: Cloud Run deployment
+
+paths:
+  /models:
+    get:
+      summary: List all model configurations
+      description: Returns all registered model configurations with optional filtering.
+      operationId: listModels
+      parameters:
+        - name: model_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - skills_extraction
+              - embeddings
+              - clustering
+              - section_classification
+          description: Filter by model type
+        - name: is_active
+          in: query
+          schema:
+            type: boolean
+          description: Filter by active status
+      responses:
+        '200':
+          description: List of model configurations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  models:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ModelConfig'
+                  total_count:
+                    type: integer
+              examples:
+                models:
+                  summary: Available models
+                  value:
+                    models:
+                      - model_id: "skills_extractor"
+                        version: "v4.0-unified-config-enhanced"
+                        model_type: "skills_extraction"
+                        is_active: true
+                        performance_metrics:
+                          precision: 0.85
+                          recall: 0.82
+                          f1: 0.83
+                      - model_id: "job_clusterer"
+                        version: "v1.0-kmeans-tfidf"
+                        model_type: "clustering"
+                        is_active: true
+                    total_count: 2
+
+  /models/{model_id}:
+    get:
+      summary: Get model configuration
+      description: Returns configuration for a specific model.
+      operationId: getModel
+      parameters:
+        - name: model_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Model identifier
+          example: "skills_extractor"
+      responses:
+        '200':
+          description: Model configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelConfig'
+        '404':
+          description: Model not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /models/{model_id}/versions:
+    get:
+      summary: List model versions
+      description: Returns all versions of a specific model.
+      operationId: listModelVersions
+      parameters:
+        - name: model_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Model identifier
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+          description: Maximum versions to return
+      responses:
+        '200':
+          description: List of model versions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  model_id:
+                    type: string
+                  versions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ModelVersion'
+              examples:
+                versions:
+                  summary: Skills extractor versions
+                  value:
+                    model_id: "skills_extractor"
+                    versions:
+                      - version: "v4.0-unified-config-enhanced"
+                        created_at: "2025-12-01T00:00:00Z"
+                        is_active: true
+                        performance_metrics:
+                          f1: 0.83
+                      - version: "v4.0-unified-config-legacy"
+                        created_at: "2025-11-15T00:00:00Z"
+                        is_active: false
+                        performance_metrics:
+                          f1: 0.75
+                      - version: "legacy"
+                        created_at: "2025-01-01T00:00:00Z"
+                        is_active: false
+
+  /models/{model_id}/current:
+    get:
+      summary: Get current active version
+      description: Returns the currently active version of a model.
+      operationId: getCurrentModelVersion
+      parameters:
+        - name: model_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Current model version
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelConfig'
+
+components:
+  schemas:
+    ModelConfig:
+      type: object
+      required:
+        - model_id
+        - version
+        - model_type
+      properties:
+        model_id:
+          type: string
+          pattern: '^[a-z_]+$'
+          description: Model identifier (lowercase with underscores)
+          example: "skills_extractor"
+        version:
+          type: string
+          pattern: '^v\d+\.\d+(-[a-z0-9-]+)?$'
+          description: Semantic version with optional suffix
+          example: "v4.0-unified-config-enhanced"
+        model_type:
+          type: string
+          enum:
+            - skills_extraction
+            - embeddings
+            - clustering
+            - section_classification
+          description: Type of ML model
+        created_at:
+          type: string
+          format: date-time
+          description: When this version was created
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+        training_data_version:
+          type: string
+          description: Version identifier for training data
+          example: "2025-11-01-v1"
+        training_date:
+          type: string
+          format: date-time
+          description: When the model was trained
+        performance_metrics:
+          $ref: '#/components/schemas/PerformanceMetrics'
+        config_overrides:
+          type: object
+          additionalProperties: true
+          description: Runtime configuration overrides
+        is_active:
+          type: boolean
+          default: true
+          description: Whether this is the active version
+
+    ModelVersion:
+      type: object
+      required:
+        - version
+        - created_at
+      properties:
+        version:
+          type: string
+          example: "v4.0-unified-config-enhanced"
+        created_at:
+          type: string
+          format: date-time
+        is_active:
+          type: boolean
+        performance_metrics:
+          $ref: '#/components/schemas/PerformanceMetrics'
+        enrichments_count:
+          type: integer
+          description: Number of enrichments using this version
+
+    PerformanceMetrics:
+      type: object
+      properties:
+        precision:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+        recall:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+        f1:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+        accuracy:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+        evaluation_date:
+          type: string
+          format: date-time
+        sample_count:
+          type: integer
+          description: Number of samples in evaluation
+
+    VersionComparisonRequest:
+      type: object
+      required:
+        - model_id
+        - version_a
+        - version_b
+      properties:
+        model_id:
+          type: string
+        version_a:
+          type: string
+        version_b:
+          type: string
+
+    VersionComparisonResponse:
+      type: object
+      properties:
+        model_id:
+          type: string
+        comparison:
+          type: object
+          properties:
+            version_a:
+              type: string
+            version_b:
+              type: string
+            metrics_diff:
+              type: object
+              additionalProperties:
+                type: number
+            sample_comparison:
+              type: array
+              items:
+                type: object
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
