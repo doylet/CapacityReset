@@ -1,0 +1,99 @@
+# Model Version Registry
+# Centralized configuration for all ML models in the enrichment pipeline.
+#
+# Version format: v{major}.{minor}[-{suffix}]
+# Examples:
+#   - skills_extractor_v4.0-unified-config-enhanced
+#   - job_clusterer_v1.0-kmeans-tfidf
+#   - embeddings_generator_v1.0-vertex-ai
+
+models:
+  skills_extractor:
+    model_id: "skills_extractor"
+    model_type: "skills_extraction"
+    current_version: "v4.0-unified-config-enhanced"
+    versions:
+      - version: "v4.0-unified-config-enhanced"
+        is_active: true
+        created_at: "2025-12-03T00:00:00Z"
+        description: "Enhanced skills extraction with semantic similarity and alias resolution"
+        config:
+          enable_semantic: true
+          enable_patterns: true
+          confidence_threshold: 0.6
+          max_skills_per_category: 15
+        performance_metrics:
+          precision: null
+          recall: null
+          f1: null
+          
+      - version: "v4.0-unified-config-legacy"
+        is_active: false
+        created_at: "2025-11-15T00:00:00Z"
+        description: "Legacy skills extraction without enhanced ML features"
+        config:
+          enable_semantic: false
+          enable_patterns: false
+          confidence_threshold: 0.6
+        performance_metrics:
+          precision: null
+          recall: null
+          f1: null
+          
+      - version: "legacy"
+        is_active: false
+        created_at: "2025-01-01T00:00:00Z"
+        description: "Original extraction before unified config"
+
+  embeddings_generator:
+    model_id: "embeddings_generator"
+    model_type: "embeddings"
+    current_version: "v1.0-vertex-ai"
+    versions:
+      - version: "v1.0-vertex-ai"
+        is_active: true
+        created_at: "2025-12-03T00:00:00Z"
+        description: "Vertex AI embeddings generator"
+        config:
+          model_name: "textembedding-gecko@001"
+          chunk_types:
+            - "full_description"
+            - "summary"
+            - "title"
+
+  job_clusterer:
+    model_id: "job_clusterer"
+    model_type: "clustering"
+    current_version: "v1.0-kmeans-tfidf"
+    versions:
+      - version: "v1.0-kmeans-tfidf"
+        is_active: true
+        created_at: "2025-12-03T00:00:00Z"
+        description: "K-means clustering with TF-IDF keyword extraction"
+        config:
+          default_n_clusters: 10
+          min_jobs_per_cluster: 3
+          top_n_keywords: 10
+          
+  section_classifier:
+    model_id: "section_classifier"
+    model_type: "section_classification"
+    current_version: "v1.0-rule-based"
+    versions:
+      - version: "v1.0-rule-based"
+        is_active: true
+        created_at: "2025-12-03T00:00:00Z"
+        description: "Rule-based section classification"
+        config:
+          classification_method: "rule_based"
+          # ML classifier to be added after annotation data is collected
+
+# Default configuration values
+defaults:
+  confidence_threshold: 0.6
+  batch_size: 50
+  max_retries: 3
+  timeout_seconds: 300
+
+# Legacy version identifier for enrichments without version tracking
+legacy_version: "legacy"
