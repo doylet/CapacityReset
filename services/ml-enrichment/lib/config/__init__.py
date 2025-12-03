@@ -125,9 +125,11 @@ def load_model_config(model_id: str) -> Optional['ModelConfig']:
     created_at = datetime.utcnow()
     if active_version.get("created_at"):
         try:
-            created_at = datetime.fromisoformat(
-                active_version["created_at"].replace("Z", "+00:00").replace("+00:00", "")
-            )
+            timestamp_str = active_version["created_at"]
+            # Handle 'Z' suffix for UTC timezone
+            if timestamp_str.endswith('Z'):
+                timestamp_str = timestamp_str[:-1]  # Remove 'Z'
+            created_at = datetime.fromisoformat(timestamp_str)
         except (ValueError, TypeError):
             pass
     

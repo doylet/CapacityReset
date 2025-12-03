@@ -19,7 +19,7 @@ from pathlib import Path
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from lib.evaluation.evaluator import SkillsEvaluator
+from lib.evaluation.evaluator import SkillsEvaluator, EvaluationSample
 
 
 def main():
@@ -74,7 +74,6 @@ def main():
     if not args.dataset:
         # Use inline test data if no dataset provided
         print("\nNo dataset provided - using built-in test samples")
-        from lib.evaluation.evaluator import EvaluationSample
         
         test_samples = [
             EvaluationSample(

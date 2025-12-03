@@ -124,6 +124,26 @@ class SkillAlias:
     @classmethod
     def from_dict(cls, data: dict) -> 'SkillAlias':
         """Create from dictionary."""
+        created_at = datetime.utcnow()
+        if data.get('created_at'):
+            ts = data['created_at']
+            if isinstance(ts, str):
+                if ts.endswith('Z'):
+                    ts = ts[:-1]
+                created_at = datetime.fromisoformat(ts)
+            elif isinstance(ts, datetime):
+                created_at = ts
+        
+        last_used_at = None
+        if data.get('last_used_at'):
+            ts = data['last_used_at']
+            if isinstance(ts, str):
+                if ts.endswith('Z'):
+                    ts = ts[:-1]
+                last_used_at = datetime.fromisoformat(ts)
+            elif isinstance(ts, datetime):
+                last_used_at = ts
+        
         return cls(
             alias_id=data.get('alias_id', str(uuid.uuid4())),
             alias_text=data['alias_text'],
@@ -131,11 +151,11 @@ class SkillAlias:
             skill_category=data['skill_category'],
             source=data.get('source', 'manual'),
             confidence=data.get('confidence', 1.0),
-            created_at=datetime.fromisoformat(data['created_at']) if data.get('created_at') else datetime.utcnow(),
+            created_at=created_at,
             created_by=data.get('created_by'),
             is_active=data.get('is_active', True),
             usage_count=data.get('usage_count', 0),
-            last_used_at=datetime.fromisoformat(data['last_used_at']) if data.get('last_used_at') else None
+            last_used_at=last_used_at
         )
     
     def __eq__(self, other):

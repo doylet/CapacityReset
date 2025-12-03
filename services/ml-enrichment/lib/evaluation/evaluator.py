@@ -261,13 +261,22 @@ class SkillsEvaluator:
         
         try:
             from google.cloud import storage
+            from google.auth.exceptions import DefaultCredentialsError
             
             # Parse GCS path
             path_parts = gcs_path.replace('gs://', '').split('/', 1)
             bucket_name = path_parts[0]
             blob_name = path_parts[1] if len(path_parts) > 1 else ''
             
-            client = storage.Client()
+            try:
+                client = storage.Client()
+            except DefaultCredentialsError as e:
+                logger.error(
+                    f"GCS authentication failed. Ensure GOOGLE_APPLICATION_CREDENTIALS "
+                    f"is set or run 'gcloud auth application-default login'. Error: {e}"
+                )
+                return samples
+            
             bucket = client.bucket(bucket_name)
             blob = bucket.blob(blob_name)
             
@@ -284,6 +293,8 @@ class SkillsEvaluator:
                     skills=set(data.get('skills', []))
                 ))
                 
+        except ImportError:
+            logger.error("google-cloud-storage package not installed")
         except Exception as e:
             logger.error(f"Error loading from GCS: {e}")
         

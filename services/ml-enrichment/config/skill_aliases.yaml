@@ -255,11 +255,7 @@ aliases:
     confidence: 0.9
 
   # Machine Learning
-  - alias: "TF"
-    canonical: "TensorFlow"
-    category: "machine_learning"
-    source: "manual"
-    confidence: 0.7  # Lower confidence due to Terraform collision
+  # Note: 'TF' alias removed due to ambiguity with Terraform - use full 'TensorFlow' instead
 
   - alias: "PyTorch"
     canonical: "PyTorch"

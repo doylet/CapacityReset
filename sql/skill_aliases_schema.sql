@@ -35,8 +35,8 @@ CREATE TABLE IF NOT EXISTS `brightdata_jobs.skill_aliases` (
     last_used_at TIMESTAMP
 );
 
--- Create unique index on alias_text (case-insensitive via lowercase)
--- Note: BigQuery doesn't support UNIQUE constraints, enforce in application
+-- Create index on alias_text for case-insensitive lookup
+-- Note: BigQuery handles case-insensitive matching in queries with LOWER()
 CREATE INDEX IF NOT EXISTS idx_alias_text
 ON `brightdata_jobs.skill_aliases` (alias_text);
 

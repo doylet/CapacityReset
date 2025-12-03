@@ -56,9 +56,9 @@ ON `brightdata_jobs.section_classifications` (is_skills_relevant, relevance_prob
 CREATE INDEX IF NOT EXISTS idx_section_classifier
 ON `brightdata_jobs.section_classifications` (classifier_version, classification_method);
 
--- Create index for training data queries
+-- Create index for training data queries (human_label)
 CREATE INDEX IF NOT EXISTS idx_section_labeled
-ON `brightdata_jobs.section_classifications` (human_label) WHERE human_label IS NOT NULL;
+ON `brightdata_jobs.section_classifications` (human_label);
 
 -- View: Skills-relevant sections
 CREATE OR REPLACE VIEW `brightdata_jobs.v_skills_relevant_sections` AS
