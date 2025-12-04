@@ -196,19 +196,19 @@ Based on plan.md structure:
 
 ### Tests for User Story 5
 
-- [ ] T072 [P] [US5] Unit test for SectionClassifier in services/ml-enrichment/tests/test_section_classifier.py
-- [ ] T073 [P] [US5] Integration test for section-aware extraction in services/ml-enrichment/tests/integration/test_section_extraction.py
+- [X] T072 [P] [US5] Unit test for SectionClassifier in services/ml-enrichment/tests/test_section_classifier.py
+- [X] T073 [P] [US5] Integration test for section-aware extraction in services/ml-enrichment/tests/integration/test_section_extraction.py
 
 ### Implementation for User Story 5
 
 - [X] T074 [US5] Implement rule-based SectionClassifier in services/ml-enrichment/lib/enrichment/section_classifier.py
 - [X] T075 [US5] Define RELEVANT_SECTIONS and EXCLUDED_SECTIONS patterns in services/ml-enrichment/lib/enrichment/section_classifier.py
-- [ ] T076 [US5] Add section_relevance_score to ExtractedSkill output in services/ml-enrichment/lib/enrichment/skills/unified_extractor.py
-- [ ] T077 [US5] Integrate SectionClassifier with UnifiedSkillsExtractor in services/ml-enrichment/lib/enrichment/skills/unified_extractor.py
-- [ ] T078 [US5] Implement confidence weighting based on section relevance in services/ml-enrichment/lib/enrichment/skills/unified_extractor.py
+- [X] T076 [US5] Add section_relevance_score to ExtractedSkill output in services/ml-enrichment/lib/enrichment/skills/unified_extractor.py
+- [X] T077 [US5] Integrate SectionClassifier with UnifiedSkillsExtractor in services/ml-enrichment/lib/enrichment/skills/unified_extractor.py
+- [X] T078 [US5] Implement confidence weighting based on section relevance in services/ml-enrichment/lib/enrichment/skills/unified_extractor.py
 - [X] T079 [US5] Add section classification storage in services/ml-enrichment/lib/adapters/bigquery/section_classification_adapter.py
-- [ ] T080 [US5] Add section_classification to enrichment_types in main.py at services/ml-enrichment/main.py
-- [ ] T081 [US5] Create placeholder for ML classifier training from annotation exports in services/ml-enrichment/lib/enrichment/skills/section_classifier.py
+- [X] T080 [US5] Add section_classification to enrichment_types in main.py at services/ml-enrichment/main.py
+- [X] T081 [US5] Create placeholder for ML classifier training from annotation exports in services/ml-enrichment/lib/enrichment/skills/section_classifier.py
 
 **Checkpoint**: User Story 5 should be fully functional - section classification improves extraction (SC-004)
 
