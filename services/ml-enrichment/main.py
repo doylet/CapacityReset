@@ -124,6 +124,23 @@ def main(request):
                 )
                 # Add extractor version to response
                 skills_stats['extractor_version'] = extractor.get_version()
+                
+                # Add alias resolution statistics
+                try:
+                    from lib.config import get_alias_resolver
+                    resolver = get_alias_resolver()
+                    all_aliases = resolver.get_all_aliases()
+                    skills_stats['alias_resolution'] = {
+                        'aliases_loaded': len(all_aliases),
+                        'resolver_available': True
+                    }
+                except Exception as e:
+                    skills_stats['alias_resolution'] = {
+                        'aliases_loaded': 0,
+                        'resolver_available': False,
+                        'error': str(e)
+                    }
+                
                 results['skills_extraction'] = skills_stats
                 logger.log_text(f"Skills extraction complete: {skills_stats}", severity="INFO")
             else:
@@ -131,7 +148,11 @@ def main(request):
                     'processed': 0, 
                     'failed': 0, 
                     'total_skills': 0,
-                    'extractor_version': extractor.get_version()
+                    'extractor_version': extractor.get_version(),
+                    'alias_resolution': {
+                        'aliases_loaded': 0,
+                        'resolver_available': True
+                    }
                 }
         
         # Process embeddings
@@ -170,8 +191,9 @@ def main(request):
                 n_clusters=n_clusters,
                 method=clustering_method
             )
-            # Add clusterer version to response
+            # Add clusterer version and run ID to response
             clustering_stats['cluster_model_id'] = clusterer.get_version()
+            clustering_stats['cluster_run_id'] = clusterer.get_current_run_id()
             results['clustering'] = clustering_stats
             logger.log_text(f"Job clustering complete: {clustering_stats}", severity="INFO")
         

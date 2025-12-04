@@ -93,9 +93,9 @@ Based on plan.md structure:
 
 - [X] T028 [US1] Implement get_version() method in UnifiedSkillsExtractor at services/ml-enrichment/lib/enrichment/skills/unified_extractor.py
 - [X] T029 [US1] Implement get_model_config() singleton loader in services/ml-enrichment/lib/config/model_config.py
-- [ ] T030 [US1] Add enrichment_version field to enrichment storage in services/ml-enrichment/lib/utils/enrichment_utils.py
-- [ ] T031 [US1] Implement version-based job query function in services/ml-enrichment/lib/utils/enrichment_utils.py
-- [ ] T032 [US1] Add version tracking to job_enrichments insert operations in services/ml-enrichment/lib/adapters/bigquery/enrichment_adapter.py
+- [X] T030 [US1] Add enrichment_version field to enrichment storage in services/ml-enrichment/lib/utils/enrichment_utils.py
+- [X] T031 [US1] Implement version-based job query function in services/ml-enrichment/lib/utils/enrichment_utils.py
+- [X] T032 [US1] Add version tracking to job_enrichments insert operations in services/ml-enrichment/lib/adapters/bigquery/enrichment_adapter.py
 - [X] T033 [US1] Create query for jobs needing re-enrichment in services/ml-enrichment/queries/version_queries.sql
 - [X] T034 [US1] Update main.py to include version in enrichment response at services/ml-enrichment/main.py
 - [X] T035 [US1] Add logging for version tracking operations in services/ml-enrichment/lib/config/model_config.py
@@ -113,20 +113,20 @@ Based on plan.md structure:
 ### Tests for User Story 2
 
 - [X] T036 [P] [US2] Unit test for AliasExtractionStrategy in services/ml-enrichment/tests/test_alias_extraction.py
-- [ ] T037 [P] [US2] Integration test for composite extractor in services/ml-enrichment/tests/integration/test_composite_extractor.py
+- [X] T037 [P] [US2] Integration test for composite extractor in services/ml-enrichment/tests/integration/test_composite_extractor.py
 - [X] T038 [P] [US2] Test for confidence scoring in services/ml-enrichment/tests/test_confidence_scoring.py
 
 ### Implementation for User Story 2
 
 - [X] T039 [P] [US2] Implement AliasExtractionStrategy class in services/ml-enrichment/lib/config/__init__.py (AliasResolver)
 - [X] T040 [US2] Implement alias lookup index builder in services/ml-enrichment/lib/config/__init__.py
-- [ ] T041 [US2] Extend UnifiedSkillsConfig with alias_config_path in services/ml-enrichment/lib/enrichment/skills/unified_config.py
+- [X] T041 [US2] Extend UnifiedSkillsConfig with alias_config_path in services/ml-enrichment/lib/enrichment/skills/unified_config.py
 - [X] T042 [US2] Integrate AliasExtractionStrategy into composite extractor in services/ml-enrichment/lib/enrichment/skills/unified_extractor.py
 - [X] T043 [US2] Implement strategy result merging with deduplication in services/ml-enrichment/lib/enrichment/skills/unified_extractor.py
 - [X] T044 [US2] Add source_strategies field to skill output in services/ml-enrichment/lib/enrichment/skills/unified_extractor.py
 - [X] T045 [US2] Implement enhanced confidence scoring using weighted ensemble in services/ml-enrichment/lib/enrichment/skills/unified_extractor.py
 - [X] T046 [US2] Populate skill_aliases.yaml with initial common aliases in services/ml-enrichment/config/skill_aliases.yaml
-- [ ] T047 [US2] Add alias resolution statistics to extraction response in services/ml-enrichment/main.py
+- [X] T047 [US2] Add alias resolution statistics to extraction response in services/ml-enrichment/main.py
 
 **Checkpoint**: User Story 2 should be fully functional - alias resolution works (SC-003), confidence scores included
 
@@ -140,18 +140,18 @@ Based on plan.md structure:
 
 ### Tests for User Story 3
 
-- [ ] T048 [P] [US3] Unit test for cluster version tracking in services/ml-enrichment/tests/test_cluster_versioning.py
-- [ ] T049 [P] [US3] Integration test for cluster stability metrics in services/ml-enrichment/tests/integration/test_cluster_stability.py
+- [X] T048 [P] [US3] Unit test for cluster version tracking in services/ml-enrichment/tests/test_cluster_versioning.py
+- [X] T049 [P] [US3] Integration test for cluster stability metrics in services/ml-enrichment/tests/integration/test_cluster_stability.py
 
 ### Implementation for User Story 3
 
-- [ ] T050 [US3] Extend JobClusterer with cluster_run_id generation in services/ml-enrichment/lib/enrichment/job_clusterer.py
-- [ ] T051 [US3] Add cluster_model_id and cluster_version fields to clustering output in services/ml-enrichment/lib/enrichment/job_clusterer.py
-- [ ] T052 [US3] Implement is_active flag management for cluster assignments in services/ml-enrichment/lib/enrichment/job_clusterer.py
-- [ ] T053 [US3] Add cluster version filtering queries in services/ml-enrichment/queries/clustering_queries.sql
-- [ ] T054 [US3] Implement cluster stability metrics calculation in services/ml-enrichment/lib/enrichment/job_clusterer.py
-- [ ] T055 [US3] Add cluster_run_id to clustering response in services/ml-enrichment/main.py
-- [ ] T056 [US3] Update BigQuery adapter for cluster version storage in services/ml-enrichment/lib/adapters/bigquery/cluster_adapter.py
+- [X] T050 [US3] Extend JobClusterer with cluster_run_id generation in services/ml-enrichment/lib/enrichment/job_clusterer.py
+- [X] T051 [US3] Add cluster_model_id and cluster_version fields to clustering output in services/ml-enrichment/lib/enrichment/job_clusterer.py
+- [X] T052 [US3] Implement is_active flag management for cluster assignments in services/ml-enrichment/lib/enrichment/job_clusterer.py
+- [X] T053 [US3] Add cluster version filtering queries in services/ml-enrichment/queries/clustering_queries.sql
+- [X] T054 [US3] Implement cluster stability metrics calculation in services/ml-enrichment/lib/enrichment/job_clusterer.py
+- [X] T055 [US3] Add cluster_run_id to clustering response in services/ml-enrichment/main.py
+- [X] T056 [US3] Update BigQuery adapter for cluster version storage in services/ml-enrichment/lib/adapters/bigquery/cluster_adapter.py
 
 **Checkpoint**: User Story 3 should be fully functional - cluster assignments include version tracking (SC-005)
 
