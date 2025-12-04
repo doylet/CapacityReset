@@ -18,8 +18,8 @@ This feature transforms CapacityReset from disconnected ML tasks into an identit
 **Target Platform**: Google Cloud Run (brand services), Cloud Functions (document processing events)  
 **Project Type**: New brand-focused service in monorepo extending existing ML enrichment architecture  
 **Performance Goals**: <10min brand discovery, <30s cross-surface generation, <500ms brand overview retrieval  
-**Constraints**: NEEDS CLARIFICATION on user personas, input surfaces, and minimum output surfaces before architecture decisions  
-**Scale/Scope**: [NEEDS CLARIFICATION: specific user personas - job seekers only vs. multiple professional personas], [NEEDS CLARIFICATION: minimum input surfaces required - CV only, or CV + LinkedIn + other sources], [NEEDS CLARIFICATION: minimum number of output surfaces required for "one-click branding" experience]
+**Constraints**: Job seekers only in Phase 1; CV required with optional LinkedIn; 3 output surfaces minimum  
+**Scale/Scope**: Primary user persona: job seekers; Input: CV required + LinkedIn optional; Output: 3 surfaces (CV summary, LinkedIn summary, portfolio introduction)
 
 ## Constitution Check
 

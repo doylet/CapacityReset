@@ -76,9 +76,9 @@ A user provides feedback on generated content through edits, regeneration reques
 - **FR-009**: Users MUST be able to review and approve brand overview before content generation begins
 - **FR-010**: Users MUST be able to regenerate specific surface content without affecting other surfaces
 - **FR-011**: System MUST track user editing patterns to identify improvement opportunities
-- **FR-012**: System MUST support [NEEDS CLARIFICATION: specific user personas - job seekers only vs. multiple professional personas] in Phase 1 implementation
-- **FR-013**: System MUST support [NEEDS CLARIFICATION: minimum input surfaces required - CV only, or CV + LinkedIn + other sources] for brand analysis
-- **FR-014**: System MUST generate content for [NEEDS CLARIFICATION: minimum number of output surfaces required for "one-click branding" experience - 2, 3, or more surfaces] to constitute a complete branding experience
+- **FR-012**: System MUST support job seekers as the primary user persona in Phase 1 implementation
+- **FR-013**: System MUST support CV/resume as required input with optional LinkedIn profile for enhanced brand analysis
+- **FR-014**: System MUST generate content for 3 surfaces (CV professional summary, LinkedIn summary, portfolio/website introduction) to constitute a complete branding experience
 
 **Architecture Alignment**:
 - Define Brand Representation entity as core domain model with repository interface for persistence
