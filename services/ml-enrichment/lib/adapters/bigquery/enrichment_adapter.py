@@ -132,19 +132,40 @@ class BigQueryEnrichmentRepository:
         Returns:
             JobEnrichment or None
         """
-        version_filter = f"AND enrichment_version = '{version}'" if version else ""
+        if version:
+            query = f"""
+            SELECT *
+            FROM `{self.table_id}`
+            WHERE job_posting_id = @job_posting_id
+                AND enrichment_type = @enrichment_type
+                AND enrichment_version = @version
+            ORDER BY created_at DESC
+            LIMIT 1
+            """
+            job_config = bigquery.QueryJobConfig(
+                query_parameters=[
+                    bigquery.ScalarQueryParameter("job_posting_id", "STRING", job_posting_id),
+                    bigquery.ScalarQueryParameter("enrichment_type", "STRING", enrichment_type),
+                    bigquery.ScalarQueryParameter("version", "STRING", version),
+                ]
+            )
+        else:
+            query = f"""
+            SELECT *
+            FROM `{self.table_id}`
+            WHERE job_posting_id = @job_posting_id
+                AND enrichment_type = @enrichment_type
+            ORDER BY created_at DESC
+            LIMIT 1
+            """
+            job_config = bigquery.QueryJobConfig(
+                query_parameters=[
+                    bigquery.ScalarQueryParameter("job_posting_id", "STRING", job_posting_id),
+                    bigquery.ScalarQueryParameter("enrichment_type", "STRING", enrichment_type),
+                ]
+            )
         
-        query = f"""
-        SELECT *
-        FROM `{self.table_id}`
-        WHERE job_posting_id = '{job_posting_id}'
-            AND enrichment_type = '{enrichment_type}'
-            {version_filter}
-        ORDER BY created_at DESC
-        LIMIT 1
-        """
-        
-        results = list(self.client.query(query).result())
+        results = list(self.client.query(query, job_config=job_config).result())
         
         if not results:
             return None

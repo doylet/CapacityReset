@@ -19,7 +19,21 @@ import numpy as np
 
 
 class JobClusterer:
-    """Cluster jobs and extract defining keywords with version tracking."""
+    """
+    Cluster jobs and extract defining keywords with version tracking.
+    
+    Supports:
+    - K-means and DBSCAN clustering algorithms
+    - TF-IDF keyword extraction per cluster
+    - Version tracking via cluster_run_id and cluster_version
+    - Cluster stability analysis between runs
+    - Deactivation of previous assignments on re-clustering
+    
+    Each clustering run generates a unique cluster_run_id that enables:
+    - Tracking cluster assignments over time
+    - Comparing stability between runs
+    - Historical analysis of cluster evolution
+    """
     
     def __init__(self):
         self.version = "v1.0-kmeans-tfidf"

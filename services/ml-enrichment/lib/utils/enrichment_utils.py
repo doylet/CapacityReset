@@ -162,14 +162,23 @@ def get_jobs_by_version(
     FROM `{DATASET_ID}.job_postings` jp
     INNER JOIN `{DATASET_ID}.job_enrichments` je
         ON jp.job_posting_id = je.job_posting_id
-        AND je.enrichment_type = '{enrichment_type}'
-        AND je.status = '{status}'
-        AND je.enrichment_version = '{enrichment_version}'
+        AND je.enrichment_type = @enrichment_type
+        AND je.status = @status
+        AND je.enrichment_version = @enrichment_version
     ORDER BY je.created_at DESC
-    LIMIT {limit}
+    LIMIT @limit
     """
     
-    query_job = bigquery_client.query(query)
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter("enrichment_type", "STRING", enrichment_type),
+            bigquery.ScalarQueryParameter("status", "STRING", status),
+            bigquery.ScalarQueryParameter("enrichment_version", "STRING", enrichment_version),
+            bigquery.ScalarQueryParameter("limit", "INT64", limit),
+        ]
+    )
+    
+    query_job = bigquery_client.query(query, job_config=job_config)
     results = query_job.result()
     
     jobs = []
@@ -210,12 +219,18 @@ def get_version_distribution(enrichment_type: str) -> List[Dict[str, Any]]:
         MIN(created_at) AS first_enriched,
         MAX(created_at) AS last_enriched
     FROM `{DATASET_ID}.job_enrichments`
-    WHERE enrichment_type = '{enrichment_type}'
+    WHERE enrichment_type = @enrichment_type
     GROUP BY enrichment_version
     ORDER BY enrichment_count DESC
     """
     
-    query_job = bigquery_client.query(query)
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter("enrichment_type", "STRING", enrichment_type),
+        ]
+    )
+    
+    query_job = bigquery_client.query(query, job_config=job_config)
     results = query_job.result()
     
     distribution = []
@@ -268,17 +283,25 @@ def get_jobs_needing_reenrichment(
     FROM `{DATASET_ID}.job_postings` jp
     LEFT JOIN `{DATASET_ID}.job_enrichments` je
         ON jp.job_posting_id = je.job_posting_id
-        AND je.enrichment_type = '{enrichment_type}'
+        AND je.enrichment_type = @enrichment_type
         AND je.status = 'success'
-        AND je.enrichment_version = '{target_version}'
+        AND je.enrichment_version = @target_version
     WHERE je.enrichment_id IS NULL
         AND jp.job_summary IS NOT NULL
         AND jp.job_description_formatted IS NOT NULL
     ORDER BY jp.job_posted_date DESC
-    LIMIT {limit}
+    LIMIT @limit
     """
     
-    query_job = bigquery_client.query(query)
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter("enrichment_type", "STRING", enrichment_type),
+            bigquery.ScalarQueryParameter("target_version", "STRING", target_version),
+            bigquery.ScalarQueryParameter("limit", "INT64", limit),
+        ]
+    )
+    
+    query_job = bigquery_client.query(query, job_config=job_config)
     results = query_job.result()
     
     jobs = []
