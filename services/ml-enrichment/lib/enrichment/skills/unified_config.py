@@ -282,6 +282,9 @@ class UnifiedSkillsConfig:
     project_id: str = "sylvan-replica-478802-p4"
     dataset_id: str = "brightdata_jobs"
     
+    # Alias configuration path (for external alias resolution)
+    alias_config_path: Optional[str] = None
+    
     # Mode selection (auto-detected based on available dependencies)
     enhanced_mode: bool = True
     fallback_to_original: bool = True
