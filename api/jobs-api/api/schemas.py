@@ -4,9 +4,10 @@ API Schemas - Pydantic models for request/response validation
 Separate DTOs from domain entities for clean API contracts.
 """
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
 from datetime import date, datetime
+from enum import Enum
 from domain.entities import SkillType, AnnotationLabel
 
 
@@ -92,3 +93,246 @@ class ExportTrainingDataResponse(BaseModel):
     total_annotations: int
     annotations: List[Dict[str, Any]]
     label_distribution: Dict[str, int]
+
+
+# === AI Brand Roadmap Schemas ===
+
+class ThemeCategoryEnum(str, Enum):
+    """Categories for professional themes."""
+    SKILL = "skill"
+    INDUSTRY = "industry"
+    ROLE = "role"
+    VALUE_PROPOSITION = "value_proposition"
+    ACHIEVEMENT = "achievement"
+
+
+class VoiceToneEnum(str, Enum):
+    """Tone options for voice characteristics."""
+    PROFESSIONAL = "professional"
+    CONVERSATIONAL = "conversational"
+    AUTHORITATIVE = "authoritative"
+    CREATIVE = "creative"
+    ANALYTICAL = "analytical"
+
+
+class FormalityLevelEnum(str, Enum):
+    """Formality level options."""
+    CASUAL = "casual"
+    BUSINESS_CASUAL = "business_casual"
+    FORMAL = "formal"
+    HIGHLY_FORMAL = "highly_formal"
+
+
+class EnergyLevelEnum(str, Enum):
+    """Energy level options."""
+    RESERVED = "reserved"
+    BALANCED = "balanced"
+    ENTHUSIASTIC = "enthusiastic"
+    DYNAMIC = "dynamic"
+
+
+class CareerLevelEnum(str, Enum):
+    """Career level options."""
+    ENTRY = "entry"
+    MID = "mid"
+    SENIOR = "senior"
+    EXECUTIVE = "executive"
+
+
+class SurfaceTypeEnum(str, Enum):
+    """Surface type options."""
+    CV_SUMMARY = "cv_summary"
+    LINKEDIN_SUMMARY = "linkedin_summary"
+    PORTFOLIO_INTRO = "portfolio_intro"
+
+
+class TargetLengthEnum(str, Enum):
+    """Target length options."""
+    CONCISE = "concise"
+    STANDARD = "standard"
+    DETAILED = "detailed"
+
+
+class FeedbackReasonEnum(str, Enum):
+    """Feedback reason options."""
+    TONE_ADJUSTMENT = "tone_adjustment"
+    CONTENT_ACCURACY = "content_accuracy"
+    LENGTH_CHANGE = "length_change"
+    STYLE_PREFERENCE = "style_preference"
+
+
+class FeedbackTypeEnum(str, Enum):
+    """Feedback type options."""
+    CONTENT_EDIT = "content_edit"
+    SATISFACTION_RATING = "satisfaction_rating"
+    PREFERENCE_CHANGE = "preference_change"
+    GENERAL_FEEDBACK = "general_feedback"
+
+
+class LengthPreferenceEnum(str, Enum):
+    """Length preference options."""
+    SHORTER = "shorter"
+    CURRENT = "current"
+    LONGER = "longer"
+
+
+class AnalysisPreferencesSchema(BaseModel):
+    """Preferences for brand analysis."""
+    industry_focus: Optional[str] = None
+    career_level: Optional[CareerLevelEnum] = None
+    tone_preference: Optional[VoiceToneEnum] = None
+
+
+class ProfessionalThemeSchema(BaseModel):
+    """Professional theme response."""
+    theme_id: str
+    theme_name: str
+    theme_category: ThemeCategoryEnum
+    description: Optional[str] = None
+    keywords: List[str] = Field(default_factory=list)
+    confidence_score: float = Field(ge=0.0, le=1.0)
+    source_evidence: Optional[str] = None
+
+
+class VoiceCharacteristicsSchema(BaseModel):
+    """Voice characteristics response."""
+    tone: VoiceToneEnum
+    formality_level: FormalityLevelEnum
+    energy_level: EnergyLevelEnum
+    communication_style: List[str] = Field(default_factory=list)
+    vocabulary_complexity: str = "professional"
+
+
+class NarrativeArcSchema(BaseModel):
+    """Narrative arc response."""
+    career_focus: str
+    value_proposition: str
+    career_progression: Optional[str] = None
+    key_achievements: List[str] = Field(default_factory=list)
+    future_goals: Optional[str] = None
+
+
+class BrandOverviewSchema(BaseModel):
+    """Brand overview response."""
+    brand_id: str
+    professional_themes: List[ProfessionalThemeSchema]
+    voice_characteristics: VoiceCharacteristicsSchema
+    narrative_arc: NarrativeArcSchema
+    confidence_scores: Dict[str, float] = Field(default_factory=dict)
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+
+class AnalysisMetadataSchema(BaseModel):
+    """Analysis metadata response."""
+    document_type: Optional[str] = None
+    word_count: Optional[int] = None
+    confidence_score: Optional[float] = Field(default=None, ge=0.0, le=1.0)
+    processing_time_ms: Optional[int] = None
+
+
+class BrandAnalysisResponse(BaseModel):
+    """Response for brand analysis."""
+    brand_id: str
+    analysis_status: str
+    brand_overview: BrandOverviewSchema
+    analysis_metadata: Optional[AnalysisMetadataSchema] = None
+
+
+class BrandUpdateRequest(BaseModel):
+    """Request for updating brand overview."""
+    professional_themes: Optional[List[ProfessionalThemeSchema]] = None
+    voice_characteristics: Optional[VoiceCharacteristicsSchema] = None
+    narrative_arc: Optional[NarrativeArcSchema] = None
+
+
+class GenerationPreferencesSchema(BaseModel):
+    """Preferences for content generation."""
+    emphasis_themes: List[str] = Field(default_factory=list)
+    target_length: TargetLengthEnum = TargetLengthEnum.STANDARD
+    include_achievements: bool = True
+
+
+class ContentGenerationRequest(BaseModel):
+    """Request for content generation."""
+    surface_types: List[SurfaceTypeEnum] = Field(min_length=1, max_length=10)
+    generation_preferences: Optional[GenerationPreferencesSchema] = None
+
+
+class GeneratedContentSchema(BaseModel):
+    """Generated content response."""
+    generation_id: str
+    surface_type: SurfaceTypeEnum
+    surface_name: Optional[str] = None
+    content_text: str
+    generation_timestamp: datetime
+    generation_version: int = 1
+    word_count: int = 0
+    consistency_score: Optional[float] = None
+    edit_count: int = 0
+    user_satisfaction_rating: Optional[int] = Field(default=None, ge=1, le=5)
+    status: str = "draft"
+
+
+class GenerationMetadataSchema(BaseModel):
+    """Generation metadata response."""
+    generation_time_ms: Optional[int] = None
+    consistency_score: Optional[float] = None
+    surfaces_count: int = 0
+
+
+class ContentGenerationResponse(BaseModel):
+    """Response for content generation."""
+    generation_id: str
+    brand_id: str
+    generated_content: List[GeneratedContentSchema]
+    generation_metadata: Optional[GenerationMetadataSchema] = None
+
+
+class RegenerationRequest(BaseModel):
+    """Request for regenerating content."""
+    feedback_reason: FeedbackReasonEnum
+    feedback_details: Optional[str] = Field(default=None, max_length=500)
+    preferred_tone: Optional[VoiceToneEnum] = None
+    preferred_length: Optional[LengthPreferenceEnum] = None
+
+
+class ContentEditSchema(BaseModel):
+    """Content edit details."""
+    original_text: Optional[str] = None
+    modified_text: Optional[str] = None
+    edit_type: Optional[str] = None
+
+
+class PreferencesSchema(BaseModel):
+    """User preferences."""
+    tone_preference: Optional[str] = None
+    emphasis_areas: List[str] = Field(default_factory=list)
+
+
+class FeedbackRequest(BaseModel):
+    """Request for submitting feedback."""
+    feedback_type: FeedbackTypeEnum
+    generation_id: Optional[str] = None
+    satisfaction_rating: Optional[int] = Field(default=None, ge=1, le=5)
+    content_edits: Optional[ContentEditSchema] = None
+    preferences: Optional[PreferencesSchema] = None
+    feedback_text: Optional[str] = Field(default=None, max_length=1000)
+
+
+class ContentRequirementsSchema(BaseModel):
+    """Content requirements for a surface."""
+    min_length: Optional[int] = None
+    max_length: Optional[int] = None
+    tone_guidelines: List[str] = Field(default_factory=list)
+    structure_requirements: List[str] = Field(default_factory=list)
+
+
+class ProfessionalSurfaceSchema(BaseModel):
+    """Professional surface response."""
+    surface_id: str
+    surface_type: str
+    surface_name: str
+    content_requirements: ContentRequirementsSchema
+    template_structure: Optional[str] = None
+    active: bool = True
