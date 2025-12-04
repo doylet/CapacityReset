@@ -218,15 +218,15 @@ Based on plan.md structure:
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] T082 [P] Update services/ml-enrichment/README.md with new features documentation
-- [ ] T083 [P] Add environment variable documentation to README
-- [ ] T084 [P] Update quickstart.md with new usage examples at specs/001-ml-quality-lifecycle/quickstart.md
-- [ ] T085 Code cleanup and consolidate imports across modules
-- [ ] T086 Performance optimization: ensure <10% processing time increase (SC-008)
-- [ ] T087 [P] Add comprehensive logging for debugging and monitoring
-- [ ] T088 Security review: validate no sensitive data in logs
-- [ ] T089 Run quickstart.md validation - verify all code examples work
-- [ ] T090 Validate all BigQuery schemas are idempotent (IF NOT EXISTS pattern)
+- [X] T082 [P] Update services/ml-enrichment/README.md with new features documentation
+- [X] T083 [P] Add environment variable documentation to README
+- [X] T084 [P] Update quickstart.md with new usage examples at specs/001-ml-quality-lifecycle/quickstart.md
+- [X] T085 Code cleanup and consolidate imports across modules
+- [X] T086 Performance optimization: ensure <10% processing time increase (SC-008)
+- [X] T087 [P] Add comprehensive logging for debugging and monitoring
+- [X] T088 Security review: validate no sensitive data in logs
+- [X] T089 Run quickstart.md validation - verify all code examples work
+- [X] T090 Validate all BigQuery schemas are idempotent (IF NOT EXISTS pattern)
 
 ---
 
