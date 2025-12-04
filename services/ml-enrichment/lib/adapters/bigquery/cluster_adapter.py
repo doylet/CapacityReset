@@ -102,11 +102,17 @@ class BigQueryClusterRepository:
         query = f"""
         UPDATE `{self.table_id}`
         SET is_active = FALSE, updated_at = CURRENT_TIMESTAMP()
-        WHERE cluster_run_id = '{run_id}'
+        WHERE cluster_run_id = @run_id
         """
         
+        job_config = bigquery.QueryJobConfig(
+            query_parameters=[
+                bigquery.ScalarQueryParameter("run_id", "STRING", run_id)
+            ]
+        )
+        
         try:
-            query_job = self.client.query(query)
+            query_job = self.client.query(query, job_config=job_config)
             query_job.result()
             logger.info(f"Deactivated assignments for run {run_id}")
         except Exception as e:
@@ -119,11 +125,17 @@ class BigQueryClusterRepository:
         SELECT *
         FROM `{self.table_id}`
         WHERE is_active = TRUE
-        LIMIT {limit}
+        LIMIT @limit
         """
         
+        job_config = bigquery.QueryJobConfig(
+            query_parameters=[
+                bigquery.ScalarQueryParameter("limit", "INT64", limit)
+            ]
+        )
+        
         try:
-            query_job = self.client.query(query)
+            query_job = self.client.query(query, job_config=job_config)
             results = query_job.result()
             return [self._row_to_entity(row) for row in results]
         except Exception as e:
@@ -135,12 +147,18 @@ class BigQueryClusterRepository:
         query = f"""
         SELECT *
         FROM `{self.table_id}`
-        WHERE cluster_run_id = '{run_id}'
+        WHERE cluster_run_id = @run_id
         ORDER BY cluster_id, job_posting_id
         """
         
+        job_config = bigquery.QueryJobConfig(
+            query_parameters=[
+                bigquery.ScalarQueryParameter("run_id", "STRING", run_id)
+            ]
+        )
+        
         try:
-            query_job = self.client.query(query)
+            query_job = self.client.query(query, job_config=job_config)
             results = query_job.result()
             return [self._row_to_entity(row) for row in results]
         except Exception as e:
@@ -158,14 +176,20 @@ class BigQueryClusterRepository:
         query = f"""
         SELECT *
         FROM `{self.table_id}`
-        WHERE job_posting_id = '{job_posting_id}'
+        WHERE job_posting_id = @job_posting_id
             {active_filter}
         ORDER BY cluster_version DESC
         LIMIT 1
         """
         
+        job_config = bigquery.QueryJobConfig(
+            query_parameters=[
+                bigquery.ScalarQueryParameter("job_posting_id", "STRING", job_posting_id)
+            ]
+        )
+        
         try:
-            query_job = self.client.query(query)
+            query_job = self.client.query(query, job_config=job_config)
             results = list(query_job.result())
             if results:
                 return self._row_to_entity(results[0])
@@ -182,12 +206,18 @@ class BigQueryClusterRepository:
         query = f"""
         SELECT *
         FROM `{self.table_id}`
-        WHERE job_posting_id = '{job_posting_id}'
+        WHERE job_posting_id = @job_posting_id
         ORDER BY cluster_version DESC
         """
         
+        job_config = bigquery.QueryJobConfig(
+            query_parameters=[
+                bigquery.ScalarQueryParameter("job_posting_id", "STRING", job_posting_id)
+            ]
+        )
+        
         try:
-            query_job = self.client.query(query)
+            query_job = self.client.query(query, job_config=job_config)
             results = query_job.result()
             return [self._row_to_entity(row) for row in results]
         except Exception as e:
@@ -205,12 +235,18 @@ class BigQueryClusterRepository:
             COUNT(DISTINCT cluster_id) as num_clusters,
             MIN(created_at) as run_timestamp
         FROM `{self.table_id}`
-        WHERE cluster_run_id = '{run_id}'
+        WHERE cluster_run_id = @run_id
         GROUP BY cluster_run_id, cluster_model_id, cluster_version
         """
         
+        job_config = bigquery.QueryJobConfig(
+            query_parameters=[
+                bigquery.ScalarQueryParameter("run_id", "STRING", run_id)
+            ]
+        )
+        
         try:
-            query_job = self.client.query(query)
+            query_job = self.client.query(query, job_config=job_config)
             results = list(query_job.result())
             if results:
                 row = results[0]
@@ -241,11 +277,17 @@ class BigQueryClusterRepository:
         FROM `{self.table_id}`
         GROUP BY cluster_run_id, cluster_model_id, cluster_version
         ORDER BY cluster_version DESC
-        LIMIT {limit}
+        LIMIT @limit
         """
         
+        job_config = bigquery.QueryJobConfig(
+            query_parameters=[
+                bigquery.ScalarQueryParameter("limit", "INT64", limit)
+            ]
+        )
+        
         try:
-            query_job = self.client.query(query)
+            query_job = self.client.query(query, job_config=job_config)
             results = query_job.result()
             return [
                 {

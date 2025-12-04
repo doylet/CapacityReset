@@ -143,6 +143,8 @@ def main(request):
                 results['skills_extraction'] = skills_stats
                 logger.log_text(f"Skills extraction complete: {skills_stats}", severity="INFO")
             else:
+                # Cache stats to avoid redundant computation
+                empty_alias_stats = alias_resolver.get_stats()
                 results['skills_extraction'] = {
                     'processed': 0, 
                     'failed': 0, 
@@ -152,7 +154,7 @@ def main(request):
                         'total_lookups': 0,
                         'successful_resolutions': 0,
                         'resolution_rate': 0.0,
-                        'total_aliases_available': alias_resolver.get_stats().get('total_aliases_loaded', 0)
+                        'total_aliases_available': empty_alias_stats.get('total_aliases_loaded', 0)
                     }
                 }
         

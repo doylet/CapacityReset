@@ -134,27 +134,35 @@ class BigQueryEnrichmentRepository:
         Returns:
             True if update succeeded
         """
-        metadata_clause = ""
-        if metadata:
-            metadata_json = json.dumps(metadata).replace("'", "\\'")
-            metadata_clause = f", metadata = '{metadata_json}'"
+        # Build parameterized query
+        set_clauses = ["status = @status", "updated_at = CURRENT_TIMESTAMP()"]
+        query_params = [
+            bigquery.ScalarQueryParameter("enrichment_id", "STRING", enrichment_id),
+            bigquery.ScalarQueryParameter("status", "STRING", status)
+        ]
         
-        error_clause = ""
+        if metadata:
+            set_clauses.append("metadata = @metadata")
+            query_params.append(
+                bigquery.ScalarQueryParameter("metadata", "STRING", json.dumps(metadata))
+            )
+        
         if error_message:
-            error_message_escaped = error_message.replace("'", "\\'")
-            error_clause = f", error_message = '{error_message_escaped}'"
+            set_clauses.append("error_message = @error_message")
+            query_params.append(
+                bigquery.ScalarQueryParameter("error_message", "STRING", error_message)
+            )
         
         query = f"""
         UPDATE `{self.table_id}`
-        SET status = '{status}',
-            updated_at = CURRENT_TIMESTAMP()
-            {metadata_clause}
-            {error_clause}
-        WHERE enrichment_id = '{enrichment_id}'
+        SET {', '.join(set_clauses)}
+        WHERE enrichment_id = @enrichment_id
         """
         
+        job_config = bigquery.QueryJobConfig(query_parameters=query_params)
+        
         try:
-            query_job = self.client.query(query)
+            query_job = self.client.query(query, job_config=job_config)
             query_job.result()
             logger.info(f"Updated enrichment {enrichment_id} status to {status}")
             return True
