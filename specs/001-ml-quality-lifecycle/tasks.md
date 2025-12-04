@@ -93,9 +93,9 @@ Based on plan.md structure:
 
 - [X] T028 [US1] Implement get_version() method in UnifiedSkillsExtractor at services/ml-enrichment/lib/enrichment/skills/unified_extractor.py
 - [X] T029 [US1] Implement get_model_config() singleton loader in services/ml-enrichment/lib/config/model_config.py
-- [ ] T030 [US1] Add enrichment_version field to enrichment storage in services/ml-enrichment/lib/utils/enrichment_utils.py
-- [ ] T031 [US1] Implement version-based job query function in services/ml-enrichment/lib/utils/enrichment_utils.py
-- [ ] T032 [US1] Add version tracking to job_enrichments insert operations in services/ml-enrichment/lib/adapters/bigquery/enrichment_adapter.py
+- [X] T030 [US1] Add enrichment_version field to enrichment storage in services/ml-enrichment/lib/utils/enrichment_utils.py
+- [X] T031 [US1] Implement version-based job query function in services/ml-enrichment/lib/utils/enrichment_utils.py
+- [X] T032 [US1] Add version tracking to job_enrichments insert operations in services/ml-enrichment/lib/adapters/bigquery/enrichment_adapter.py
 - [X] T033 [US1] Create query for jobs needing re-enrichment in services/ml-enrichment/queries/version_queries.sql
 - [X] T034 [US1] Update main.py to include version in enrichment response at services/ml-enrichment/main.py
 - [X] T035 [US1] Add logging for version tracking operations in services/ml-enrichment/lib/config/model_config.py
@@ -113,20 +113,20 @@ Based on plan.md structure:
 ### Tests for User Story 2
 
 - [X] T036 [P] [US2] Unit test for AliasExtractionStrategy in services/ml-enrichment/tests/test_alias_extraction.py
-- [ ] T037 [P] [US2] Integration test for composite extractor in services/ml-enrichment/tests/integration/test_composite_extractor.py
+- [X] T037 [P] [US2] Integration test for composite extractor in services/ml-enrichment/tests/integration/test_composite_extractor.py
 - [X] T038 [P] [US2] Test for confidence scoring in services/ml-enrichment/tests/test_confidence_scoring.py
 
 ### Implementation for User Story 2
 
 - [X] T039 [P] [US2] Implement AliasExtractionStrategy class in services/ml-enrichment/lib/config/__init__.py (AliasResolver)
 - [X] T040 [US2] Implement alias lookup index builder in services/ml-enrichment/lib/config/__init__.py
-- [ ] T041 [US2] Extend UnifiedSkillsConfig with alias_config_path in services/ml-enrichment/lib/enrichment/skills/unified_config.py
+- [X] T041 [US2] Extend UnifiedSkillsConfig with alias_config_path in services/ml-enrichment/lib/enrichment/skills/unified_config.py
 - [X] T042 [US2] Integrate AliasExtractionStrategy into composite extractor in services/ml-enrichment/lib/enrichment/skills/unified_extractor.py
 - [X] T043 [US2] Implement strategy result merging with deduplication in services/ml-enrichment/lib/enrichment/skills/unified_extractor.py
 - [X] T044 [US2] Add source_strategies field to skill output in services/ml-enrichment/lib/enrichment/skills/unified_extractor.py
 - [X] T045 [US2] Implement enhanced confidence scoring using weighted ensemble in services/ml-enrichment/lib/enrichment/skills/unified_extractor.py
 - [X] T046 [US2] Populate skill_aliases.yaml with initial common aliases in services/ml-enrichment/config/skill_aliases.yaml
-- [ ] T047 [US2] Add alias resolution statistics to extraction response in services/ml-enrichment/main.py
+- [X] T047 [US2] Add alias resolution statistics to extraction response in services/ml-enrichment/main.py
 
 **Checkpoint**: User Story 2 should be fully functional - alias resolution works (SC-003), confidence scores included
 

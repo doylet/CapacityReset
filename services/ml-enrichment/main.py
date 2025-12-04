@@ -26,6 +26,7 @@ from lib.processors.enrichment_processors import (
     process_embeddings,
     process_clustering
 )
+from lib.config import get_alias_resolver
 
 # Get logger
 logger = get_logger()
@@ -110,6 +111,11 @@ def main(request):
         # Process skills extraction
         if 'skills_extraction' in enrichment_types:
             extractor = get_skills_extractor()
+            
+            # Reset alias resolver stats for this batch
+            alias_resolver = get_alias_resolver()
+            alias_resolver.reset_stats()
+            
             jobs = get_jobs_needing_enrichment(
                 'skills_extraction', 
                 batch_size,
@@ -124,6 +130,16 @@ def main(request):
                 )
                 # Add extractor version to response
                 skills_stats['extractor_version'] = extractor.get_version()
+                
+                # Add alias resolution statistics
+                alias_stats = alias_resolver.get_stats()
+                skills_stats['alias_resolution'] = {
+                    'total_lookups': alias_stats.get('total_lookups', 0),
+                    'successful_resolutions': alias_stats.get('successful_resolutions', 0),
+                    'resolution_rate': alias_stats.get('resolution_rate', 0.0),
+                    'total_aliases_available': alias_stats.get('total_aliases_loaded', 0)
+                }
+                
                 results['skills_extraction'] = skills_stats
                 logger.log_text(f"Skills extraction complete: {skills_stats}", severity="INFO")
             else:
@@ -131,7 +147,13 @@ def main(request):
                     'processed': 0, 
                     'failed': 0, 
                     'total_skills': 0,
-                    'extractor_version': extractor.get_version()
+                    'extractor_version': extractor.get_version(),
+                    'alias_resolution': {
+                        'total_lookups': 0,
+                        'successful_resolutions': 0,
+                        'resolution_rate': 0.0,
+                        'total_aliases_available': alias_resolver.get_stats().get('total_aliases_loaded', 0)
+                    }
                 }
         
         # Process embeddings
