@@ -69,7 +69,7 @@ export default function JobFilters({
         <h2 className="text-lg font-semibold text-gray-900">Filters</h2>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-1">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             <MapPin className="w-4 h-4 inline mr-1" />
