@@ -124,3 +124,138 @@ SELECT
 FROM `sylvan-replica-478802-p4.brightdata_jobs.job_clusters`
 GROUP BY cluster_id, cluster_name
 ORDER BY cluster_id;
+
+-- =============================================================================
+-- VERSION-BASED CLUSTER QUERIES (for cluster stability analysis)
+-- =============================================================================
+
+-- 9. Get clusters by run ID
+-- Parameters: @cluster_run_id
+SELECT 
+  cluster_assignment_id,
+  job_posting_id,
+  cluster_id,
+  cluster_name,
+  cluster_size,
+  cluster_keywords,
+  cluster_run_id,
+  cluster_model_id,
+  cluster_version,
+  is_active,
+  created_at
+FROM `sylvan-replica-478802-p4.brightdata_jobs.job_clusters`
+WHERE cluster_run_id = @cluster_run_id
+ORDER BY cluster_id, job_posting_id;
+
+-- 10. Get only active cluster assignments
+SELECT 
+  job_posting_id,
+  cluster_id,
+  cluster_name,
+  cluster_run_id,
+  cluster_version
+FROM `sylvan-replica-478802-p4.brightdata_jobs.job_clusters`
+WHERE is_active = TRUE
+ORDER BY cluster_id;
+
+-- 11. Compare cluster assignments between two runs
+-- Parameters: @old_run_id, @new_run_id
+SELECT 
+  COALESCE(old.job_posting_id, new.job_posting_id) AS job_posting_id,
+  old.cluster_id AS old_cluster,
+  old.cluster_name AS old_cluster_name,
+  new.cluster_id AS new_cluster,
+  new.cluster_name AS new_cluster_name,
+  CASE 
+    WHEN old.cluster_id IS NULL THEN 'new'
+    WHEN new.cluster_id IS NULL THEN 'removed'
+    WHEN old.cluster_id = new.cluster_id THEN 'stable'
+    ELSE 'changed'
+  END AS status
+FROM (
+  SELECT * FROM `sylvan-replica-478802-p4.brightdata_jobs.job_clusters`
+  WHERE cluster_run_id = @old_run_id
+) old
+FULL OUTER JOIN (
+  SELECT * FROM `sylvan-replica-478802-p4.brightdata_jobs.job_clusters`
+  WHERE cluster_run_id = @new_run_id
+) new
+ON old.job_posting_id = new.job_posting_id
+ORDER BY status, job_posting_id;
+
+-- 12. Cluster stability summary between runs
+-- Parameters: @old_run_id, @new_run_id
+WITH comparison AS (
+  SELECT 
+    CASE 
+      WHEN old.cluster_id IS NULL THEN 'new'
+      WHEN new.cluster_id IS NULL THEN 'removed'
+      WHEN old.cluster_id = new.cluster_id THEN 'stable'
+      ELSE 'changed'
+    END AS status
+  FROM (
+    SELECT * FROM `sylvan-replica-478802-p4.brightdata_jobs.job_clusters`
+    WHERE cluster_run_id = @old_run_id
+  ) old
+  FULL OUTER JOIN (
+    SELECT * FROM `sylvan-replica-478802-p4.brightdata_jobs.job_clusters`
+    WHERE cluster_run_id = @new_run_id
+  ) new
+  ON old.job_posting_id = new.job_posting_id
+)
+SELECT 
+  status,
+  COUNT(*) AS job_count,
+  ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (), 2) AS percentage
+FROM comparison
+GROUP BY status
+ORDER BY job_count DESC;
+
+-- 13. Cluster version history for a specific job
+-- Parameters: @job_posting_id
+SELECT 
+  cluster_id,
+  cluster_name,
+  cluster_run_id,
+  cluster_model_id,
+  cluster_version,
+  is_active,
+  created_at
+FROM `sylvan-replica-478802-p4.brightdata_jobs.job_clusters`
+WHERE job_posting_id = @job_posting_id
+ORDER BY cluster_version DESC;
+
+-- 14. List all cluster runs with summary
+SELECT 
+  cluster_run_id,
+  cluster_model_id,
+  MIN(created_at) AS run_start,
+  MAX(created_at) AS run_end,
+  COUNT(DISTINCT job_posting_id) AS jobs_clustered,
+  COUNT(DISTINCT cluster_id) AS clusters_created,
+  COUNTIF(is_active) AS active_assignments
+FROM `sylvan-replica-478802-p4.brightdata_jobs.job_clusters`
+GROUP BY cluster_run_id, cluster_model_id
+ORDER BY run_start DESC;
+
+-- 15. Cluster size changes across runs
+-- Parameters: @old_run_id, @new_run_id
+SELECT 
+  COALESCE(old.cluster_name, new.cluster_name) AS cluster_name,
+  old.size AS old_size,
+  new.size AS new_size,
+  (COALESCE(new.size, 0) - COALESCE(old.size, 0)) AS size_change
+FROM (
+  SELECT cluster_name, COUNT(*) AS size
+  FROM `sylvan-replica-478802-p4.brightdata_jobs.job_clusters`
+  WHERE cluster_run_id = @old_run_id
+  GROUP BY cluster_name
+) old
+FULL OUTER JOIN (
+  SELECT cluster_name, COUNT(*) AS size
+  FROM `sylvan-replica-478802-p4.brightdata_jobs.job_clusters`
+  WHERE cluster_run_id = @new_run_id
+  GROUP BY cluster_name
+) new
+ON old.cluster_name = new.cluster_name
+ORDER BY ABS(COALESCE(new.size, 0) - COALESCE(old.size, 0)) DESC;

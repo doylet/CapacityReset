@@ -7,7 +7,7 @@ Uses rule-based classification with support for future ML enhancement.
 
 import logging
 import re
-from typing import List, Dict, Set, Tuple, Optional
+from typing import List, Dict, Set, Tuple, Optional, Any
 from dataclasses import dataclass
 
 from ..domain.entities import SectionClassification
@@ -278,6 +278,62 @@ class SectionClassifier:
             if h in header or header in h:
                 return True
         return False
+    
+    def detect_sections(self, text: str) -> List[Dict[str, Any]]:
+        """
+        Detect sections in text and return as dictionaries.
+        
+        Args:
+            text: Full job posting text
+            
+        Returns:
+            List of section dictionaries with header, text, is_relevant, and probability
+        """
+        if not text:
+            return []
+        
+        classifications = self.classify_sections(text)
+        return [
+            {
+                'header': c.section_header,
+                'text': c.section_text,
+                'is_relevant': c.is_skills_relevant,
+                'probability': c.relevance_probability
+            }
+            for c in classifications
+        ]
+    
+    def get_relevance_score(self, section_header: str) -> float:
+        """
+        Get relevance score for a section header.
+        
+        Args:
+            section_header: The section header text
+            
+        Returns:
+            Relevance probability between 0.0 and 1.0
+        """
+        if not section_header:
+            return 0.5
+        
+        header_lower = section_header.lower()
+        
+        if self._matches_header_set(header_lower, self._relevant_headers):
+            return 0.9
+        elif self._matches_header_set(header_lower, self._non_relevant_headers):
+            return 0.1
+        else:
+            return 0.5
+    
+    @property
+    def relevant_sections(self) -> Set[str]:
+        """Get the set of relevant section headers."""
+        return self.RELEVANT_HEADERS
+    
+    @property
+    def excluded_sections(self) -> Set[str]:
+        """Get the set of excluded section headers."""
+        return self.NON_RELEVANT_HEADERS
 
 
 def get_section_classifier() -> SectionClassifier:
