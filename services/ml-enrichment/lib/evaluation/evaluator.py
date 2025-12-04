@@ -46,12 +46,14 @@ class SkillsEvaluator:
     - Computing precision, recall, F1 metrics
     - Per-category metric breakdown
     - CI/CD integration with threshold gating
+    - Storing results in BigQuery
     """
     
     def __init__(
         self,
         model_id: str = "skills_extractor",
-        extractor: Optional[UnifiedSkillsExtractor] = None
+        extractor: Optional[UnifiedSkillsExtractor] = None,
+        repository=None
     ):
         """
         Initialize evaluator.
@@ -59,6 +61,7 @@ class SkillsEvaluator:
         Args:
             model_id: Identifier for the model being evaluated
             extractor: Optional pre-configured extractor (for testing)
+            repository: Optional BigQueryEvaluationRepository for storing results
         """
         self.model_id = model_id
         self.extractor = extractor or UnifiedSkillsExtractor(
@@ -66,13 +69,27 @@ class SkillsEvaluator:
             enable_patterns=True
         )
         self.model_version = self.extractor.get_version()
+        self._repository = repository
+    
+    @property
+    def repository(self):
+        """Lazy-load repository to avoid import issues."""
+        if self._repository is None:
+            try:
+                from ..adapters.bigquery import BigQueryEvaluationRepository
+                self._repository = BigQueryEvaluationRepository()
+            except Exception as e:
+                logger.warning(f"Could not initialize repository: {e}")
+                self._repository = None
+        return self._repository
     
     def evaluate(
         self,
         dataset_path: Optional[str] = None,
         dataset: Optional[List[EvaluationSample]] = None,
         sample_limit: Optional[int] = None,
-        categories: Optional[List[str]] = None
+        categories: Optional[List[str]] = None,
+        save_results: bool = False
     ) -> EvaluationResult:
         """
         Run evaluation on a dataset.
@@ -82,6 +99,7 @@ class SkillsEvaluator:
             dataset: Pre-loaded list of EvaluationSample objects
             sample_limit: Maximum samples to evaluate
             categories: Limit evaluation to specific categories
+            save_results: Whether to save results to BigQuery
             
         Returns:
             EvaluationResult with metrics
@@ -154,6 +172,14 @@ class SkillsEvaluator:
             f"Evaluation complete: precision={metrics['precision']:.3f}, "
             f"recall={metrics['recall']:.3f}, f1={metrics['f1']:.3f}"
         )
+        
+        # Save results to BigQuery if requested
+        if save_results and self.repository:
+            try:
+                self.repository.save(result)
+                logger.info(f"Saved evaluation result: {result.evaluation_id}")
+            except Exception as e:
+                logger.warning(f"Failed to save evaluation result: {e}")
         
         return result
     

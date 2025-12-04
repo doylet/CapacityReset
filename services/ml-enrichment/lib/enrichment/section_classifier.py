@@ -286,3 +286,16 @@ def get_section_classifier() -> SectionClassifier:
     if '_classifier_instance' not in globals():
         _classifier_instance = SectionClassifier()
     return _classifier_instance
+
+
+# Alias methods for test compatibility
+SectionClassifier.detect_sections = lambda self, text: [
+    {'header': result.section_header, 'text': result.section_text, 'is_relevant': result.is_skills_relevant, 'probability': result.relevance_probability}
+    for result in self.classify_sections(text or "")
+]
+
+SectionClassifier.get_relevance_score = lambda self, section_header: (
+    0.9 if any(h in (section_header or "").lower() for h in self._relevant_headers) else
+    0.1 if any(h in (section_header or "").lower() for h in self._non_relevant_headers) else
+    0.5
+)

@@ -214,3 +214,315 @@ def main(request):
             'error': str(e)
         }, 500
 
+
+@functions_framework.http
+def evaluate(request):
+    """
+    HTTP Cloud Function to run model evaluation.
+    
+    Request body:
+        {
+            "dataset_path": "gs://bucket/evaluation_data.jsonl",  # or local path
+            "sample_limit": 100,  # optional
+            "categories": ["programming_languages", "web_frameworks"]  # optional
+        }
+    
+    Response:
+        {
+            "status": "success",
+            "evaluation_id": "eval-uuid",
+            "model_id": "skills_extractor",
+            "model_version": "v4.0-enhanced",
+            "sample_count": 100,
+            "overall_precision": 0.85,
+            "overall_recall": 0.90,
+            "overall_f1": 0.87,
+            "category_metrics": {...},
+            "execution_time_seconds": 45.2
+        }
+    """
+    start_time = datetime.utcnow()
+    
+    try:
+        from lib.evaluation.evaluator import SkillsEvaluator
+        
+        # Parse request
+        request_json = request.get_json(silent=True) or {}
+        dataset_path = request_json.get('dataset_path')
+        sample_limit = request_json.get('sample_limit')
+        categories = request_json.get('categories')
+        
+        if not dataset_path:
+            return {
+                'status': 'error',
+                'error': 'dataset_path is required'
+            }, 400
+        
+        logger.log_text(f"Starting evaluation with dataset: {dataset_path}", severity="INFO")
+        
+        # Run evaluation
+        evaluator = SkillsEvaluator()
+        result = evaluator.evaluate(
+            dataset_path=dataset_path,
+            sample_limit=sample_limit,
+            categories=categories
+        )
+        
+        logger.log_text(
+            f"Evaluation complete: F1={result.overall_f1:.3f}, samples={result.sample_count}",
+            severity="INFO"
+        )
+        
+        return {
+            'status': 'success',
+            'evaluation_id': result.evaluation_id,
+            'model_id': result.model_id,
+            'model_version': result.model_version,
+            'dataset_version': result.dataset_version,
+            'sample_count': result.sample_count,
+            'overall_precision': result.overall_precision,
+            'overall_recall': result.overall_recall,
+            'overall_f1': result.overall_f1,
+            'category_metrics': result.category_metrics,
+            'execution_time_seconds': result.execution_time_seconds
+        }, 200
+        
+    except Exception as e:
+        logger.log_text(f"Evaluation failed: {str(e)}", severity="ERROR")
+        return {
+            'status': 'error',
+            'error': str(e)
+        }, 500
+
+
+@functions_framework.http
+def evaluate_quick(request):
+    """
+    HTTP Cloud Function for quick CI/CD evaluation.
+    
+    Request body:
+        {
+            "dataset_path": "gs://bucket/eval_small.jsonl",
+            "threshold_f1": 0.7,
+            "sample_limit": 50,
+            "ci_build_id": "build-123"  # optional
+        }
+    
+    Response:
+        {
+            "status": "success",
+            "threshold_passed": true,
+            "overall_f1": 0.82,
+            "threshold_f1": 0.7,
+            "sample_count": 50,
+            "execution_time_seconds": 12.5
+        }
+    """
+    try:
+        from lib.evaluation.evaluator import SkillsEvaluator
+        
+        # Parse request
+        request_json = request.get_json(silent=True) or {}
+        dataset_path = request_json.get('dataset_path')
+        threshold_f1 = request_json.get('threshold_f1', 0.7)
+        sample_limit = request_json.get('sample_limit', 50)
+        ci_build_id = request_json.get('ci_build_id')
+        
+        if not dataset_path:
+            return {
+                'status': 'error',
+                'error': 'dataset_path is required'
+            }, 400
+        
+        logger.log_text(
+            f"Starting quick evaluation: dataset={dataset_path}, threshold={threshold_f1}",
+            severity="INFO"
+        )
+        
+        # Run quick evaluation
+        evaluator = SkillsEvaluator()
+        result = evaluator.evaluate_quick(
+            dataset_path=dataset_path,
+            threshold_f1=threshold_f1,
+            sample_limit=sample_limit,
+            ci_build_id=ci_build_id
+        )
+        
+        status_msg = "PASS" if result.threshold_passed else "FAIL"
+        logger.log_text(
+            f"Quick evaluation {status_msg}: F1={result.overall_f1:.3f} (threshold={threshold_f1})",
+            severity="INFO"
+        )
+        
+        return {
+            'status': 'success',
+            'threshold_passed': result.threshold_passed,
+            'overall_f1': result.overall_f1,
+            'overall_precision': result.overall_precision,
+            'overall_recall': result.overall_recall,
+            'threshold_f1': threshold_f1,
+            'sample_count': result.sample_count,
+            'model_version': result.model_version,
+            'execution_time_seconds': result.execution_time_seconds,
+            'ci_build_id': ci_build_id
+        }, 200
+        
+    except Exception as e:
+        logger.log_text(f"Quick evaluation failed: {str(e)}", severity="ERROR")
+        return {
+            'status': 'error',
+            'error': str(e)
+        }, 500
+
+
+@functions_framework.http
+def evaluate_results(request):
+    """
+    HTTP Cloud Function to retrieve historical evaluation results.
+    
+    Request body:
+        {
+            "model_id": "skills_extractor",  # optional
+            "limit": 20  # optional
+        }
+    
+    Response:
+        {
+            "status": "success",
+            "results": [
+                {
+                    "evaluation_id": "...",
+                    "model_version": "v4.0-enhanced",
+                    "overall_f1": 0.87,
+                    "evaluation_date": "2025-12-03T10:00:00Z"
+                },
+                ...
+            ]
+        }
+    """
+    try:
+        from lib.adapters.bigquery import BigQueryEvaluationRepository
+        
+        # Parse request
+        request_json = request.get_json(silent=True) or {}
+        model_id = request_json.get('model_id', 'skills_extractor')
+        limit = request_json.get('limit', 20)
+        
+        logger.log_text(
+            f"Fetching evaluation results: model={model_id}, limit={limit}",
+            severity="INFO"
+        )
+        
+        # Fetch results
+        repository = BigQueryEvaluationRepository()
+        results = repository.find_by_model(model_id=model_id, limit=limit)
+        
+        # Format response
+        formatted_results = [
+            {
+                'evaluation_id': r.evaluation_id,
+                'model_id': r.model_id,
+                'model_version': r.model_version,
+                'dataset_version': r.dataset_version,
+                'sample_count': r.sample_count,
+                'overall_precision': r.overall_precision,
+                'overall_recall': r.overall_recall,
+                'overall_f1': r.overall_f1,
+                'evaluation_date': r.evaluation_date.isoformat(),
+                'is_ci_run': r.is_ci_run,
+                'threshold_passed': r.threshold_passed
+            }
+            for r in results
+        ]
+        
+        return {
+            'status': 'success',
+            'count': len(formatted_results),
+            'results': formatted_results
+        }, 200
+        
+    except Exception as e:
+        logger.log_text(f"Failed to fetch evaluation results: {str(e)}", severity="ERROR")
+        return {
+            'status': 'error',
+            'error': str(e)
+        }, 500
+
+
+@functions_framework.http
+def classify_sections(request):
+    """
+    HTTP Cloud Function to classify job posting sections.
+    
+    Request body:
+        {
+            "job_posting_id": "job-123",  # optional
+            "text": "Full job posting text..."
+        }
+    
+    Response:
+        {
+            "status": "success",
+            "sections": [
+                {
+                    "header": "Requirements",
+                    "is_skills_relevant": true,
+                    "relevance_probability": 0.9,
+                    "detected_keywords": ["python", "experience with"]
+                },
+                ...
+            ],
+            "classifier_version": "v1.0-rule-based"
+        }
+    """
+    try:
+        from lib.enrichment.section_classifier import SectionClassifier
+        
+        # Parse request
+        request_json = request.get_json(silent=True) or {}
+        job_posting_id = request_json.get('job_posting_id')
+        text = request_json.get('text', '')
+        
+        if not text:
+            return {
+                'status': 'error',
+                'error': 'text is required'
+            }, 400
+        
+        logger.log_text(
+            f"Classifying sections for job: {job_posting_id or 'unknown'}",
+            severity="INFO"
+        )
+        
+        # Classify sections
+        classifier = SectionClassifier()
+        classifications = classifier.classify_sections(text, job_posting_id)
+        
+        # Format response
+        formatted_sections = [
+            {
+                'section_index': c.section_index,
+                'header': c.section_header,
+                'text_preview': c.section_text[:200] + '...' if len(c.section_text) > 200 else c.section_text,
+                'is_skills_relevant': c.is_skills_relevant,
+                'relevance_probability': c.relevance_probability,
+                'detected_keywords': c.detected_keywords
+            }
+            for c in classifications
+        ]
+        
+        return {
+            'status': 'success',
+            'section_count': len(formatted_sections),
+            'sections': formatted_sections,
+            'classifier_version': classifier.get_version(),
+            'relevant_section_count': sum(1 for c in classifications if c.is_skills_relevant)
+        }, 200
+        
+    except Exception as e:
+        logger.log_text(f"Section classification failed: {str(e)}", severity="ERROR")
+        return {
+            'status': 'error',
+            'error': str(e)
+        }, 500
+
