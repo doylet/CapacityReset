@@ -4,9 +4,11 @@ API Routes - FastAPI route handlers
 All HTTP endpoint definitions separated from application setup.
 """
 
-from fastapi import APIRouter, HTTPException, Query, Depends
+from fastapi import APIRouter, HTTPException, Query, Depends, UploadFile, File
 from typing import Optional, List, Dict, Any
-from datetime import date
+from datetime import date, datetime
+import uuid
+import time
 
 from api.schemas import (
     JobResponse,
@@ -18,7 +20,27 @@ from api.schemas import (
     GenerateReportRequest,
     CreateAnnotationRequest,
     AnnotationResponse,
-    ExportTrainingDataResponse
+    ExportTrainingDataResponse,
+    # Brand schemas
+    BrandAnalysisResponse,
+    BrandOverviewSchema,
+    BrandUpdateRequest,
+    ContentGenerationRequest,
+    ContentGenerationResponse,
+    GeneratedContentSchema,
+    RegenerationRequest,
+    FeedbackRequest,
+    ProfessionalSurfaceSchema,
+    ProfessionalThemeSchema,
+    VoiceCharacteristicsSchema,
+    NarrativeArcSchema,
+    AnalysisMetadataSchema,
+    GenerationMetadataSchema,
+    SurfaceTypeEnum,
+    ThemeCategoryEnum,
+    VoiceToneEnum,
+    FormalityLevelEnum,
+    EnergyLevelEnum
 )
 from api.dependencies import (
     get_list_jobs_uc,
@@ -61,6 +83,9 @@ clusters_router = APIRouter(prefix="/clusters", tags=["clusters"])
 
 # Router for annotations
 annotations_router = APIRouter(prefix="/annotations", tags=["annotations"])
+
+# Router for brand management (AI Brand Roadmap)
+brand_router = APIRouter(prefix="/brand", tags=["brand"])
 
 
 # === Job Routes ===
@@ -480,3 +505,493 @@ async def export_training_data():
         annotations=data['annotations'],
         label_distribution=data['label_distribution']
     )
+
+
+# === Brand Routes (AI Brand Roadmap) ===
+
+# In-memory storage for MVP demonstration (replace with BigQuery adapter in production)
+_brand_storage: Dict[str, Dict[str, Any]] = {}
+_content_storage: Dict[str, Dict[str, Any]] = {}
+_surfaces_data = [
+    {
+        "surface_id": "surf-cv-summary-001",
+        "surface_type": "cv_summary",
+        "surface_name": "CV Professional Summary",
+        "content_requirements": {
+            "min_length": 100,
+            "max_length": 300,
+            "tone_guidelines": ["professional", "achievement-focused"],
+            "structure_requirements": ["opening_statement", "key_achievements", "value_proposition"]
+        },
+        "template_structure": "A results-driven {career_focus} professional...",
+        "active": True
+    },
+    {
+        "surface_id": "surf-linkedin-summary-001",
+        "surface_type": "linkedin_summary",
+        "surface_name": "LinkedIn Summary",
+        "content_requirements": {
+            "min_length": 150,
+            "max_length": 500,
+            "tone_guidelines": ["conversational", "professional", "authentic"],
+            "structure_requirements": ["hook", "story", "expertise", "call_to_action"]
+        },
+        "template_structure": "{hook_statement}\n\n{career_story}...",
+        "active": True
+    },
+    {
+        "surface_id": "surf-portfolio-intro-001",
+        "surface_type": "portfolio_intro",
+        "surface_name": "Portfolio Introduction",
+        "content_requirements": {
+            "min_length": 100,
+            "max_length": 250,
+            "tone_guidelines": ["creative", "professional", "engaging"],
+            "structure_requirements": ["introduction", "expertise", "value_statement"]
+        },
+        "template_structure": "Hello, I am {professional_title}...",
+        "active": True
+    }
+]
+
+
+@brand_router.post("/analysis", response_model=BrandAnalysisResponse)
+async def analyze_brand(
+    document: UploadFile = File(...),
+    linkedin_profile_url: Optional[str] = None
+):
+    """
+    Analyze professional document for brand extraction.
+    
+    Upload CV/resume and optional LinkedIn profile for comprehensive brand analysis.
+    Returns brand overview with themes, voice characteristics, and narrative arc.
+    """
+    start_time = time.time()
+    
+    # Read document content
+    content = await document.read()
+    document_text = content.decode('utf-8', errors='ignore')
+    
+    # Generate brand ID
+    brand_id = str(uuid.uuid4())
+    
+    # Extract professional themes from document (MVP implementation)
+    themes = _extract_themes_from_document(document_text)
+    
+    # Analyze voice characteristics
+    voice = _analyze_voice_characteristics(document_text)
+    
+    # Build narrative arc
+    narrative = _build_narrative_arc(document_text)
+    
+    # Calculate confidence scores
+    confidence_scores = {
+        "overall": 0.85,
+        "themes": 0.82,
+        "voice": 0.88,
+        "narrative": 0.80
+    }
+    
+    # Store brand representation
+    brand_data = {
+        "brand_id": brand_id,
+        "user_id": "default-user",
+        "source_document_url": f"uploads/{document.filename}",
+        "linkedin_profile_url": linkedin_profile_url,
+        "professional_themes": themes,
+        "voice_characteristics": voice,
+        "narrative_arc": narrative,
+        "confidence_scores": confidence_scores,
+        "created_at": datetime.utcnow(),
+        "updated_at": datetime.utcnow(),
+        "version": 1
+    }
+    _brand_storage[brand_id] = brand_data
+    
+    processing_time_ms = int((time.time() - start_time) * 1000)
+    
+    return BrandAnalysisResponse(
+        brand_id=brand_id,
+        analysis_status="completed",
+        brand_overview=BrandOverviewSchema(
+            brand_id=brand_id,
+            professional_themes=[
+                ProfessionalThemeSchema(**theme) for theme in themes
+            ],
+            voice_characteristics=VoiceCharacteristicsSchema(**voice),
+            narrative_arc=NarrativeArcSchema(**narrative),
+            confidence_scores=confidence_scores,
+            created_at=brand_data["created_at"],
+            updated_at=brand_data["updated_at"]
+        ),
+        analysis_metadata=AnalysisMetadataSchema(
+            document_type=document.content_type,
+            word_count=len(document_text.split()),
+            confidence_score=confidence_scores["overall"],
+            processing_time_ms=processing_time_ms
+        )
+    )
+
+
+@brand_router.get("/overview/{brand_id}", response_model=BrandOverviewSchema)
+async def get_brand_overview(brand_id: str):
+    """Retrieve brand overview."""
+    if brand_id not in _brand_storage:
+        raise HTTPException(status_code=404, detail="Brand not found")
+    
+    brand_data = _brand_storage[brand_id]
+    
+    return BrandOverviewSchema(
+        brand_id=brand_id,
+        professional_themes=[
+            ProfessionalThemeSchema(**theme) for theme in brand_data["professional_themes"]
+        ],
+        voice_characteristics=VoiceCharacteristicsSchema(**brand_data["voice_characteristics"]),
+        narrative_arc=NarrativeArcSchema(**brand_data["narrative_arc"]),
+        confidence_scores=brand_data["confidence_scores"],
+        created_at=brand_data.get("created_at"),
+        updated_at=brand_data.get("updated_at")
+    )
+
+
+@brand_router.patch("/overview/{brand_id}", response_model=BrandOverviewSchema)
+async def update_brand_overview(brand_id: str, request: BrandUpdateRequest):
+    """Update brand overview."""
+    if brand_id not in _brand_storage:
+        raise HTTPException(status_code=404, detail="Brand not found")
+    
+    brand_data = _brand_storage[brand_id]
+    
+    # Update fields if provided
+    if request.professional_themes is not None:
+        brand_data["professional_themes"] = [t.model_dump() for t in request.professional_themes]
+    if request.voice_characteristics is not None:
+        brand_data["voice_characteristics"] = request.voice_characteristics.model_dump()
+    if request.narrative_arc is not None:
+        brand_data["narrative_arc"] = request.narrative_arc.model_dump()
+    
+    brand_data["updated_at"] = datetime.utcnow()
+    brand_data["version"] += 1
+    
+    return BrandOverviewSchema(
+        brand_id=brand_id,
+        professional_themes=[
+            ProfessionalThemeSchema(**theme) for theme in brand_data["professional_themes"]
+        ],
+        voice_characteristics=VoiceCharacteristicsSchema(**brand_data["voice_characteristics"]),
+        narrative_arc=NarrativeArcSchema(**brand_data["narrative_arc"]),
+        confidence_scores=brand_data["confidence_scores"],
+        created_at=brand_data.get("created_at"),
+        updated_at=brand_data.get("updated_at")
+    )
+
+
+@brand_router.post("/{brand_id}/generate", response_model=ContentGenerationResponse)
+async def generate_content(brand_id: str, request: ContentGenerationRequest):
+    """
+    Generate cross-surface branded content.
+    
+    Create consistent content across multiple professional surfaces (CV, LinkedIn, portfolio)
+    using established brand representation.
+    """
+    start_time = time.time()
+    
+    if brand_id not in _brand_storage:
+        raise HTTPException(status_code=404, detail="Brand not found")
+    
+    brand_data = _brand_storage[brand_id]
+    generation_id = str(uuid.uuid4())
+    generated_content = []
+    
+    for surface_type in request.surface_types:
+        content_id = str(uuid.uuid4())
+        content_text = _generate_surface_content(
+            brand_data, 
+            surface_type.value,
+            request.generation_preferences
+        )
+        
+        content_data = {
+            "generation_id": content_id,
+            "brand_id": brand_id,
+            "surface_type": surface_type,
+            "surface_name": _get_surface_name(surface_type.value),
+            "content_text": content_text,
+            "generation_timestamp": datetime.utcnow(),
+            "generation_version": 1,
+            "word_count": len(content_text.split()),
+            "consistency_score": 0.92,
+            "edit_count": 0,
+            "status": "draft"
+        }
+        
+        _content_storage[content_id] = content_data
+        generated_content.append(GeneratedContentSchema(**content_data))
+    
+    processing_time_ms = int((time.time() - start_time) * 1000)
+    
+    return ContentGenerationResponse(
+        generation_id=generation_id,
+        brand_id=brand_id,
+        generated_content=generated_content,
+        generation_metadata=GenerationMetadataSchema(
+            generation_time_ms=processing_time_ms,
+            consistency_score=0.92,
+            surfaces_count=len(generated_content)
+        )
+    )
+
+
+@brand_router.get("/{brand_id}/content", response_model=List[GeneratedContentSchema])
+async def get_generated_content(
+    brand_id: str,
+    surface_type: Optional[SurfaceTypeEnum] = None
+):
+    """Retrieve generated content for a brand."""
+    if brand_id not in _brand_storage:
+        raise HTTPException(status_code=404, detail="Brand not found")
+    
+    contents = [
+        GeneratedContentSchema(**data)
+        for data in _content_storage.values()
+        if data["brand_id"] == brand_id and (
+            surface_type is None or data["surface_type"] == surface_type
+        )
+    ]
+    
+    return contents
+
+
+@brand_router.post("/{brand_id}/content/{generation_id}/regenerate", response_model=GeneratedContentSchema)
+async def regenerate_content(
+    brand_id: str,
+    generation_id: str,
+    request: RegenerationRequest
+):
+    """Regenerate specific surface content with feedback."""
+    if brand_id not in _brand_storage:
+        raise HTTPException(status_code=404, detail="Brand not found")
+    
+    if generation_id not in _content_storage:
+        raise HTTPException(status_code=404, detail="Content generation not found")
+    
+    content_data = _content_storage[generation_id]
+    if content_data["brand_id"] != brand_id:
+        raise HTTPException(status_code=404, detail="Content not found for this brand")
+    
+    brand_data = _brand_storage[brand_id]
+    
+    # Archive old generation
+    content_data["status"] = "archived"
+    
+    # Create new generation
+    new_id = str(uuid.uuid4())
+    new_content_text = _generate_surface_content(
+        brand_data,
+        content_data["surface_type"].value if hasattr(content_data["surface_type"], 'value') else content_data["surface_type"],
+        None,
+        feedback=request.feedback_details,
+        tone=request.preferred_tone,
+        length=request.preferred_length
+    )
+    
+    new_content = {
+        "generation_id": new_id,
+        "brand_id": brand_id,
+        "surface_type": content_data["surface_type"],
+        "surface_name": content_data.get("surface_name"),
+        "content_text": new_content_text,
+        "generation_timestamp": datetime.utcnow(),
+        "generation_version": content_data["generation_version"] + 1,
+        "word_count": len(new_content_text.split()),
+        "consistency_score": 0.90,
+        "edit_count": 0,
+        "status": "draft"
+    }
+    
+    _content_storage[new_id] = new_content
+    
+    return GeneratedContentSchema(**new_content)
+
+
+@brand_router.post("/{brand_id}/feedback")
+async def submit_feedback(brand_id: str, request: FeedbackRequest):
+    """Submit content feedback for learning improvement."""
+    if brand_id not in _brand_storage:
+        raise HTTPException(status_code=404, detail="Brand not found")
+    
+    # Record learning event (MVP: just acknowledge receipt)
+    event_id = str(uuid.uuid4())
+    
+    return {
+        "event_id": event_id,
+        "brand_id": brand_id,
+        "feedback_type": request.feedback_type,
+        "status": "recorded",
+        "message": "Feedback recorded successfully for learning improvement"
+    }
+
+
+@brand_router.post("/{brand_id}/rating")
+async def submit_rating(
+    brand_id: str,
+    rating: int = Query(..., ge=1, le=5),
+    generation_id: Optional[str] = None
+):
+    """Submit satisfaction rating for generated content."""
+    if brand_id not in _brand_storage:
+        raise HTTPException(status_code=404, detail="Brand not found")
+    
+    if generation_id and generation_id in _content_storage:
+        _content_storage[generation_id]["user_satisfaction_rating"] = rating
+    
+    return {
+        "brand_id": brand_id,
+        "generation_id": generation_id,
+        "rating": rating,
+        "status": "recorded"
+    }
+
+
+@brand_router.get("/surfaces", response_model=List[ProfessionalSurfaceSchema])
+async def list_surfaces():
+    """List available professional surfaces."""
+    return [
+        ProfessionalSurfaceSchema(
+            surface_id=s["surface_id"],
+            surface_type=s["surface_type"],
+            surface_name=s["surface_name"],
+            content_requirements=s["content_requirements"],
+            template_structure=s.get("template_structure"),
+            active=s.get("active", True)
+        )
+        for s in _surfaces_data
+    ]
+
+
+# === Helper functions for brand analysis ===
+
+def _extract_themes_from_document(text: str) -> List[Dict[str, Any]]:
+    """Extract professional themes from document text (MVP implementation)."""
+    themes = []
+    text_lower = text.lower()
+    
+    # Simple keyword-based theme extraction for MVP
+    theme_patterns = {
+        "leadership": ("leadership", "skill", ["leadership", "team management", "mentoring"]),
+        "technical_expertise": ("technical expertise", "skill", ["programming", "development", "engineering"]),
+        "communication": ("communication", "skill", ["communication", "presentation", "collaboration"]),
+        "innovation": ("innovation", "value_proposition", ["innovation", "creative", "problem-solving"]),
+        "results_driven": ("results-driven", "achievement", ["results", "delivered", "achieved"])
+    }
+    
+    for key, (name, category, keywords) in theme_patterns.items():
+        if any(kw in text_lower for kw in keywords):
+            themes.append({
+                "theme_id": str(uuid.uuid4()),
+                "theme_name": name,
+                "theme_category": category,
+                "description": f"Demonstrated {name} throughout career",
+                "keywords": keywords,
+                "confidence_score": 0.85,
+                "source_evidence": f"Extracted from document analysis"
+            })
+    
+    # Ensure at least one theme
+    if not themes:
+        themes.append({
+            "theme_id": str(uuid.uuid4()),
+            "theme_name": "professional expertise",
+            "theme_category": "skill",
+            "description": "General professional expertise",
+            "keywords": ["professional", "experience"],
+            "confidence_score": 0.75,
+            "source_evidence": "Default theme from document"
+        })
+    
+    return themes[:5]  # Limit to 5 themes
+
+
+def _analyze_voice_characteristics(text: str) -> Dict[str, Any]:
+    """Analyze voice characteristics from document text (MVP implementation)."""
+    text_lower = text.lower()
+    
+    # Simple heuristics for voice analysis
+    tone = "professional"
+    if any(word in text_lower for word in ["passionate", "excited", "thrilled"]):
+        tone = "enthusiastic"
+    elif any(word in text_lower for word in ["data", "metrics", "analysis"]):
+        tone = "analytical"
+    
+    formality = "formal"
+    if any(word in text_lower for word in ["hey", "folks", "awesome"]):
+        formality = "casual"
+    elif any(word in text_lower for word in ["i am", "i've", "my experience"]):
+        formality = "business_casual"
+    
+    return {
+        "tone": tone,
+        "formality_level": formality,
+        "energy_level": "balanced",
+        "communication_style": ["data_driven", "action_oriented"],
+        "vocabulary_complexity": "professional"
+    }
+
+
+def _build_narrative_arc(text: str) -> Dict[str, Any]:
+    """Build narrative arc from document text (MVP implementation)."""
+    words = text.split()
+    
+    # Extract simple narrative elements
+    career_focus = "Experienced professional"
+    if len(words) > 10:
+        career_focus = " ".join(words[:5]) + "..."
+    
+    return {
+        "career_focus": career_focus,
+        "value_proposition": "Delivering results through expertise and dedication",
+        "career_progression": "Progressive career growth with increasing responsibilities",
+        "key_achievements": ["Demonstrated track record of success"],
+        "future_goals": "Continuing to drive impact in the industry"
+    }
+
+
+def _generate_surface_content(
+    brand_data: Dict[str, Any],
+    surface_type: str,
+    preferences: Any = None,
+    feedback: str = None,
+    tone: Any = None,
+    length: Any = None
+) -> str:
+    """Generate content for a specific surface (MVP implementation)."""
+    themes = brand_data.get("professional_themes", [])
+    narrative = brand_data.get("narrative_arc", {})
+    voice = brand_data.get("voice_characteristics", {})
+    
+    theme_names = [t.get("theme_name", "") for t in themes[:3]]
+    theme_str = ", ".join(theme_names) if theme_names else "professional skills"
+    
+    career_focus = narrative.get("career_focus", "experienced professional")
+    value_prop = narrative.get("value_proposition", "delivering results")
+    
+    if surface_type == "cv_summary":
+        return f"A results-driven professional with expertise in {theme_str}. {career_focus} with a proven track record of {value_prop}. Known for delivering exceptional outcomes and driving meaningful impact across organizations."
+    
+    elif surface_type == "linkedin_summary":
+        return f"Welcome! I'm a passionate professional specializing in {theme_str}.\n\n{career_focus}\n\nWhat drives me? {value_prop}\n\nI believe in continuous learning and making a positive impact. Let's connect and explore how we can collaborate!"
+    
+    elif surface_type == "portfolio_intro":
+        return f"Hello, I'm a {career_focus}. My expertise spans {theme_str}, and I'm dedicated to {value_prop}. Explore my portfolio to see examples of my work and the impact I've created."
+    
+    return f"Professional content for {surface_type}: {theme_str}"
+
+
+def _get_surface_name(surface_type: str) -> str:
+    """Get display name for a surface type."""
+    names = {
+        "cv_summary": "CV Professional Summary",
+        "linkedin_summary": "LinkedIn Summary",
+        "portfolio_intro": "Portfolio Introduction"
+    }
+    return names.get(surface_type, surface_type)

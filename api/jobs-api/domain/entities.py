@@ -128,3 +128,165 @@ class SectionAnnotation:
             raise ValueError("Section text cannot be empty")
         if len(self.section_text) < 10:
             raise ValueError("Section must be at least 10 characters")
+
+
+# === AI Brand Roadmap Entities ===
+
+class ThemeCategory(str, Enum):
+    """Categories for professional themes."""
+    SKILL = "skill"
+    INDUSTRY = "industry"
+    ROLE = "role"
+    VALUE_PROPOSITION = "value_proposition"
+    ACHIEVEMENT = "achievement"
+
+
+class VoiceTone(str, Enum):
+    """Tone options for voice characteristics."""
+    PROFESSIONAL = "professional"
+    CONVERSATIONAL = "conversational"
+    AUTHORITATIVE = "authoritative"
+    CREATIVE = "creative"
+    ANALYTICAL = "analytical"
+
+
+class FormalityLevel(str, Enum):
+    """Formality level options."""
+    CASUAL = "casual"
+    BUSINESS_CASUAL = "business_casual"
+    FORMAL = "formal"
+    HIGHLY_FORMAL = "highly_formal"
+
+
+class EnergyLevel(str, Enum):
+    """Energy level options."""
+    RESERVED = "reserved"
+    BALANCED = "balanced"
+    ENTHUSIASTIC = "enthusiastic"
+    DYNAMIC = "dynamic"
+
+
+class ContentStatus(str, Enum):
+    """Status for content generations."""
+    DRAFT = "draft"
+    ACTIVE = "active"
+    ARCHIVED = "archived"
+
+
+class LearningEventType(str, Enum):
+    """Types of brand learning events."""
+    EDIT = "edit"
+    REGENERATION = "regeneration"
+    PREFERENCE_CHANGE = "preference_change"
+    RATING = "rating"
+
+
+@dataclass
+class ProfessionalTheme:
+    """Extracted professional theme from brand analysis."""
+    theme_id: str
+    theme_name: str
+    theme_category: ThemeCategory
+    description: str
+    keywords: List[str]
+    confidence_score: float
+    source_evidence: str
+    created_at: Optional[datetime] = None
+    
+    def __post_init__(self):
+        """Validate theme data."""
+        if not 0.0 <= self.confidence_score <= 1.0:
+            raise ValueError("Confidence score must be between 0 and 1")
+        if not self.theme_name.strip():
+            raise ValueError("Theme name cannot be empty")
+
+
+@dataclass
+class VoiceCharacteristics:
+    """Voice and communication style for brand representation."""
+    tone: VoiceTone
+    formality_level: FormalityLevel
+    energy_level: EnergyLevel
+    communication_style: List[str] = field(default_factory=list)
+    vocabulary_complexity: str = "professional"
+
+
+@dataclass
+class NarrativeArc:
+    """Career story structure for brand representation."""
+    career_focus: str
+    value_proposition: str
+    career_progression: Optional[str] = None
+    key_achievements: List[str] = field(default_factory=list)
+    future_goals: Optional[str] = None
+
+
+@dataclass
+class BrandRepresentation:
+    """Core professional identity model."""
+    brand_id: str
+    user_id: str
+    source_document_url: str
+    professional_themes: List[Dict[str, Any]]
+    voice_characteristics: Dict[str, Any]
+    narrative_arc: Dict[str, Any]
+    confidence_scores: Dict[str, float]
+    linkedin_profile_url: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    version: int = 1
+    
+    def __post_init__(self):
+        """Validate brand data."""
+        if not self.source_document_url.strip():
+            raise ValueError("Source document URL cannot be empty")
+        if not self.professional_themes:
+            raise ValueError("Professional themes cannot be empty")
+
+
+@dataclass
+class ProfessionalSurface:
+    """Target platform for branded content generation."""
+    surface_id: str
+    surface_type: str
+    surface_name: str
+    content_requirements: Dict[str, Any]
+    template_structure: str
+    validation_rules: Dict[str, Any]
+    active: bool = True
+
+
+@dataclass
+class ContentGeneration:
+    """Generated branded content for a specific surface."""
+    generation_id: str
+    brand_id: str
+    surface_id: str
+    content_text: str
+    generation_timestamp: datetime
+    generation_version: int = 1
+    generation_prompt: str = ""
+    consistency_score: Optional[float] = None
+    user_satisfaction_rating: Optional[int] = None
+    edit_count: int = 0
+    word_count: int = 0
+    status: ContentStatus = ContentStatus.DRAFT
+    
+    def __post_init__(self):
+        """Calculate word count if not set."""
+        if self.word_count == 0 and self.content_text:
+            self.word_count = len(self.content_text.split())
+
+
+@dataclass
+class BrandLearningEvent:
+    """Captured user interaction for learning improvement."""
+    event_id: str
+    brand_id: str
+    event_type: LearningEventType
+    event_timestamp: datetime
+    event_data: Dict[str, Any]
+    surface_id: Optional[str] = None
+    theme_id: Optional[str] = None
+    user_feedback: Optional[str] = None
+    processed: bool = False
