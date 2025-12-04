@@ -165,9 +165,9 @@ Based on plan.md structure:
 
 ### Tests for User Story 4
 
-- [ ] T057 [P] [US4] Unit test for SkillsEvaluator in services/ml-enrichment/tests/test_evaluation.py
-- [ ] T058 [P] [US4] Test for metrics calculation in services/ml-enrichment/tests/test_metrics.py
-- [ ] T059 [P] [US4] Integration test for evaluation API in services/ml-enrichment/tests/integration/test_evaluation_api.py
+- [X] T057 [P] [US4] Unit test for SkillsEvaluator in services/ml-enrichment/tests/test_evaluation.py
+- [X] T058 [P] [US4] Test for metrics calculation in services/ml-enrichment/tests/test_metrics.py
+- [X] T059 [P] [US4] Integration test for evaluation API in services/ml-enrichment/tests/integration/test_evaluation_api.py
 
 ### Implementation for User Story 4
 
@@ -175,14 +175,14 @@ Based on plan.md structure:
 - [X] T061 [US4] Implement SkillsEvaluator class in services/ml-enrichment/lib/evaluation/evaluator.py
 - [X] T062 [US4] Implement evaluation dataset loader (JSONL format) in services/ml-enrichment/lib/evaluation/evaluator.py
 - [X] T063 [US4] Implement per-category metrics breakdown in services/ml-enrichment/lib/evaluation/evaluator.py
-- [ ] T064 [US4] Add evaluation result storage via BigQueryEvaluationRepository in services/ml-enrichment/lib/evaluation/evaluator.py
+- [X] T064 [US4] Add evaluation result storage via BigQueryEvaluationRepository in services/ml-enrichment/lib/evaluation/evaluator.py
 - [X] T065 [US4] Create evaluate_ci.py CI/CD script in services/ml-enrichment/scripts/evaluate_ci.py
 - [X] T066 [US4] Add threshold checking and exit code logic to evaluate_ci.py in services/ml-enrichment/scripts/evaluate_ci.py
-- [ ] T067 [US4] Add evaluation queries to retrieve historical results in services/ml-enrichment/queries/evaluation_queries.sql
-- [ ] T068 [US4] Add /evaluate endpoint to main.py at services/ml-enrichment/main.py
-- [ ] T069 [US4] Add /evaluate/quick endpoint for CI in services/ml-enrichment/main.py
-- [ ] T070 [US4] Add /evaluate/results endpoint for historical data in services/ml-enrichment/main.py
-- [ ] T071 [US4] Update cloudbuild.yaml to include evaluation step (optional) in services/ml-enrichment/cloudbuild.yaml
+- [X] T067 [US4] Add evaluation queries to retrieve historical results in services/ml-enrichment/queries/evaluation_queries.sql
+- [X] T068 [US4] Add /evaluate endpoint to main.py at services/ml-enrichment/main.py
+- [X] T069 [US4] Add /evaluate/quick endpoint for CI in services/ml-enrichment/main.py
+- [X] T070 [US4] Add /evaluate/results endpoint for historical data in services/ml-enrichment/main.py
+- [X] T071 [US4] Update cloudbuild.yaml to include evaluation step (optional) in services/ml-enrichment/cloudbuild.yaml
 
 **Checkpoint**: User Story 4 should be fully functional - evaluation produces metrics (SC-006, SC-007)
 

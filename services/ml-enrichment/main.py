@@ -214,3 +214,232 @@ def main(request):
             'error': str(e)
         }, 500
 
+
+# Lazy-load evaluator
+_skills_evaluator = None
+
+def get_skills_evaluator():
+    """Get skills evaluator instance."""
+    global _skills_evaluator
+    if _skills_evaluator is None:
+        from lib.evaluation.evaluator import SkillsEvaluator
+        extractor = get_skills_extractor()
+        _skills_evaluator = SkillsEvaluator(
+            model_id="skills_extractor",
+            extractor=extractor
+        )
+    return _skills_evaluator
+
+
+@functions_framework.http
+def evaluate(request):
+    """
+    HTTP Cloud Function to evaluate skills extraction model.
+    
+    POST /evaluate
+    Request body:
+        {
+            "dataset_path": "gs://bucket/path/to/data.jsonl",  # or local path
+            "sample_limit": 100,  # optional, limit samples
+            "categories": ["programming_languages", "cloud_platforms"]  # optional
+        }
+    
+    Response:
+        {
+            "status": "success",
+            "evaluation": {
+                "model_id": "skills_extractor",
+                "model_version": "v4.0-enhanced",
+                "overall_precision": 0.85,
+                "overall_recall": 0.90,
+                "overall_f1": 0.87,
+                "sample_count": 100,
+                "execution_time_seconds": 5.5,
+                "category_metrics": {...}
+            }
+        }
+    """
+    try:
+        request_json = request.get_json(silent=True) or {}
+        
+        dataset_path = request_json.get('dataset_path')
+        sample_limit = request_json.get('sample_limit')
+        categories = request_json.get('categories')
+        
+        if not dataset_path:
+            return {
+                'status': 'error',
+                'error': 'dataset_path is required'
+            }, 400
+        
+        evaluator = get_skills_evaluator()
+        
+        logger.log_text(
+            f"Starting evaluation: dataset={dataset_path}, limit={sample_limit}",
+            severity="INFO"
+        )
+        
+        result = evaluator.evaluate(
+            dataset_path=dataset_path,
+            sample_limit=sample_limit,
+            categories=categories
+        )
+        
+        logger.log_text(
+            f"Evaluation complete: F1={result.overall_f1:.3f}, samples={result.sample_count}",
+            severity="INFO"
+        )
+        
+        return {
+            'status': 'success',
+            'evaluation': result.to_dict()
+        }, 200
+        
+    except Exception as e:
+        logger.log_text(f"Evaluation failed: {str(e)}", severity="ERROR")
+        return {
+            'status': 'error',
+            'error': str(e)
+        }, 500
+
+
+@functions_framework.http
+def evaluate_quick(request):
+    """
+    HTTP Cloud Function for quick CI/CD evaluation.
+    
+    POST /evaluate/quick
+    Request body:
+        {
+            "dataset_path": "gs://bucket/path/to/data.jsonl",
+            "threshold": 0.75,  # F1 threshold
+            "sample_limit": 50,  # default: 50 for speed
+            "ci_build_id": "build-12345"  # optional
+        }
+    
+    Response:
+        {
+            "status": "success",
+            "passed": true,
+            "evaluation": {
+                "overall_f1": 0.82,
+                "threshold": 0.75,
+                "threshold_passed": true,
+                "execution_time_seconds": 2.5
+            }
+        }
+    
+    Exit codes for CI:
+        200: Passed threshold
+        400: Bad request
+        417: Failed threshold (Expectation Failed)
+        500: Server error
+    """
+    try:
+        request_json = request.get_json(silent=True) or {}
+        
+        dataset_path = request_json.get('dataset_path')
+        threshold = request_json.get('threshold', 0.7)
+        sample_limit = request_json.get('sample_limit', 50)
+        ci_build_id = request_json.get('ci_build_id')
+        
+        if not dataset_path:
+            return {
+                'status': 'error',
+                'error': 'dataset_path is required'
+            }, 400
+        
+        evaluator = get_skills_evaluator()
+        
+        logger.log_text(
+            f"Starting quick evaluation: threshold={threshold}, limit={sample_limit}",
+            severity="INFO"
+        )
+        
+        result = evaluator.evaluate_quick(
+            dataset_path=dataset_path,
+            threshold_f1=threshold,
+            sample_limit=sample_limit,
+            ci_build_id=ci_build_id
+        )
+        
+        status_code = 200 if result.threshold_passed else 417
+        status_str = "PASS" if result.threshold_passed else "FAIL"
+        
+        logger.log_text(
+            f"Quick evaluation {status_str}: F1={result.overall_f1:.3f} (threshold={threshold})",
+            severity="INFO" if result.threshold_passed else "WARNING"
+        )
+        
+        return {
+            'status': 'success',
+            'passed': result.threshold_passed,
+            'evaluation': {
+                'model_version': result.model_version,
+                'overall_f1': result.overall_f1,
+                'overall_precision': result.overall_precision,
+                'overall_recall': result.overall_recall,
+                'threshold': threshold,
+                'threshold_passed': result.threshold_passed,
+                'sample_count': result.sample_count,
+                'execution_time_seconds': result.execution_time_seconds,
+                'ci_build_id': ci_build_id
+            }
+        }, status_code
+        
+    except Exception as e:
+        logger.log_text(f"Quick evaluation failed: {str(e)}", severity="ERROR")
+        return {
+            'status': 'error',
+            'error': str(e)
+        }, 500
+
+
+@functions_framework.http
+def evaluate_results(request):
+    """
+    HTTP Cloud Function to retrieve historical evaluation results.
+    
+    GET /evaluate/results
+    Query params:
+        model_id: Filter by model ID (optional)
+        limit: Number of results (default: 10)
+    
+    Response:
+        {
+            "status": "success",
+            "results": [
+                {
+                    "evaluation_id": "...",
+                    "model_version": "v4.0-enhanced",
+                    "overall_f1": 0.87,
+                    "evaluation_date": "2024-01-15T10:30:00",
+                    ...
+                },
+                ...
+            ]
+        }
+    """
+    try:
+        from lib.adapters.bigquery import BigQueryEvaluationRepository
+        
+        model_id = request.args.get('model_id', 'skills_extractor')
+        limit = int(request.args.get('limit', 10))
+        
+        repo = BigQueryEvaluationRepository()
+        results = repo.get_recent_results(model_id=model_id, limit=limit)
+        
+        return {
+            'status': 'success',
+            'count': len(results),
+            'results': [r.to_dict() for r in results]
+        }, 200
+        
+    except Exception as e:
+        logger.log_text(f"Failed to fetch evaluation results: {str(e)}", severity="ERROR")
+        return {
+            'status': 'error',
+            'error': str(e)
+        }, 500
+
+
