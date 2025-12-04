@@ -140,18 +140,18 @@ Based on plan.md structure:
 
 ### Tests for User Story 3
 
-- [ ] T048 [P] [US3] Unit test for cluster version tracking in services/ml-enrichment/tests/test_cluster_versioning.py
-- [ ] T049 [P] [US3] Integration test for cluster stability metrics in services/ml-enrichment/tests/integration/test_cluster_stability.py
+- [X] T048 [P] [US3] Unit test for cluster version tracking in services/ml-enrichment/tests/test_cluster_versioning.py
+- [X] T049 [P] [US3] Integration test for cluster stability metrics in services/ml-enrichment/tests/integration/test_cluster_stability.py
 
 ### Implementation for User Story 3
 
-- [ ] T050 [US3] Extend JobClusterer with cluster_run_id generation in services/ml-enrichment/lib/enrichment/job_clusterer.py
-- [ ] T051 [US3] Add cluster_model_id and cluster_version fields to clustering output in services/ml-enrichment/lib/enrichment/job_clusterer.py
-- [ ] T052 [US3] Implement is_active flag management for cluster assignments in services/ml-enrichment/lib/enrichment/job_clusterer.py
-- [ ] T053 [US3] Add cluster version filtering queries in services/ml-enrichment/queries/clustering_queries.sql
-- [ ] T054 [US3] Implement cluster stability metrics calculation in services/ml-enrichment/lib/enrichment/job_clusterer.py
-- [ ] T055 [US3] Add cluster_run_id to clustering response in services/ml-enrichment/main.py
-- [ ] T056 [US3] Update BigQuery adapter for cluster version storage in services/ml-enrichment/lib/adapters/bigquery/cluster_adapter.py
+- [X] T050 [US3] Extend JobClusterer with cluster_run_id generation in services/ml-enrichment/lib/enrichment/job_clusterer.py
+- [X] T051 [US3] Add cluster_model_id and cluster_version fields to clustering output in services/ml-enrichment/lib/enrichment/job_clusterer.py
+- [X] T052 [US3] Implement is_active flag management for cluster assignments in services/ml-enrichment/lib/enrichment/job_clusterer.py
+- [X] T053 [US3] Add cluster version filtering queries in services/ml-enrichment/queries/clustering_queries.sql
+- [X] T054 [US3] Implement cluster stability metrics calculation in services/ml-enrichment/lib/enrichment/job_clusterer.py
+- [X] T055 [US3] Add cluster_run_id to clustering response in services/ml-enrichment/main.py
+- [X] T056 [US3] Update BigQuery adapter for cluster version storage in services/ml-enrichment/lib/adapters/bigquery/cluster_adapter.py
 
 **Checkpoint**: User Story 3 should be fully functional - cluster assignments include version tracking (SC-005)
 

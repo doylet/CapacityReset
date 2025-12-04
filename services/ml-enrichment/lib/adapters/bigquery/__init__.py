@@ -9,10 +9,12 @@ from .skill_alias_adapter import BigQuerySkillAliasRepository
 from .evaluation_adapter import BigQueryEvaluationRepository
 from .section_classification_adapter import BigQuerySectionClassificationRepository
 from .enrichment_adapter import BigQueryEnrichmentRepository
+from .cluster_adapter import BigQueryClusterRepository
 
 __all__ = [
     'BigQuerySkillAliasRepository',
     'BigQueryEvaluationRepository',
     'BigQuerySectionClassificationRepository',
-    'BigQueryEnrichmentRepository'
+    'BigQueryEnrichmentRepository',
+    'BigQueryClusterRepository'
 ]
