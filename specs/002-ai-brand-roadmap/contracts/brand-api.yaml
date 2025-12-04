@@ -1,0 +1,609 @@
+openapi: 3.0.3
+info:
+  title: AI Brand Roadmap API
+  description: Professional brand analysis and cross-surface content generation
+  version: 1.0.0
+  contact:
+    name: CapacityReset Team
+
+servers:
+  - url: https://jobs-api-xxxxxxx.run.app
+    description: Production API
+  - url: http://localhost:8000
+    description: Local development
+
+paths:
+  /brand/analysis:
+    post:
+      summary: Analyze professional document for brand extraction
+      description: |
+        Upload CV/resume and optional LinkedIn profile for comprehensive brand analysis.
+        Returns brand overview with themes, voice characteristics, and narrative arc.
+      operationId: analyzeBrand
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - document
+              properties:
+                document:
+                  type: string
+                  format: binary
+                  description: CV/resume file (PDF, DOCX, TXT)
+                linkedin_profile_url:
+                  type: string
+                  format: uri
+                  description: Optional LinkedIn profile URL for enhanced analysis
+                analysis_preferences:
+                  $ref: '#/components/schemas/AnalysisPreferences'
+      responses:
+        '200':
+          description: Brand analysis completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrandAnalysisResponse'
+        '400':
+          description: Invalid document format or analysis parameters
+        '422':
+          description: Document content insufficient for brand analysis
+        '429':
+          description: Rate limit exceeded
+        '500':
+          description: Internal server error during analysis
+
+  /brand/overview/{brand_id}:
+    get:
+      summary: Retrieve brand overview
+      description: Get current brand representation with themes and characteristics
+      operationId: getBrandOverview
+      parameters:
+        - name: brand_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Brand overview retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrandOverview'
+        '404':
+          description: Brand not found
+
+    patch:
+      summary: Update brand overview
+      description: Modify brand themes, voice characteristics, or narrative elements
+      operationId: updateBrandOverview
+      parameters:
+        - name: brand_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BrandUpdateRequest'
+      responses:
+        '200':
+          description: Brand updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrandOverview'
+        '400':
+          description: Invalid update parameters
+        '404':
+          description: Brand not found
+
+  /brand/{brand_id}/generate:
+    post:
+      summary: Generate cross-surface branded content
+      description: |
+        Create consistent content across multiple professional surfaces (CV, LinkedIn, portfolio)
+        using established brand representation.
+      operationId: generateContent
+      parameters:
+        - name: brand_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContentGenerationRequest'
+      responses:
+        '200':
+          description: Content generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentGenerationResponse'
+        '400':
+          description: Invalid generation parameters
+        '404':
+          description: Brand not found
+        '422':
+          description: Brand representation incomplete for generation
+        '500':
+          description: Generation service error
+
+  /brand/{brand_id}/content:
+    get:
+      summary: Retrieve generated content
+      description: Get all current content generations for a brand
+      operationId: getGeneratedContent
+      parameters:
+        - name: brand_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: surface_type
+          in: query
+          schema:
+            type: string
+            enum: [cv_summary, linkedin_summary, portfolio_intro]
+          description: Filter by specific surface type
+      responses:
+        '200':
+          description: Content retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GeneratedContent'
+
+  /brand/{brand_id}/content/{generation_id}/regenerate:
+    post:
+      summary: Regenerate specific surface content
+      description: Create new version of content for specific surface with user feedback
+      operationId: regenerateContent
+      parameters:
+        - name: brand_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: generation_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegenerationRequest'
+      responses:
+        '200':
+          description: Content regenerated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneratedContent'
+
+  /brand/{brand_id}/feedback:
+    post:
+      summary: Submit content feedback
+      description: Provide feedback on generated content for learning improvement
+      operationId: submitFeedback
+      parameters:
+        - name: brand_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedbackRequest'
+      responses:
+        '200':
+          description: Feedback recorded successfully
+        '400':
+          description: Invalid feedback format
+
+  /brand/surfaces:
+    get:
+      summary: List available professional surfaces
+      description: Get all supported surfaces with their requirements and templates
+      operationId: listSurfaces
+      responses:
+        '200':
+          description: Surfaces retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProfessionalSurface'
+
+components:
+  schemas:
+    AnalysisPreferences:
+      type: object
+      properties:
+        industry_focus:
+          type: string
+          description: Target industry for brand positioning
+        career_level:
+          type: string
+          enum: [entry, mid, senior, executive]
+        tone_preference:
+          type: string
+          enum: [professional, conversational, authoritative, creative]
+    
+    BrandAnalysisResponse:
+      type: object
+      required:
+        - brand_id
+        - analysis_status
+        - brand_overview
+      properties:
+        brand_id:
+          type: string
+          format: uuid
+        analysis_status:
+          type: string
+          enum: [completed, partial, insufficient_data]
+        brand_overview:
+          $ref: '#/components/schemas/BrandOverview'
+        analysis_metadata:
+          type: object
+          properties:
+            document_type:
+              type: string
+            word_count:
+              type: integer
+            confidence_score:
+              type: number
+              format: float
+              minimum: 0.0
+              maximum: 1.0
+            processing_time_ms:
+              type: integer
+
+    BrandOverview:
+      type: object
+      required:
+        - brand_id
+        - professional_themes
+        - voice_characteristics
+        - narrative_arc
+      properties:
+        brand_id:
+          type: string
+          format: uuid
+        professional_themes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfessionalTheme'
+        voice_characteristics:
+          $ref: '#/components/schemas/VoiceCharacteristics'
+        narrative_arc:
+          $ref: '#/components/schemas/NarrativeArc'
+        confidence_scores:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ProfessionalTheme:
+      type: object
+      required:
+        - theme_id
+        - theme_name
+        - theme_category
+        - confidence_score
+      properties:
+        theme_id:
+          type: string
+          format: uuid
+        theme_name:
+          type: string
+          maxLength: 100
+        theme_category:
+          type: string
+          enum: [skill, industry, role, value_proposition, achievement]
+        description:
+          type: string
+          maxLength: 500
+        keywords:
+          type: array
+          items:
+            type: string
+        confidence_score:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+        source_evidence:
+          type: string
+          description: Document text supporting this theme
+
+    VoiceCharacteristics:
+      type: object
+      required:
+        - tone
+        - formality_level
+        - energy_level
+      properties:
+        tone:
+          type: string
+          enum: [professional, conversational, authoritative, creative, analytical]
+        formality_level:
+          type: string
+          enum: [casual, business_casual, formal, highly_formal]
+        energy_level:
+          type: string
+          enum: [reserved, balanced, enthusiastic, dynamic]
+        communication_style:
+          type: array
+          items:
+            type: string
+            enum: [data_driven, story_focused, action_oriented, relationship_building]
+        vocabulary_complexity:
+          type: string
+          enum: [accessible, professional, technical, academic]
+
+    NarrativeArc:
+      type: object
+      required:
+        - career_focus
+        - value_proposition
+      properties:
+        career_focus:
+          type: string
+          maxLength: 200
+          description: Primary career direction and expertise area
+        value_proposition:
+          type: string
+          maxLength: 300
+          description: Unique professional value and differentiators
+        career_progression:
+          type: string
+          maxLength: 400
+          description: Professional growth story and trajectory
+        key_achievements:
+          type: array
+          items:
+            type: string
+          maxItems: 5
+        future_goals:
+          type: string
+          maxLength: 200
+
+    BrandUpdateRequest:
+      type: object
+      properties:
+        professional_themes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfessionalTheme'
+        voice_characteristics:
+          $ref: '#/components/schemas/VoiceCharacteristics'
+        narrative_arc:
+          $ref: '#/components/schemas/NarrativeArc'
+
+    ContentGenerationRequest:
+      type: object
+      required:
+        - surface_types
+      properties:
+        surface_types:
+          type: array
+          items:
+            type: string
+            enum: [cv_summary, linkedin_summary, portfolio_intro]
+          minItems: 1
+          maxItems: 10
+        generation_preferences:
+          type: object
+          properties:
+            emphasis_themes:
+              type: array
+              items:
+                type: string
+              description: Theme IDs to emphasize in generation
+            target_length:
+              type: string
+              enum: [concise, standard, detailed]
+            include_achievements:
+              type: boolean
+              default: true
+
+    ContentGenerationResponse:
+      type: object
+      required:
+        - generation_id
+        - brand_id
+        - generated_content
+        - generation_metadata
+      properties:
+        generation_id:
+          type: string
+          format: uuid
+        brand_id:
+          type: string
+          format: uuid
+        generated_content:
+          type: array
+          items:
+            $ref: '#/components/schemas/GeneratedContent'
+        generation_metadata:
+          type: object
+          properties:
+            generation_time_ms:
+              type: integer
+            consistency_score:
+              type: number
+              format: float
+            surfaces_count:
+              type: integer
+
+    GeneratedContent:
+      type: object
+      required:
+        - generation_id
+        - surface_type
+        - content_text
+        - generation_timestamp
+      properties:
+        generation_id:
+          type: string
+          format: uuid
+        surface_type:
+          type: string
+          enum: [cv_summary, linkedin_summary, portfolio_intro]
+        surface_name:
+          type: string
+        content_text:
+          type: string
+        generation_timestamp:
+          type: string
+          format: date-time
+        generation_version:
+          type: integer
+        word_count:
+          type: integer
+        consistency_score:
+          type: number
+          format: float
+        edit_count:
+          type: integer
+        user_satisfaction_rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        status:
+          type: string
+          enum: [draft, active, archived]
+
+    RegenerationRequest:
+      type: object
+      required:
+        - feedback_reason
+      properties:
+        feedback_reason:
+          type: string
+          enum: [tone_adjustment, content_accuracy, length_change, style_preference]
+        feedback_details:
+          type: string
+          maxLength: 500
+        preferred_tone:
+          type: string
+          enum: [professional, conversational, authoritative, creative]
+        preferred_length:
+          type: string
+          enum: [shorter, current, longer]
+
+    FeedbackRequest:
+      type: object
+      required:
+        - feedback_type
+      properties:
+        feedback_type:
+          type: string
+          enum: [content_edit, satisfaction_rating, preference_change, general_feedback]
+        generation_id:
+          type: string
+          format: uuid
+          description: Required for content-specific feedback
+        satisfaction_rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        content_edits:
+          type: object
+          properties:
+            original_text:
+              type: string
+            modified_text:
+              type: string
+            edit_type:
+              type: string
+              enum: [addition, deletion, modification]
+        preferences:
+          type: object
+          properties:
+            tone_preference:
+              type: string
+            emphasis_areas:
+              type: array
+              items:
+                type: string
+        feedback_text:
+          type: string
+          maxLength: 1000
+
+    ProfessionalSurface:
+      type: object
+      required:
+        - surface_id
+        - surface_type
+        - surface_name
+      properties:
+        surface_id:
+          type: string
+          format: uuid
+        surface_type:
+          type: string
+        surface_name:
+          type: string
+        content_requirements:
+          type: object
+          properties:
+            min_length:
+              type: integer
+            max_length:
+              type: integer
+            tone_guidelines:
+              type: array
+              items:
+                type: string
+            structure_requirements:
+              type: array
+              items:
+                type: string
+        template_structure:
+          type: string
+        active:
+          type: boolean
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []
