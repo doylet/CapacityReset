@@ -133,6 +133,110 @@
 
 ---
 
+## Phase 7: Constitutional Compliance & Template Management
+
+**Purpose**: Ensure code clarity principles and template-based content generation following Constitution Principle VIII
+
+- [ ] T057 [P] Create generation templates directory in services/ml-enrichment/templates/brand/ following file-based approach
+- [ ] T058 [P] Create CV summary template in services/ml-enrichment/templates/brand/cv_summary.jinja2
+- [ ] T059 [P] Create LinkedIn summary template in services/ml-enrichment/templates/brand/linkedin_summary.jinja2
+- [ ] T060 [P] Create portfolio introduction template in services/ml-enrichment/templates/brand/portfolio_intro.jinja2
+- [ ] T061 Implement template loader utility in services/ml-enrichment/lib/template_loader.py (no HEREDOCs per Constitution VIII)
+- [ ] T062 Create SQL query files in sql/queries/brand/ directory for brand-related database operations
+- [ ] T063 [P] Verify no HEREDOC patterns in brand-related code (Constitution VIII compliance audit)
+- [ ] T064 [P] Update content_generator.py to use file-based templates instead of inline strings
+
+---
+
+## Phase 8: Edge Case Handling
+
+**Purpose**: Handle edge cases identified in spec.md for robust production behavior
+
+### Insufficient Content Handling (Edge Case 1)
+
+- [ ] T065 [US1] Implement minimum content validator in services/ml-enrichment/lib/content_validator.py
+- [ ] T066 [US1] Add graceful degradation prompts for sparse CVs in services/ml-enrichment/lib/brand_analyzer.py
+- [ ] T067 [US1] Create user prompt flow for additional context when CV lacks sufficient content in apps/jobs-web/src/components/brand/ContentPrompt.tsx
+
+### Career Transition Handling (Edge Case 2)
+
+- [ ] T068 [US1] Implement multi-identity detection in services/ml-enrichment/lib/identity_detector.py
+- [ ] T069 [US1] Add career transition narrative support to brand representation model
+- [ ] T070 [US1] Create career transition UI component in apps/jobs-web/src/components/brand/CareerTransition.tsx
+
+### Edit Contradiction Handling (Edge Case 3)
+
+- [ ] T071 [US3] Implement brand coherence validator in services/ml-enrichment/lib/coherence_validator.py
+- [ ] T072 [US3] Add contradiction detection for user edits vs. established brand
+- [ ] T073 [US3] Create edit conflict resolution UI in apps/jobs-web/src/components/brand/EditConflict.tsx
+
+### Context Divergence Handling (Edge Case 4)
+
+- [ ] T074 [US2] Implement surface context analyzer in services/ml-enrichment/lib/context_analyzer.py
+- [ ] T075 [US2] Add cross-context consistency maintenance logic to content generator
+- [ ] T076 [US2] Create context adaptation preview in apps/jobs-web/src/components/brand/ContextPreview.tsx
+
+### Similar Background Handling (Edge Case 5)
+
+- [ ] T077 [US1] Implement unique differentiator extraction in services/ml-enrichment/lib/differentiator_extractor.py
+- [ ] T078 [US1] Add differentiation scoring to brand analysis output
+
+---
+
+## Phase 9: Success Criteria Measurement & Validation
+
+**Purpose**: Implement measurement infrastructure to validate all success criteria from spec.md
+
+### SC-001: Brand Discovery Time (<10 minutes)
+
+- [ ] T079 [P] Implement brand discovery timing tracker in services/ml-enrichment/lib/metrics/discovery_timer.py
+- [ ] T080 [P] Add discovery time logging to brand analysis use case
+- [ ] T081 [P] Create discovery time dashboard widget in apps/jobs-web/src/components/brand/analytics/DiscoveryTime.tsx
+
+### SC-002: Edit Requirement (<10% editing for 80% users)
+
+- [ ] T082 [P] Implement edit percentage calculator in services/ml-enrichment/lib/metrics/edit_tracker.py
+- [ ] T083 [P] Add word count comparison between generated and final content
+- [ ] T084 [P] Create edit frequency analytics in apps/jobs-web/src/components/brand/analytics/EditMetrics.tsx
+
+### SC-003: Cross-Surface Consistency (90% semantic similarity)
+
+- [ ] T085 [P] Implement semantic similarity scorer in services/ml-enrichment/lib/metrics/consistency_scorer.py
+- [ ] T086 [P] Add automated consistency validation to content generation pipeline
+- [ ] T087 [P] Create consistency score display in apps/jobs-web/src/components/brand/analytics/ConsistencyScore.tsx
+
+### SC-004: Generation Time (<30 seconds)
+
+- [ ] T088 [P] Implement generation timing tracker in services/ml-enrichment/lib/metrics/generation_timer.py
+- [ ] T089 [P] Add timing metrics to one-click generation use case
+- [ ] T090 [P] Create performance monitoring for generation latency in apps/jobs-web/src/components/brand/analytics/GenerationPerformance.tsx
+
+### SC-005: Single Session Completion (85% success rate)
+
+- [ ] T091 [P] Implement session completion tracker in services/ml-enrichment/lib/metrics/session_tracker.py
+- [ ] T092 [P] Add session state persistence for workflow tracking
+- [ ] T093 [P] Create session completion analytics in apps/jobs-web/src/components/brand/analytics/SessionMetrics.tsx
+
+### SC-006: User Satisfaction (>4.0/5.0 rating)
+
+- [ ] T094 [P] Implement satisfaction rating capture in api/jobs-api/api/routes.py for POST /brand/{brand_id}/rating
+- [ ] T095 [P] Create rating UI component in apps/jobs-web/src/components/brand/SatisfactionRating.tsx
+- [ ] T096 [P] Add satisfaction analytics dashboard in apps/jobs-web/src/components/brand/analytics/SatisfactionScore.tsx
+
+### SC-007: Learning Improvement (25% edit reduction after 3 sessions)
+
+- [ ] T097 [P] Implement learning progress tracker in services/ml-enrichment/lib/metrics/learning_tracker.py
+- [ ] T098 [P] Add session-over-session edit comparison analytics
+- [ ] T099 [P] Create learning improvement visualization in apps/jobs-web/src/components/brand/analytics/LearningProgress.tsx
+
+### SC-008: Onboarding Time (<15 minutes to first content)
+
+- [ ] T100 [P] Implement end-to-end onboarding timer in services/ml-enrichment/lib/metrics/onboarding_timer.py
+- [ ] T101 [P] Add onboarding milestone tracking (account creation → first branded content)
+- [ ] T102 [P] Create onboarding funnel analytics in apps/jobs-web/src/components/brand/analytics/OnboardingFunnel.tsx
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies
@@ -142,7 +246,10 @@
 - **User Stories (Phase 3+)**: All depend on Foundational phase completion
   - User stories can then proceed in parallel (if staffed)
   - Or sequentially in priority order (P1 → P2 → P3)
-- **Polish (Final Phase)**: Depends on all desired user stories being complete
+- **Polish (Phase 6)**: Depends on all desired user stories being complete
+- **Constitutional Compliance (Phase 7)**: Can run in parallel with Phase 6 - no blocking dependencies
+- **Edge Case Handling (Phase 8)**: Depends on User Stories (Phase 3-5) - extends story functionality
+- **Success Criteria Measurement (Phase 9)**: Depends on User Stories and Polish phases - adds measurement layer
 
 ### User Story Dependencies
 
@@ -221,19 +328,39 @@ With multiple developers:
 ## Success Validation
 
 **After User Story 1 (MVP)**:
-- [ ] CV upload generates brand overview in <10 minutes
+- [ ] CV upload generates brand overview in <10 minutes (SC-001: T079-T081)
 - [ ] Brand themes and voice characteristics accurately extracted
 - [ ] User can edit and update brand overview
 
 **After User Story 2**:
-- [ ] Cross-surface generation completes in <30 seconds
-- [ ] Content maintains 90% consistency across surfaces
-- [ ] Generated content requires <10% editing
+- [ ] Cross-surface generation completes in <30 seconds (SC-004: T088-T090)
+- [ ] Content maintains 90% consistency across surfaces (SC-003: T085-T087)
+- [ ] Generated content requires <10% editing (SC-002: T082-T084)
 
 **After User Story 3**:
 - [ ] User feedback captured and processed
-- [ ] Subsequent generations show learning improvements
+- [ ] Subsequent generations show learning improvements (SC-007: T097-T099)
 - [ ] Edit frequency reduces by 25% after 3 feedback sessions
+
+**Cross-Cutting Validations**:
+- [ ] 85% single-session completion rate (SC-005: T091-T093)
+- [ ] User satisfaction exceeds 4.0/5.0 rating (SC-006: T094-T096)
+- [ ] End-to-end onboarding under 15 minutes (SC-008: T100-T102)
+
+---
+
+## Success Criteria to Task Mapping
+
+| Success Criteria | Description | Validation Tasks |
+|-----------------|-------------|------------------|
+| SC-001 | Brand discovery <10 minutes | T079, T080, T081 |
+| SC-002 | <10% editing for 80% users | T082, T083, T084 |
+| SC-003 | 90% cross-surface consistency | T085, T086, T087 |
+| SC-004 | Generation <30 seconds | T088, T089, T090 |
+| SC-005 | 85% single-session completion | T091, T092, T093 |
+| SC-006 | User satisfaction >4.0/5.0 | T094, T095, T096 |
+| SC-007 | 25% edit reduction after 3 sessions | T097, T098, T099 |
+| SC-008 | Onboarding <15 minutes | T100, T101, T102 |
 
 ---
 

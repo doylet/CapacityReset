@@ -13,7 +13,7 @@
 
 ## Requirement Completeness
 
-- [ ] No [NEEDS CLARIFICATION] markers remain (3 clarifications identified)
+- [x] No [NEEDS CLARIFICATION] markers remain (resolved via research.md decisions)
 - [x] Requirements are testable and unambiguous
 - [x] Success criteria are measurable
 - [x] Success criteria are technology-agnostic (no implementation details)
@@ -31,6 +31,9 @@
 
 ## Notes
 
-- 3 [NEEDS CLARIFICATION] markers require resolution before proceeding to planning phase
-- All other quality criteria are met
-- Specification is ready for clarification and then planning once user provides responses
+- All [NEEDS CLARIFICATION] markers resolved using decisions from research.md (December 4, 2024)
+  - FR-012: Job seekers only in Phase 1
+  - FR-013: CV required + optional LinkedIn profile
+  - FR-014: 3 surfaces (CV summary, LinkedIn summary, portfolio introduction)
+- All quality criteria are now met
+- Specification is ready for planning and implementation
