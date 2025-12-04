@@ -340,6 +340,44 @@ class BigQueryEvaluationRepository(EvaluationResultRepository):
         result = self.client.query(query, job_config=job_config).result()
         return result.num_dml_affected_rows > 0 if hasattr(result, 'num_dml_affected_rows') else True
     
+    def get_recent_results(
+        self,
+        model_id: Optional[str] = None,
+        limit: int = 10
+    ) -> List[EvaluationResult]:
+        """
+        Get recent evaluation results.
+        
+        Args:
+            model_id: Optional model ID to filter by
+            limit: Maximum number of results
+            
+        Returns:
+            List of EvaluationResult entities
+        """
+        if model_id:
+            return self.find_by_model(model_id=model_id, limit=limit)
+        
+        query = f"""
+        SELECT *
+        FROM `{self.full_table_id}`
+        ORDER BY evaluation_date DESC
+        LIMIT @limit
+        """
+        
+        job_config = bigquery.QueryJobConfig(
+            query_parameters=[
+                bigquery.ScalarQueryParameter("limit", "INT64", limit)
+            ]
+        )
+        
+        try:
+            results = self.client.query(query, job_config=job_config).result()
+            return [self._row_to_result(row) for row in results]
+        except Exception as e:
+            logger.warning(f"Could not fetch recent results: {e}")
+            return []
+    
     def _row_to_result(self, row) -> EvaluationResult:
         """Convert a BigQuery row to an EvaluationResult entity."""
         category_metrics = {}

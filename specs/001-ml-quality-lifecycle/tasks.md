@@ -93,9 +93,9 @@ Based on plan.md structure:
 
 - [X] T028 [US1] Implement get_version() method in UnifiedSkillsExtractor at services/ml-enrichment/lib/enrichment/skills/unified_extractor.py
 - [X] T029 [US1] Implement get_model_config() singleton loader in services/ml-enrichment/lib/config/model_config.py
-- [ ] T030 [US1] Add enrichment_version field to enrichment storage in services/ml-enrichment/lib/utils/enrichment_utils.py
-- [ ] T031 [US1] Implement version-based job query function in services/ml-enrichment/lib/utils/enrichment_utils.py
-- [ ] T032 [US1] Add version tracking to job_enrichments insert operations in services/ml-enrichment/lib/adapters/bigquery/enrichment_adapter.py
+- [X] T030 [US1] Add enrichment_version field to enrichment storage in services/ml-enrichment/lib/utils/enrichment_utils.py
+- [X] T031 [US1] Implement version-based job query function in services/ml-enrichment/lib/utils/enrichment_utils.py
+- [X] T032 [US1] Add version tracking to job_enrichments insert operations in services/ml-enrichment/lib/adapters/bigquery/enrichment_adapter.py
 - [X] T033 [US1] Create query for jobs needing re-enrichment in services/ml-enrichment/queries/version_queries.sql
 - [X] T034 [US1] Update main.py to include version in enrichment response at services/ml-enrichment/main.py
 - [X] T035 [US1] Add logging for version tracking operations in services/ml-enrichment/lib/config/model_config.py
@@ -113,20 +113,20 @@ Based on plan.md structure:
 ### Tests for User Story 2
 
 - [X] T036 [P] [US2] Unit test for AliasExtractionStrategy in services/ml-enrichment/tests/test_alias_extraction.py
-- [ ] T037 [P] [US2] Integration test for composite extractor in services/ml-enrichment/tests/integration/test_composite_extractor.py
+- [X] T037 [P] [US2] Integration test for composite extractor in services/ml-enrichment/tests/integration/test_composite_extractor.py
 - [X] T038 [P] [US2] Test for confidence scoring in services/ml-enrichment/tests/test_confidence_scoring.py
 
 ### Implementation for User Story 2
 
 - [X] T039 [P] [US2] Implement AliasExtractionStrategy class in services/ml-enrichment/lib/config/__init__.py (AliasResolver)
 - [X] T040 [US2] Implement alias lookup index builder in services/ml-enrichment/lib/config/__init__.py
-- [ ] T041 [US2] Extend UnifiedSkillsConfig with alias_config_path in services/ml-enrichment/lib/enrichment/skills/unified_config.py
+- [X] T041 [US2] Extend UnifiedSkillsConfig with alias_config_path in services/ml-enrichment/lib/enrichment/skills/unified_config.py
 - [X] T042 [US2] Integrate AliasExtractionStrategy into composite extractor in services/ml-enrichment/lib/enrichment/skills/unified_extractor.py
 - [X] T043 [US2] Implement strategy result merging with deduplication in services/ml-enrichment/lib/enrichment/skills/unified_extractor.py
 - [X] T044 [US2] Add source_strategies field to skill output in services/ml-enrichment/lib/enrichment/skills/unified_extractor.py
 - [X] T045 [US2] Implement enhanced confidence scoring using weighted ensemble in services/ml-enrichment/lib/enrichment/skills/unified_extractor.py
 - [X] T046 [US2] Populate skill_aliases.yaml with initial common aliases in services/ml-enrichment/config/skill_aliases.yaml
-- [ ] T047 [US2] Add alias resolution statistics to extraction response in services/ml-enrichment/main.py
+- [X] T047 [US2] Add alias resolution statistics to extraction response in services/ml-enrichment/main.py
 
 **Checkpoint**: User Story 2 should be fully functional - alias resolution works (SC-003), confidence scores included
 
@@ -140,18 +140,18 @@ Based on plan.md structure:
 
 ### Tests for User Story 3
 
-- [ ] T048 [P] [US3] Unit test for cluster version tracking in services/ml-enrichment/tests/test_cluster_versioning.py
-- [ ] T049 [P] [US3] Integration test for cluster stability metrics in services/ml-enrichment/tests/integration/test_cluster_stability.py
+- [X] T048 [P] [US3] Unit test for cluster version tracking in services/ml-enrichment/tests/test_cluster_versioning.py
+- [X] T049 [P] [US3] Integration test for cluster stability metrics in services/ml-enrichment/tests/integration/test_cluster_stability.py
 
 ### Implementation for User Story 3
 
-- [ ] T050 [US3] Extend JobClusterer with cluster_run_id generation in services/ml-enrichment/lib/enrichment/job_clusterer.py
-- [ ] T051 [US3] Add cluster_model_id and cluster_version fields to clustering output in services/ml-enrichment/lib/enrichment/job_clusterer.py
-- [ ] T052 [US3] Implement is_active flag management for cluster assignments in services/ml-enrichment/lib/enrichment/job_clusterer.py
-- [ ] T053 [US3] Add cluster version filtering queries in services/ml-enrichment/queries/clustering_queries.sql
-- [ ] T054 [US3] Implement cluster stability metrics calculation in services/ml-enrichment/lib/enrichment/job_clusterer.py
-- [ ] T055 [US3] Add cluster_run_id to clustering response in services/ml-enrichment/main.py
-- [ ] T056 [US3] Update BigQuery adapter for cluster version storage in services/ml-enrichment/lib/adapters/bigquery/cluster_adapter.py
+- [X] T050 [US3] Extend JobClusterer with cluster_run_id generation in services/ml-enrichment/lib/enrichment/job_clusterer.py
+- [X] T051 [US3] Add cluster_model_id and cluster_version fields to clustering output in services/ml-enrichment/lib/enrichment/job_clusterer.py
+- [X] T052 [US3] Implement is_active flag management for cluster assignments in services/ml-enrichment/lib/enrichment/job_clusterer.py
+- [X] T053 [US3] Add cluster version filtering queries in services/ml-enrichment/queries/clustering_queries.sql
+- [X] T054 [US3] Implement cluster stability metrics calculation in services/ml-enrichment/lib/enrichment/job_clusterer.py
+- [X] T055 [US3] Add cluster_run_id to clustering response in services/ml-enrichment/main.py
+- [X] T056 [US3] Update BigQuery adapter for cluster version storage in services/ml-enrichment/lib/adapters/bigquery/cluster_adapter.py
 
 **Checkpoint**: User Story 3 should be fully functional - cluster assignments include version tracking (SC-005)
 
@@ -165,9 +165,9 @@ Based on plan.md structure:
 
 ### Tests for User Story 4
 
-- [ ] T057 [P] [US4] Unit test for SkillsEvaluator in services/ml-enrichment/tests/test_evaluation.py
-- [ ] T058 [P] [US4] Test for metrics calculation in services/ml-enrichment/tests/test_metrics.py
-- [ ] T059 [P] [US4] Integration test for evaluation API in services/ml-enrichment/tests/integration/test_evaluation_api.py
+- [X] T057 [P] [US4] Unit test for SkillsEvaluator in services/ml-enrichment/tests/test_evaluation.py
+- [X] T058 [P] [US4] Test for metrics calculation in services/ml-enrichment/tests/test_metrics.py
+- [X] T059 [P] [US4] Integration test for evaluation API in services/ml-enrichment/tests/integration/test_evaluation_api.py
 
 ### Implementation for User Story 4
 
@@ -175,14 +175,14 @@ Based on plan.md structure:
 - [X] T061 [US4] Implement SkillsEvaluator class in services/ml-enrichment/lib/evaluation/evaluator.py
 - [X] T062 [US4] Implement evaluation dataset loader (JSONL format) in services/ml-enrichment/lib/evaluation/evaluator.py
 - [X] T063 [US4] Implement per-category metrics breakdown in services/ml-enrichment/lib/evaluation/evaluator.py
-- [ ] T064 [US4] Add evaluation result storage via BigQueryEvaluationRepository in services/ml-enrichment/lib/evaluation/evaluator.py
+- [X] T064 [US4] Add evaluation result storage via BigQueryEvaluationRepository in services/ml-enrichment/lib/evaluation/evaluator.py
 - [X] T065 [US4] Create evaluate_ci.py CI/CD script in services/ml-enrichment/scripts/evaluate_ci.py
 - [X] T066 [US4] Add threshold checking and exit code logic to evaluate_ci.py in services/ml-enrichment/scripts/evaluate_ci.py
-- [ ] T067 [US4] Add evaluation queries to retrieve historical results in services/ml-enrichment/queries/evaluation_queries.sql
-- [ ] T068 [US4] Add /evaluate endpoint to main.py at services/ml-enrichment/main.py
-- [ ] T069 [US4] Add /evaluate/quick endpoint for CI in services/ml-enrichment/main.py
-- [ ] T070 [US4] Add /evaluate/results endpoint for historical data in services/ml-enrichment/main.py
-- [ ] T071 [US4] Update cloudbuild.yaml to include evaluation step (optional) in services/ml-enrichment/cloudbuild.yaml
+- [X] T067 [US4] Add evaluation queries to retrieve historical results in services/ml-enrichment/queries/evaluation_queries.sql
+- [X] T068 [US4] Add /evaluate endpoint to main.py at services/ml-enrichment/main.py
+- [X] T069 [US4] Add /evaluate/quick endpoint for CI in services/ml-enrichment/main.py
+- [X] T070 [US4] Add /evaluate/results endpoint for historical data in services/ml-enrichment/main.py
+- [X] T071 [US4] Update cloudbuild.yaml to include evaluation step (optional) in services/ml-enrichment/cloudbuild.yaml
 
 **Checkpoint**: User Story 4 should be fully functional - evaluation produces metrics (SC-006, SC-007)
 
@@ -196,19 +196,19 @@ Based on plan.md structure:
 
 ### Tests for User Story 5
 
-- [ ] T072 [P] [US5] Unit test for SectionClassifier in services/ml-enrichment/tests/test_section_classifier.py
-- [ ] T073 [P] [US5] Integration test for section-aware extraction in services/ml-enrichment/tests/integration/test_section_extraction.py
+- [X] T072 [P] [US5] Unit test for SectionClassifier in services/ml-enrichment/tests/test_section_classifier.py
+- [X] T073 [P] [US5] Integration test for section-aware extraction in services/ml-enrichment/tests/integration/test_section_extraction.py
 
 ### Implementation for User Story 5
 
 - [X] T074 [US5] Implement rule-based SectionClassifier in services/ml-enrichment/lib/enrichment/section_classifier.py
 - [X] T075 [US5] Define RELEVANT_SECTIONS and EXCLUDED_SECTIONS patterns in services/ml-enrichment/lib/enrichment/section_classifier.py
-- [ ] T076 [US5] Add section_relevance_score to ExtractedSkill output in services/ml-enrichment/lib/enrichment/skills/unified_extractor.py
-- [ ] T077 [US5] Integrate SectionClassifier with UnifiedSkillsExtractor in services/ml-enrichment/lib/enrichment/skills/unified_extractor.py
-- [ ] T078 [US5] Implement confidence weighting based on section relevance in services/ml-enrichment/lib/enrichment/skills/unified_extractor.py
+- [X] T076 [US5] Add section_relevance_score to ExtractedSkill output in services/ml-enrichment/lib/enrichment/skills/unified_extractor.py
+- [X] T077 [US5] Integrate SectionClassifier with UnifiedSkillsExtractor in services/ml-enrichment/lib/enrichment/skills/unified_extractor.py
+- [X] T078 [US5] Implement confidence weighting based on section relevance in services/ml-enrichment/lib/enrichment/skills/unified_extractor.py
 - [X] T079 [US5] Add section classification storage in services/ml-enrichment/lib/adapters/bigquery/section_classification_adapter.py
-- [ ] T080 [US5] Add section_classification to enrichment_types in main.py at services/ml-enrichment/main.py
-- [ ] T081 [US5] Create placeholder for ML classifier training from annotation exports in services/ml-enrichment/lib/enrichment/skills/section_classifier.py
+- [X] T080 [US5] Add section_classification to enrichment_types in main.py at services/ml-enrichment/main.py
+- [X] T081 [US5] Create placeholder for ML classifier training from annotation exports in services/ml-enrichment/lib/enrichment/skills/section_classifier.py
 
 **Checkpoint**: User Story 5 should be fully functional - section classification improves extraction (SC-004)
 
@@ -218,15 +218,15 @@ Based on plan.md structure:
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] T082 [P] Update services/ml-enrichment/README.md with new features documentation
-- [ ] T083 [P] Add environment variable documentation to README
-- [ ] T084 [P] Update quickstart.md with new usage examples at specs/001-ml-quality-lifecycle/quickstart.md
-- [ ] T085 Code cleanup and consolidate imports across modules
-- [ ] T086 Performance optimization: ensure <10% processing time increase (SC-008)
-- [ ] T087 [P] Add comprehensive logging for debugging and monitoring
-- [ ] T088 Security review: validate no sensitive data in logs
-- [ ] T089 Run quickstart.md validation - verify all code examples work
-- [ ] T090 Validate all BigQuery schemas are idempotent (IF NOT EXISTS pattern)
+- [X] T082 [P] Update services/ml-enrichment/README.md with new features documentation
+- [X] T083 [P] Add environment variable documentation to README
+- [X] T084 [P] Update quickstart.md with new usage examples at specs/001-ml-quality-lifecycle/quickstart.md
+- [X] T085 Code cleanup and consolidate imports across modules
+- [X] T086 Performance optimization: ensure <10% processing time increase (SC-008)
+- [X] T087 [P] Add comprehensive logging for debugging and monitoring
+- [X] T088 Security review: validate no sensitive data in logs
+- [X] T089 Run quickstart.md validation - verify all code examples work
+- [X] T090 Validate all BigQuery schemas are idempotent (IF NOT EXISTS pattern)
 
 ---
 

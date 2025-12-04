@@ -286,6 +286,10 @@ class UnifiedSkillsConfig:
     enhanced_mode: bool = True
     fallback_to_original: bool = True
     
+    # Configuration file paths
+    alias_config_path: str = "config/skill_aliases.yaml"
+    model_versions_path: str = "config/model_versions.yaml"
+    
     # Skills lexicons (enhanced is preferred, original as fallback)
     enhanced_skills_lexicon: Dict[str, List[str]] = field(default_factory=lambda: ENHANCED_SKILLS_LEXICON)
     original_skills_lexicon: Dict[str, List[str]] = field(default_factory=lambda: ORIGINAL_SKILLS_LEXICON)
