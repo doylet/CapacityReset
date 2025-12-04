@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS `brand_learning_events` (
   event_id STRING NOT NULL,
   brand_id STRING NOT NULL,
   event_type STRING NOT NULL,
-  event_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+  event_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   surface_id STRING,
   theme_id STRING,
   event_data JSON NOT NULL,

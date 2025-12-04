@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS `professional_themes` (
   keywords ARRAY<STRING> NOT NULL,
   confidence_score FLOAT64 NOT NULL,
   source_evidence STRING NOT NULL,
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP()
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 )
 PARTITION BY DATE(created_at)
 CLUSTER BY theme_category;

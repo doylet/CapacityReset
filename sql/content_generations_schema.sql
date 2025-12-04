@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS `content_generations` (
   brand_id STRING NOT NULL,
   surface_id STRING NOT NULL,
   content_text STRING NOT NULL,
-  generation_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+  generation_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   generation_version INTEGER NOT NULL DEFAULT 1,
   generation_prompt STRING NOT NULL,
   consistency_score FLOAT64,

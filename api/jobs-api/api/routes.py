@@ -509,9 +509,21 @@ async def export_training_data():
 
 # === Brand Routes (AI Brand Roadmap) ===
 
-# In-memory storage for MVP demonstration (replace with BigQuery adapter in production)
+# MVP Implementation Note: In-memory storage for demonstration purposes.
+# Production deployment should use BigQuery adapters from domain/repositories.py
+# This enables immediate feature testing while maintaining the hexagonal architecture
+# separation that allows swapping in persistent storage without API changes.
 _brand_storage: Dict[str, Dict[str, Any]] = {}
 _content_storage: Dict[str, Dict[str, Any]] = {}
+
+
+def _get_surface_type_value(surface_type: Any) -> str:
+    """Extract string value from surface type, handling both enum and string types."""
+    if hasattr(surface_type, 'value'):
+        return surface_type.value
+    return str(surface_type)
+
+
 _surfaces_data = [
     {
         "surface_id": "surf-cv-summary-001",
@@ -788,7 +800,7 @@ async def regenerate_content(
     new_id = str(uuid.uuid4())
     new_content_text = _generate_surface_content(
         brand_data,
-        content_data["surface_type"].value if hasattr(content_data["surface_type"], 'value') else content_data["surface_type"],
+        _get_surface_type_value(content_data["surface_type"]),
         None,
         feedback=request.feedback_details,
         tone=request.preferred_tone,
