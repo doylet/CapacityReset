@@ -1,11 +1,124 @@
 'use client';
 
+import { useState } from 'react';
 import { BrandOverview, ProfessionalTheme } from '@/types/brand';
-import { User, Mic, BookOpen, Award, TrendingUp } from 'lucide-react';
+import { User, Mic, BookOpen, Award, TrendingUp, ChevronDown, ChevronUp, Quote, Lightbulb } from 'lucide-react';
 
 interface BrandOverviewDisplayProps {
   brand: BrandOverview;
   onEdit?: () => void;
+}
+
+interface ThemeCardProps {
+  theme: ProfessionalTheme;
+  getCategoryColor: (category: string) => string;
+}
+
+function ThemeCard({ theme, getCategoryColor }: ThemeCardProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  
+  return (
+    <div className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors">
+      <div className="flex items-center justify-between mb-2">
+        <span className="font-medium text-gray-900">{theme.theme_name}</span>
+        <div className="flex items-center gap-2">
+          <span className={`px-2 py-1 text-xs rounded-full ${getCategoryColor(theme.theme_category)}`}>
+            {theme.theme_category.replace('_', ' ')}
+          </span>
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+            aria-label={isExpanded ? "Collapse details" : "Expand details"}
+          >
+            {isExpanded ? (
+              <ChevronUp className="w-4 h-4 text-gray-500" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-gray-500" />
+            )}
+          </button>
+        </div>
+      </div>
+      
+      {theme.description && (
+        <p className="text-sm text-gray-600 mb-2">{theme.description}</p>
+      )}
+      
+      {/* Keywords */}
+      <div className="flex flex-wrap gap-2 mb-3">
+        {theme.keywords.map((keyword, idx) => (
+          <span
+            key={idx}
+            className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded"
+          >
+            {keyword}
+          </span>
+        ))}
+      </div>
+      
+      {/* Confidence Score */}
+      <div className="flex items-center">
+        <div className="w-full bg-gray-200 rounded-full h-2">
+          <div
+            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+            style={{ width: `${theme.confidence_score * 100}%` }}
+          />
+        </div>
+        <span className="ml-2 text-xs text-gray-500 whitespace-nowrap">
+          {Math.round(theme.confidence_score * 100)}% confidence
+        </span>
+      </div>
+      
+      {/* Expanded Details - LLM Reasoning and Evidence */}
+      {isExpanded && (
+        <div className="mt-4 pt-4 border-t border-gray-100 space-y-3">
+          {/* LLM Reasoning */}
+          {theme.reasoning && (
+            <div className="flex items-start gap-2">
+              <Lightbulb className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
+              <div>
+                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                  Why this theme?
+                </span>
+                <p className="text-sm text-gray-700 mt-1">{theme.reasoning}</p>
+              </div>
+            </div>
+          )}
+          
+          {/* Source Evidence */}
+          {theme.source_evidence && (
+            <div className="flex items-start gap-2">
+              <Quote className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+              <div>
+                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                  Evidence
+                </span>
+                <p className="text-sm text-gray-700 mt-1 italic">{theme.source_evidence}</p>
+              </div>
+            </div>
+          )}
+          
+          {/* Evidence Quotes (if available) */}
+          {theme.evidence_quotes && theme.evidence_quotes.length > 0 && (
+            <div className="flex items-start gap-2">
+              <Quote className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+              <div>
+                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                  Supporting Quotes
+                </span>
+                <ul className="mt-1 space-y-1">
+                  {theme.evidence_quotes.map((quote, idx) => (
+                    <li key={idx} className="text-sm text-gray-700 pl-3 border-l-2 border-green-200">
+                      "{quote}"
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function BrandOverviewDisplay({ brand, onEdit }: BrandOverviewDisplayProps) {
@@ -63,46 +176,27 @@ export default function BrandOverviewDisplay({ brand, onEdit }: BrandOverviewDis
         </div>
       </div>
 
-      {/* Professional Themes */}
+      {/* Professional Themes - Enhanced Display */}
       <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-lg font-medium text-gray-900 flex items-center mb-4">
-          <Award className="w-5 h-5 mr-2 text-blue-600" />
-          Professional Themes
-        </h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-medium text-gray-900 flex items-center">
+            <Award className="w-5 h-5 mr-2 text-blue-600" />
+            Professional Themes
+          </h3>
+          <span className="text-sm text-gray-500">
+            {brand.professional_themes.length} themes identified
+          </span>
+        </div>
+        <p className="text-sm text-gray-600 mb-4">
+          Click on a theme to see the reasoning and evidence behind each identification.
+        </p>
         <div className="grid gap-4">
           {brand.professional_themes.map((theme) => (
-            <div key={theme.theme_id} className="border border-gray-200 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-medium text-gray-900">{theme.theme_name}</span>
-                <span className={`px-2 py-1 text-xs rounded-full ${getCategoryColor(theme.theme_category)}`}>
-                  {theme.theme_category.replace('_', ' ')}
-                </span>
-              </div>
-              {theme.description && (
-                <p className="text-sm text-gray-600 mb-2">{theme.description}</p>
-              )}
-              <div className="flex flex-wrap gap-2">
-                {theme.keywords.map((keyword, idx) => (
-                  <span
-                    key={idx}
-                    className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded"
-                  >
-                    {keyword}
-                  </span>
-                ))}
-              </div>
-              <div className="mt-2 flex items-center">
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-blue-600 h-2 rounded-full"
-                    style={{ width: `${theme.confidence_score * 100}%` }}
-                  />
-                </div>
-                <span className="ml-2 text-xs text-gray-500">
-                  {Math.round(theme.confidence_score * 100)}%
-                </span>
-              </div>
-            </div>
+            <ThemeCard 
+              key={theme.theme_id} 
+              theme={theme} 
+              getCategoryColor={getCategoryColor} 
+            />
           ))}
         </div>
       </div>

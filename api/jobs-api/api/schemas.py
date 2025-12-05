@@ -184,7 +184,7 @@ class AnalysisPreferencesSchema(BaseModel):
 
 
 class ProfessionalThemeSchema(BaseModel):
-    """Professional theme response."""
+    """Professional theme response with LLM-enhanced evidence."""
     theme_id: str
     theme_name: str
     theme_category: ThemeCategoryEnum
@@ -192,6 +192,8 @@ class ProfessionalThemeSchema(BaseModel):
     keywords: List[str] = Field(default_factory=list)
     confidence_score: float = Field(ge=0.0, le=1.0)
     source_evidence: Optional[str] = None
+    reasoning: Optional[str] = None  # LLM explanation for theme identification
+    evidence_quotes: List[str] = Field(default_factory=list)  # Supporting quotes from document
 
 
 class VoiceCharacteristicsSchema(BaseModel):
@@ -224,11 +226,15 @@ class BrandOverviewSchema(BaseModel):
 
 
 class AnalysisMetadataSchema(BaseModel):
-    """Analysis metadata response."""
+    """Analysis metadata response with LLM tracking."""
     document_type: Optional[str] = None
     word_count: Optional[int] = None
     confidence_score: Optional[float] = Field(default=None, ge=0.0, le=1.0)
     processing_time_ms: Optional[int] = None
+    analysis_type: Optional[str] = None  # "llm" or "keyword"
+    prompt_version: Optional[str] = None  # Prompt template version used
+    model_version: Optional[str] = None  # LLM model version
+    fallback_used: Optional[bool] = None  # Whether fallback was triggered
 
 
 class BrandAnalysisResponse(BaseModel):

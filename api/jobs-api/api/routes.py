@@ -570,14 +570,27 @@ _surfaces_data = [
 @brand_router.post("/analysis", response_model=BrandAnalysisResponse)
 async def analyze_brand(
     document: UploadFile = File(...),
-    linkedin_profile_url: Optional[str] = None
+    linkedin_profile_url: Optional[str] = None,
+    use_enhanced_llm: bool = True
 ):
     """
     Analyze professional document for brand extraction.
     
     Upload CV/resume and optional LinkedIn profile for comprehensive brand analysis.
     Returns brand overview with themes, voice characteristics, and narrative arc.
+    
+    The analysis uses LLM-powered extraction to identify:
+    - Professional themes with evidence citations and confidence scores
+    - Voice characteristics (tone, formality, energy, communication style)
+    - Narrative arc (career progression, value proposition, future positioning)
+    
+    Args:
+        document: CV/resume file to analyze
+        linkedin_profile_url: Optional LinkedIn profile for enrichment
+        use_enhanced_llm: Whether to use enhanced LLM analysis (default: True)
     """
+    from application.use_cases import AnalyzeBrandUseCase
+    
     start_time = time.time()
     
     # Read document content
@@ -587,60 +600,69 @@ async def analyze_brand(
     # Generate brand ID
     brand_id = str(uuid.uuid4())
     
-    # Extract professional themes from document (MVP implementation)
-    themes = _extract_themes_from_document(document_text)
+    # Use enhanced brand analysis use case
+    analyze_uc = AnalyzeBrandUseCase()
+    brand_data = await analyze_uc.execute(
+        document_content=document_text,
+        user_id="default-user",
+        source_document_url=f"uploads/{document.filename}",
+        linkedin_profile_url=linkedin_profile_url,
+        analysis_options={
+            "use_enhanced_llm": use_enhanced_llm,
+            "prompt_version": "v1"
+        }
+    )
     
-    # Analyze voice characteristics
-    voice = _analyze_voice_characteristics(document_text)
-    
-    # Build narrative arc
-    narrative = _build_narrative_arc(document_text)
-    
-    # Calculate confidence scores
-    confidence_scores = {
+    # Extract themes with enhanced evidence
+    themes = brand_data.get("professional_themes", [])
+    voice = brand_data.get("voice_characteristics", {})
+    narrative = brand_data.get("narrative_arc", {})
+    confidence_scores = brand_data.get("confidence_scores", {
         "overall": 0.85,
         "themes": 0.82,
         "voice": 0.88,
         "narrative": 0.80
-    }
+    })
     
     # Store brand representation
-    brand_data = {
-        "brand_id": brand_id,
-        "user_id": "default-user",
-        "source_document_url": f"uploads/{document.filename}",
-        "linkedin_profile_url": linkedin_profile_url,
-        "professional_themes": themes,
-        "voice_characteristics": voice,
-        "narrative_arc": narrative,
-        "confidence_scores": confidence_scores,
-        "created_at": datetime.utcnow(),
-        "updated_at": datetime.utcnow(),
-        "version": 1
-    }
+    brand_data["brand_id"] = brand_id
     _brand_storage[brand_id] = brand_data
     
     processing_time_ms = int((time.time() - start_time) * 1000)
+    
+    # Build enhanced theme response with evidence and reasoning
+    enhanced_themes = []
+    for theme in themes:
+        enhanced_themes.append(ProfessionalThemeSchema(
+            theme_id=theme.get("theme_id", str(uuid.uuid4())),
+            theme_name=theme.get("theme_name", ""),
+            theme_category=theme.get("theme_category", "skill"),
+            description=theme.get("description", ""),
+            keywords=theme.get("keywords", []),
+            confidence_score=theme.get("confidence_score", 0.7),
+            source_evidence=theme.get("source_evidence", ""),
+            reasoning=theme.get("reasoning", "")  # LLM explanation for theme
+        ))
     
     return BrandAnalysisResponse(
         brand_id=brand_id,
         analysis_status="completed",
         brand_overview=BrandOverviewSchema(
             brand_id=brand_id,
-            professional_themes=[
-                ProfessionalThemeSchema(**theme) for theme in themes
-            ],
+            professional_themes=enhanced_themes,
             voice_characteristics=VoiceCharacteristicsSchema(**voice),
             narrative_arc=NarrativeArcSchema(**narrative),
             confidence_scores=confidence_scores,
-            created_at=brand_data["created_at"],
-            updated_at=brand_data["updated_at"]
+            created_at=brand_data.get("created_at"),
+            updated_at=brand_data.get("updated_at")
         ),
         analysis_metadata=AnalysisMetadataSchema(
             document_type=document.content_type,
             word_count=len(document_text.split()),
-            confidence_score=confidence_scores["overall"],
-            processing_time_ms=processing_time_ms
+            confidence_score=confidence_scores.get("overall", 0.85),
+            processing_time_ms=processing_time_ms,
+            analysis_type=brand_data.get("analysis_metadata", {}).get("analysis_type", "llm"),
+            prompt_version=brand_data.get("analysis_metadata", {}).get("prompt_version", "v1")
         )
     )
 

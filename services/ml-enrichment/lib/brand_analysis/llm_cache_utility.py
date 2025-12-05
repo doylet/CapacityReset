@@ -9,11 +9,19 @@ import json
 import logging
 import hashlib
 from datetime import datetime, timedelta
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, Protocol
 from dataclasses import asdict
 
-from ...adapters.bigquery_repository import BigQueryRepository
-from ...domain.entities import LLMAnalysisResult, APICall
+from ..domain.entities import LLMAnalysisResult, APICall
+
+
+class BigQueryRepositoryProtocol(Protocol):
+    """Protocol for BigQuery repository interface."""
+    project_id: str
+    dataset_id: str
+    
+    def execute_query(self, query: str, parameters: List[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+        ...
 
 
 class LLMCacheUtility:
@@ -24,7 +32,7 @@ class LLMCacheUtility:
     invalidation support for cost optimization.
     """
     
-    def __init__(self, bigquery_repo: BigQueryRepository, default_ttl_hours: int = 24):
+    def __init__(self, bigquery_repo: BigQueryRepositoryProtocol, default_ttl_hours: int = 24):
         self.bigquery_repo = bigquery_repo
         self.default_ttl_hours = default_ttl_hours
         self.logger = logging.getLogger(__name__)
