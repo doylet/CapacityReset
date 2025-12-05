@@ -10,6 +10,15 @@ from .section_classification import SectionClassification
 from .cluster_assignment import ClusterAssignment
 from .evaluation_result import EvaluationResult
 from .job_enrichment import JobEnrichment
+from .llm_analysis import (
+    LLMThemeResult,
+    LLMVoiceCharacteristics,
+    LLMNarrativeArc,
+    LLMAnalysisResult,
+    ContentGenerationRequest,
+    LLMContentGeneration,
+    APICall
+)
 
 __all__ = [
     'SkillAlias',
@@ -17,5 +26,13 @@ __all__ = [
     'SectionClassification',
     'ClusterAssignment',
     'EvaluationResult',
-    'JobEnrichment'
+    'JobEnrichment',
+    # LLM Analysis entities
+    'LLMThemeResult',
+    'LLMVoiceCharacteristics',
+    'LLMNarrativeArc',
+    'LLMAnalysisResult',
+    'ContentGenerationRequest',
+    'LLMContentGeneration',
+    'APICall'
 ]

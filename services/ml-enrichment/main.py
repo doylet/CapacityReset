@@ -526,3 +526,93 @@ def classify_sections(request):
             'error': str(e)
         }, 500
 
+
+@functions_framework.http
+def health(request):
+    """
+    Health check endpoint for LLM integration status.
+    
+    Returns:
+        {
+            "status": "healthy" | "degraded" | "unhealthy",
+            "services": {
+                "vertex_ai": {"status": "available", "model": "gemini-flash"},
+                "bigquery": {"status": "available"},
+                "skills_extractor": {"status": "available", "version": "..."}
+            },
+            "llm_integration": {
+                "status": "ready",
+                "model": "gemini-flash",
+                "fallback_enabled": true
+            }
+        }
+    """
+    import os
+    
+    status = "healthy"
+    services = {}
+    
+    # Check Vertex AI availability
+    try:
+        from lib.adapters.vertex_ai_adapter import VERTEX_AI_AVAILABLE, get_vertex_client
+        
+        vertex_status = "available" if VERTEX_AI_AVAILABLE else "unavailable"
+        if VERTEX_AI_AVAILABLE:
+            client = get_vertex_client()
+            vertex_status = "available" if client else "not_initialized"
+        
+        services["vertex_ai"] = {
+            "status": vertex_status,
+            "model": os.getenv("GEMINI_MODEL_NAME", "gemini-flash"),
+            "project": os.getenv("VERTEX_AI_PROJECT_ID", os.getenv("GOOGLE_CLOUD_PROJECT", "not_set")),
+            "location": os.getenv("VERTEX_AI_LOCATION", "us-central1")
+        }
+        
+        if vertex_status == "unavailable":
+            status = "degraded"
+            
+    except Exception as e:
+        services["vertex_ai"] = {"status": "error", "error": str(e)}
+        status = "degraded"
+    
+    # Check Skills Extractor
+    try:
+        extractor = get_skills_extractor()
+        services["skills_extractor"] = {
+            "status": "available",
+            "version": extractor.get_version(),
+            "enhanced_mode": extractor.enhanced_mode
+        }
+    except Exception as e:
+        services["skills_extractor"] = {"status": "error", "error": str(e)}
+        status = "degraded"
+    
+    # Check BigQuery
+    try:
+        from google.cloud import bigquery
+        client = bigquery.Client()
+        services["bigquery"] = {
+            "status": "available",
+            "project": client.project
+        }
+    except Exception as e:
+        services["bigquery"] = {"status": "error", "error": str(e)}
+        status = "unhealthy"
+    
+    # LLM Integration Summary
+    llm_integration = {
+        "status": "ready" if services.get("vertex_ai", {}).get("status") == "available" else "fallback_only",
+        "model": os.getenv("GEMINI_MODEL_NAME", "gemini-flash"),
+        "fallback_enabled": True,
+        "cache_enabled": bool(os.getenv("LLM_CACHE_TTL")),
+        "max_retries": int(os.getenv("LLM_MAX_RETRIES", "3"))
+    }
+    
+    return {
+        "status": status,
+        "timestamp": datetime.utcnow().isoformat(),
+        "services": services,
+        "llm_integration": llm_integration
+    }, 200
+
+

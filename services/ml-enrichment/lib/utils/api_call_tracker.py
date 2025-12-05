@@ -14,7 +14,20 @@ from dataclasses import dataclass, asdict
 from contextlib import contextmanager
 from collections import defaultdict
 
-from ...adapters.bigquery_repository import BigQueryRepository
+# Protocol is available in Python 3.8+, fall back to typing_extensions for older versions
+try:
+    from typing import Protocol
+except ImportError:
+    from typing_extensions import Protocol
+
+
+class BigQueryRepositoryProtocol(Protocol):
+    """Protocol for BigQuery repository interface."""
+    project_id: str
+    dataset_id: str
+    
+    def execute_query(self, query: str, parameters: List[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+        ...
 
 
 @dataclass
@@ -50,7 +63,7 @@ class APICallTracker:
     and storage for analysis and alerting.
     """
     
-    def __init__(self, bigquery_repo: BigQueryRepository):
+    def __init__(self, bigquery_repo: BigQueryRepositoryProtocol):
         self.bigquery_repo = bigquery_repo
         self.logger = logging.getLogger(__name__)
         

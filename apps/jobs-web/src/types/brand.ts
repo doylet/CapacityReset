@@ -15,6 +15,8 @@ export interface ProfessionalTheme {
   keywords: string[];
   confidence_score: number;
   source_evidence?: string;
+  reasoning?: string;  // LLM explanation for theme identification
+  evidence_quotes?: string[];  // Supporting quotes from document
 }
 
 export interface VoiceCharacteristics {
@@ -48,6 +50,10 @@ export interface AnalysisMetadata {
   word_count?: number;
   confidence_score?: number;
   processing_time_ms?: number;
+  analysis_type?: string;  // "llm" or "keyword"
+  prompt_version?: string;  // Prompt template version used
+  model_version?: string;  // LLM model version
+  fallback_used?: boolean;  // Whether fallback was triggered
 }
 
 export interface BrandAnalysisResponse {

@@ -156,6 +156,89 @@ Return as valid JSON:
 """
         else:
             raise ValueError(f"Unknown narrative analysis prompt version: {version}")
+    
+    @staticmethod
+    def get_content_generation_prompt(
+        platform: str = "linkedin_summary",
+        version: str = "v1"
+    ) -> str:
+        """
+        Get prompt template for platform-specific content generation.
+        
+        Args:
+            platform: Target platform (cv_summary, linkedin_summary, portfolio_intro)
+            version: Template version
+            
+        Returns:
+            Formatted prompt template string
+        """
+        platform_configs = {
+            "cv_summary": {
+                "max_words": 100,
+                "tone": "professional and achievement-focused",
+                "structure": "opening statement, key strengths, value proposition"
+            },
+            "linkedin_summary": {
+                "max_words": 200,
+                "tone": "engaging, authentic, and conversational yet professional",
+                "structure": "hook, career story, expertise, call to action"
+            },
+            "portfolio_intro": {
+                "max_words": 150,
+                "tone": "creative, professional, and engaging",
+                "structure": "introduction, expertise, value statement"
+            }
+        }
+        
+        config = platform_configs.get(platform, platform_configs["linkedin_summary"])
+        
+        if version == "v1":
+            return """
+Generate professional content for a {platform} based on the following brand profile.
+
+Brand Profile:
+- Professional Themes: {themes}
+- Voice Characteristics: Tone: {tone}, Formality: {formality}, Energy: {energy}
+- Communication Style: {communication_style}
+- Career Focus: {career_focus}
+- Value Proposition: {value_proposition}
+
+Content Requirements:
+- Maximum {max_words} words
+- Tone: {target_tone}
+- Structure: {structure}
+- Maintain authentic voice while adapting for platform context
+- Include specific achievements or evidence where appropriate
+
+Generate content that:
+1. Reflects the professional themes identified
+2. Maintains consistent voice characteristics
+3. Is appropriate for the platform context
+4. Provides value to the target audience
+
+Return response as valid JSON:
+{{
+    "content": "The generated content text...",
+    "confidence_score": 0.92,
+    "tone_match_score": 0.88,
+    "word_count": 150,
+    "reasoning": "Explanation of content generation choices"
+}}
+""".format(
+                platform=platform,
+                max_words=config["max_words"],
+                target_tone=config["tone"],
+                structure=config["structure"],
+                themes="{themes}",
+                tone="{tone}",
+                formality="{formality}",
+                energy="{energy}",
+                communication_style="{communication_style}",
+                career_focus="{career_focus}",
+                value_proposition="{value_proposition}"
+            )
+        else:
+            raise ValueError(f"Unknown content generation prompt version: {version}")
             
     @staticmethod
     def format_prompt(template: str, **kwargs) -> str:
@@ -182,5 +265,6 @@ Return as valid JSON:
         return {
             "theme_extraction": ["v1"],
             "voice_analysis": ["v1"],
-            "narrative_analysis": ["v1"]
+            "narrative_analysis": ["v1"],
+            "content_generation": ["v1"]
         }

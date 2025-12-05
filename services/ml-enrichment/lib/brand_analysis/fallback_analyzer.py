@@ -10,7 +10,7 @@ import logging
 from typing import List, Dict, Any
 from collections import Counter
 
-from ...domain.entities import LLMThemeResult, LLMVoiceCharacteristics, LLMNarrativeArc
+from ..domain.entities import LLMThemeResult, LLMVoiceCharacteristics, LLMNarrativeArc
 
 
 class FallbackAnalyzer:

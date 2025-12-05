@@ -12,7 +12,15 @@ from .entities import (
     SectionClassification,
     ClusterAssignment,
     EvaluationResult,
-    JobEnrichment
+    JobEnrichment,
+    # LLM Analysis entities
+    LLMThemeResult,
+    LLMVoiceCharacteristics,
+    LLMNarrativeArc,
+    LLMAnalysisResult,
+    ContentGenerationRequest,
+    LLMContentGeneration,
+    APICall
 )
 
 from .repositories import (
@@ -29,6 +37,14 @@ __all__ = [
     'ClusterAssignment',
     'EvaluationResult',
     'JobEnrichment',
+    # LLM Analysis entities
+    'LLMThemeResult',
+    'LLMVoiceCharacteristics',
+    'LLMNarrativeArc',
+    'LLMAnalysisResult',
+    'ContentGenerationRequest',
+    'LLMContentGeneration',
+    'APICall',
     
     # Repositories
     'SkillAliasRepository',
