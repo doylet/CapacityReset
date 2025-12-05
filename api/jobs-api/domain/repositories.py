@@ -188,6 +188,28 @@ class BrandRepository(ABC):
     async def get_brand_history(self, brand_id: str) -> List[BrandRepresentation]:
         """Retrieve brand evolution history."""
         pass
+    
+    # === LLM Analysis Extensions ===
+    
+    @abstractmethod
+    async def save_llm_analysis_result(self, brand_id: str, analysis_result: 'LLMAnalysisResult') -> str:
+        """Store LLM analysis result, return analysis_id."""
+        pass
+    
+    @abstractmethod
+    async def get_llm_analysis(self, brand_id: str, analysis_type: str) -> Optional['LLMAnalysisResult']:
+        """Retrieve latest LLM analysis result for a brand."""
+        pass
+    
+    @abstractmethod
+    async def get_llm_analysis_history(self, brand_id: str) -> List['LLMAnalysisResult']:
+        """Get analysis evolution over time."""
+        pass
+    
+    @abstractmethod
+    async def check_existing_analysis(self, brand_id: str, content_hash: str) -> Optional['LLMAnalysisResult']:
+        """Check if analysis exists for same content to avoid duplicate processing."""
+        pass
 
 
 class ContentGenerationRepository(ABC):

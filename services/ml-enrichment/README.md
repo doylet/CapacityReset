@@ -220,6 +220,21 @@ LIMIT 10
 - `sentence-transformers`: Semantic similarity (optional)
 - `torch`: Enhanced ML features (optional)
 
+## Environment Variables
+
+### Core Configuration
+- `GOOGLE_CLOUD_PROJECT`: GCP project ID
+- `BIGQUERY_DATASET`: BigQuery dataset for job data
+- `GCS_BUCKET`: Google Cloud Storage bucket for ML artifacts
+- `MODEL_VERSION`: Current ML model version (for enrichment tracking)
+
+### LLM Integration (Feature 003)
+- `VERTEX_AI_PROJECT_ID`: GCP project ID for Vertex AI (defaults to GOOGLE_CLOUD_PROJECT)
+- `VERTEX_AI_LOCATION`: Vertex AI location/region (e.g., 'us-central1')
+- `GEMINI_MODEL_NAME`: Gemini model variant ('gemini-flash', 'gemini-pro')
+- `LLM_CACHE_TTL`: Cache TTL for LLM responses in seconds (default: 3600)
+- `LLM_MAX_RETRIES`: Maximum retry attempts for LLM API calls (default: 3)
+
 ## Testing
 
 ```bash

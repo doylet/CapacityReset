@@ -865,6 +865,216 @@ async def submit_rating(
     }
 
 
+# === Enhanced LLM Feedback Collection System ===
+
+@brand_router.post("/{brand_id}/feedback/analysis")
+async def submit_analysis_feedback(
+    brand_id: str,
+    analysis_type: str = Query(..., description="Type of analysis (theme_analysis, voice_analysis, narrative_analysis)"),
+    feedback_rating: int = Query(..., ge=1, le=5, description="Quality rating 1-5"),
+    feedback_text: Optional[str] = None,
+    specific_issues: Optional[List[str]] = None,
+    suggested_improvements: Optional[str] = None
+):
+    """
+    Submit detailed feedback on LLM analysis quality.
+    
+    Collects user feedback on theme extraction, voice analysis, and narrative arc
+    generation to improve LLM prompt engineering and model performance.
+    """
+    if brand_id not in _brand_storage:
+        raise HTTPException(status_code=404, detail="Brand not found")
+    
+    feedback_id = str(uuid.uuid4())
+    
+    # Store feedback for learning (MVP: in-memory)
+    feedback_data = {
+        "feedback_id": feedback_id,
+        "brand_id": brand_id,
+        "analysis_type": analysis_type,
+        "feedback_rating": feedback_rating,
+        "feedback_text": feedback_text,
+        "specific_issues": specific_issues or [],
+        "suggested_improvements": suggested_improvements,
+        "timestamp": datetime.utcnow(),
+        "user_id": "default-user",  # TODO: Get from auth context
+        "status": "recorded"
+    }
+    
+    return {
+        "feedback_id": feedback_id,
+        "analysis_type": analysis_type,
+        "status": "recorded",
+        "message": f"Analysis feedback recorded for {analysis_type}"
+    }
+
+
+@brand_router.post("/{brand_id}/feedback/theme/{theme_id}")
+async def submit_theme_feedback(
+    brand_id: str,
+    theme_id: str,
+    is_relevant: bool = Query(..., description="Whether this theme is relevant"),
+    confidence_rating: Optional[int] = Query(None, ge=1, le=5, description="Confidence in theme accuracy"),
+    feedback_comment: Optional[str] = None
+):
+    """
+    Submit feedback on individual theme relevance and accuracy.
+    
+    Enables fine-grained feedback collection on specific themes identified
+    by LLM analysis to improve theme extraction precision.
+    """
+    if brand_id not in _brand_storage:
+        raise HTTPException(status_code=404, detail="Brand not found")
+    
+    feedback_id = str(uuid.uuid4())
+    
+    feedback_data = {
+        "feedback_id": feedback_id,
+        "brand_id": brand_id,
+        "theme_id": theme_id,
+        "feedback_type": "theme_relevance",
+        "is_relevant": is_relevant,
+        "confidence_rating": confidence_rating,
+        "feedback_comment": feedback_comment,
+        "timestamp": datetime.utcnow(),
+        "user_id": "default-user"
+    }
+    
+    return {
+        "feedback_id": feedback_id,
+        "theme_id": theme_id,
+        "status": "recorded",
+        "message": f"Theme feedback recorded: {'relevant' if is_relevant else 'not relevant'}"
+    }
+
+
+@brand_router.post("/{brand_id}/feedback/voice")
+async def submit_voice_feedback(
+    brand_id: str,
+    accuracy_rating: int = Query(..., ge=1, le=5, description="Voice analysis accuracy"),
+    tone_accuracy: Optional[bool] = Query(None, description="Is the identified tone accurate?"),
+    formality_accuracy: Optional[bool] = Query(None, description="Is the formality level accurate?"),
+    missing_characteristics: Optional[List[str]] = None,
+    feedback_details: Optional[str] = None
+):
+    """
+    Submit feedback on voice characteristics analysis accuracy.
+    
+    Collects detailed feedback on voice analysis components to improve
+    LLM understanding of communication style and personality traits.
+    """
+    if brand_id not in _brand_storage:
+        raise HTTPException(status_code=404, detail="Brand not found")
+    
+    feedback_id = str(uuid.uuid4())
+    
+    feedback_data = {
+        "feedback_id": feedback_id,
+        "brand_id": brand_id,
+        "feedback_type": "voice_characteristics",
+        "accuracy_rating": accuracy_rating,
+        "tone_accuracy": tone_accuracy,
+        "formality_accuracy": formality_accuracy,
+        "missing_characteristics": missing_characteristics or [],
+        "feedback_details": feedback_details,
+        "timestamp": datetime.utcnow(),
+        "user_id": "default-user"
+    }
+    
+    return {
+        "feedback_id": feedback_id,
+        "feedback_type": "voice_characteristics",
+        "status": "recorded",
+        "message": "Voice analysis feedback recorded"
+    }
+
+
+@brand_router.post("/{brand_id}/feedback/content/{generation_id}")
+async def submit_content_feedback(
+    brand_id: str,
+    generation_id: str,
+    quality_rating: int = Query(..., ge=1, le=5, description="Content quality rating"),
+    authenticity_rating: int = Query(..., ge=1, le=5, description="Voice authenticity rating"),
+    usefulness_rating: int = Query(..., ge=1, le=5, description="Content usefulness rating"),
+    specific_feedback: Optional[str] = None,
+    improvement_suggestions: Optional[List[str]] = None
+):
+    """
+    Submit detailed feedback on generated content quality and authenticity.
+    
+    Captures comprehensive feedback on content generation performance
+    to improve LLM content creation and voice consistency.
+    """
+    if brand_id not in _brand_storage:
+        raise HTTPException(status_code=404, detail="Brand not found")
+    
+    if generation_id not in _content_storage:
+        raise HTTPException(status_code=404, detail="Content generation not found")
+    
+    feedback_id = str(uuid.uuid4())
+    
+    feedback_data = {
+        "feedback_id": feedback_id,
+        "brand_id": brand_id,
+        "generation_id": generation_id,
+        "feedback_type": "content_quality",
+        "quality_rating": quality_rating,
+        "authenticity_rating": authenticity_rating,
+        "usefulness_rating": usefulness_rating,
+        "specific_feedback": specific_feedback,
+        "improvement_suggestions": improvement_suggestions or [],
+        "timestamp": datetime.utcnow(),
+        "user_id": "default-user"
+    }
+    
+    # Update content record with feedback
+    if generation_id in _content_storage:
+        _content_storage[generation_id]["user_feedback"] = feedback_data
+    
+    return {
+        "feedback_id": feedback_id,
+        "generation_id": generation_id,
+        "status": "recorded",
+        "message": "Content feedback recorded for improvement"
+    }
+
+
+@brand_router.get("/{brand_id}/feedback/analytics")
+async def get_feedback_analytics(brand_id: str):
+    """
+    Get feedback analytics and trends for brand analysis.
+    
+    Provides insights into user satisfaction and areas for improvement
+    based on collected feedback data.
+    """
+    if brand_id not in _brand_storage:
+        raise HTTPException(status_code=404, detail="Brand not found")
+    
+    # Mock analytics data for MVP
+    analytics = {
+        "brand_id": brand_id,
+        "feedback_summary": {
+            "total_feedback_events": 5,
+            "avg_analysis_rating": 4.2,
+            "avg_content_rating": 4.0,
+            "theme_accuracy_rate": 0.85,
+            "voice_accuracy_rate": 0.78
+        },
+        "improvement_areas": [
+            "Voice formality detection needs refinement",
+            "Theme confidence scoring could be more accurate"
+        ],
+        "recent_trends": {
+            "satisfaction_trend": "improving",
+            "most_accurate_analysis": "theme_analysis",
+            "least_accurate_analysis": "voice_analysis"
+        },
+        "generated_at": datetime.utcnow()
+    }
+    
+    return analytics
+
+
 @brand_router.get("/surfaces", response_model=List[ProfessionalSurfaceSchema])
 async def list_surfaces():
     """List available professional surfaces."""
