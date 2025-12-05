@@ -9,8 +9,14 @@ import json
 import logging
 import hashlib
 from datetime import datetime, timedelta
-from typing import Optional, Dict, Any, List, Protocol
+from typing import Optional, Dict, Any, List
 from dataclasses import asdict
+
+# Protocol is available in Python 3.8+, fall back to typing_extensions for older versions
+try:
+    from typing import Protocol
+except ImportError:
+    from typing_extensions import Protocol
 
 from ..domain.entities import LLMAnalysisResult, APICall
 

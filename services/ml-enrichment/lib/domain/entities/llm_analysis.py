@@ -112,7 +112,7 @@ class LLMContentGeneration:
     tone_match_score: float  # How well it matches brand voice (0-1)
     prompt_version: str
     generation_reasoning: str  # LLM explanation of choices made
-    created_at: datetime = field(default_factory=datetime.now)
+    created_at: datetime = field(default_factory=datetime.utcnow)
     
     def __post_init__(self):
         """Validate generated content."""
@@ -137,7 +137,7 @@ class APICall:
     success: bool
     error_message: Optional[str] = None
     cost_estimate: Optional[float] = None  # USD estimate
-    timestamp: datetime = field(default_factory=datetime.now)
+    timestamp: datetime = field(default_factory=datetime.utcnow)
     
     def __post_init__(self):
         """Validate API call record."""

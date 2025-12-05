@@ -9,10 +9,16 @@ import logging
 import time
 import json
 from datetime import datetime, timezone
-from typing import Dict, List, Optional, Any, Protocol
+from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, asdict
 from contextlib import contextmanager
 from collections import defaultdict
+
+# Protocol is available in Python 3.8+, fall back to typing_extensions for older versions
+try:
+    from typing import Protocol
+except ImportError:
+    from typing_extensions import Protocol
 
 
 class BigQueryRepositoryProtocol(Protocol):
