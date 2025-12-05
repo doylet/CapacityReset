@@ -271,6 +271,147 @@ class VertexAnalyzer:
                 metadata["error"] = str(e)
                 raise
     
+    async def generate_content(
+        self,
+        brand_data: Dict[str, Any],
+        platform: str = "linkedin_summary",
+        prompt_version: str = "v1"
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        """
+        Generate platform-specific content using LLM.
+        
+        Args:
+            brand_data: Brand profile data (themes, voice, narrative)
+            platform: Target platform (cv_summary, linkedin_summary, portfolio_intro)
+            prompt_version: Version of prompt template
+            
+        Returns:
+            Tuple of (generated content dict, metadata dict)
+        """
+        metadata = {
+            "analysis_type": "content_generation",
+            "platform": platform,
+            "prompt_version": prompt_version,
+            "model_version": self.model_version,
+            "start_time": datetime.now()
+        }
+        
+        try:
+            # Get prompt template
+            prompt_template = PromptTemplates.get_content_generation_prompt(platform, prompt_version)
+            
+            # Extract brand data for prompt
+            themes = brand_data.get("professional_themes", [])
+            voice = brand_data.get("voice_characteristics", {})
+            narrative = brand_data.get("narrative_arc", {})
+            
+            theme_names = ", ".join([t.get("theme_name", "") for t in themes[:3]])
+            
+            formatted_prompt = PromptTemplates.format_prompt(
+                prompt_template,
+                themes=theme_names,
+                tone=voice.get("tone", "professional"),
+                formality=voice.get("formality_level", "formal"),
+                energy=voice.get("energy_level", "balanced"),
+                communication_style=", ".join(voice.get("communication_style", ["professional"])),
+                career_focus=narrative.get("career_focus", "experienced professional"),
+                value_proposition=narrative.get("value_proposition", "delivering results")
+            )
+            
+            # Get Gemini model
+            model = get_gemini_model()
+            if not model:
+                raise RuntimeError("Gemini model not available")
+            
+            self.logger.info(f"Generating content for {platform} with {self.model_version}")
+            
+            # Generate LLM response
+            start_time = datetime.now()
+            response = model.generate_content(formatted_prompt)
+            processing_time_ms = int((datetime.now() - start_time).total_seconds() * 1000)
+            
+            # Parse response
+            content_result = self._parse_content_response(response.text, platform, brand_data)
+            
+            # Update metadata
+            metadata.update({
+                "processing_time_ms": processing_time_ms,
+                "tokens_used": self._estimate_tokens(formatted_prompt, response.text),
+                "success": True
+            })
+            
+            self.logger.info(f"Content generation completed for {platform} in {processing_time_ms}ms")
+            return content_result, metadata
+            
+        except Exception as e:
+            self.logger.error(f"Content generation failed for {platform}: {e}")
+            
+            # Generate fallback content
+            content_result = self._generate_fallback_content(brand_data, platform)
+            
+            metadata.update({
+                "fallback_used": True,
+                "fallback_reason": str(e),
+                "success": True
+            })
+            
+            return content_result, metadata
+    
+    def _parse_content_response(
+        self, 
+        response_text: str, 
+        platform: str,
+        brand_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Parse LLM response for content generation."""
+        try:
+            json_str = self._extract_json(response_text)
+            result = json.loads(json_str)
+            
+            return {
+                "content": result.get("content", ""),
+                "platform": platform,
+                "confidence_score": float(result.get("confidence_score", 0.8)),
+                "tone_match_score": float(result.get("tone_match_score", 0.8)),
+                "word_count": result.get("word_count", len(result.get("content", "").split())),
+                "reasoning": result.get("reasoning", "")
+            }
+        except (json.JSONDecodeError, KeyError) as e:
+            self.logger.warning(f"Failed to parse content response: {e}")
+            return self._generate_fallback_content(brand_data, platform)
+    
+    def _generate_fallback_content(
+        self,
+        brand_data: Dict[str, Any],
+        platform: str
+    ) -> Dict[str, Any]:
+        """Generate fallback content using template-based approach."""
+        themes = brand_data.get("professional_themes", [])
+        narrative = brand_data.get("narrative_arc", {})
+        
+        theme_names = [t.get("theme_name", "") for t in themes[:3]]
+        theme_str = ", ".join(theme_names) if theme_names else "professional expertise"
+        
+        career_focus = narrative.get("career_focus", "experienced professional")
+        value_prop = narrative.get("value_proposition", "delivering results")
+        
+        content_templates = {
+            "cv_summary": f"A results-driven professional with expertise in {theme_str}. {career_focus} with a proven track record of {value_prop}. Known for delivering exceptional outcomes.",
+            "linkedin_summary": f"Welcome! I'm a passionate professional specializing in {theme_str}.\n\n{career_focus}\n\nWhat drives me? {value_prop}\n\nLet's connect!",
+            "portfolio_intro": f"Hello, I'm a {career_focus}. My expertise spans {theme_str}, and I'm dedicated to {value_prop}."
+        }
+        
+        content = content_templates.get(platform, content_templates["linkedin_summary"])
+        
+        return {
+            "content": content,
+            "platform": platform,
+            "confidence_score": 0.6,
+            "tone_match_score": 0.7,
+            "word_count": len(content.split()),
+            "reasoning": "Generated using template-based fallback approach"
+        }
+    
     def _prepare_document(self, content: str, max_length: int = 10000) -> str:
         """
         Prepare document content for LLM analysis.
