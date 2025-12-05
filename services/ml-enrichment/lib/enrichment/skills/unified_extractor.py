@@ -80,7 +80,15 @@ class UnifiedSkillsExtractor:
         self.skill_filter = SkillFilter(self.config)
         self.section_filter = SectionFilter(self.config)
         self.scorer = SkillScorer(self.config)
-        self.storage = storage or BigQuerySkillsStorage(self.config)
+        
+        # Initialize BigQuery storage with proper parameters
+        if storage is None:
+            import os
+            project_id = os.getenv("GOOGLE_CLOUD_PROJECT", "sylvan-replica-478802-p4")
+            dataset_id = os.getenv("BIGQUERY_DATASET", "brightdata_jobs")
+            self.storage = BigQuerySkillsStorage(project_id, dataset_id)
+        else:
+            self.storage = storage
         
         # Enhanced ML components (if available)
         self.semantic_model = None
