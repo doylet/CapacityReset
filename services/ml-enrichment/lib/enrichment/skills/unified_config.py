@@ -285,8 +285,8 @@ class UnifiedSkillsConfig:
     # Alias configuration path (for external alias resolution)
     alias_config_path: Optional[str] = None
     
-    # Mode selection (auto-detected based on available dependencies)
-    enhanced_mode: bool = True
+    # Mode selection (disabled by default for memory efficiency)
+    enhanced_mode: bool = False  # Disable heavy ML models by default
     fallback_to_original: bool = True
     
     # Skills lexicons (enhanced is preferred, original as fallback)

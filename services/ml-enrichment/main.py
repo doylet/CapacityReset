@@ -60,10 +60,11 @@ def get_skills_extractor():
     global _skills_extractor
     if _skills_extractor is None:
         # Use unified extractor with automatic enhanced/original fallback
+        # Disable semantic features by default to reduce memory usage
         _skills_extractor = UnifiedSkillsExtractor(
             config=UnifiedSkillsConfig(),
-            enable_semantic=True,  # Enable semantic similarity if available
-            enable_patterns=True   # Enable pattern extraction if available
+            enable_semantic=False,  # Disable heavy model loading by default
+            enable_patterns=True   # Keep pattern extraction (lightweight)
         )
         
         # Log which mode is being used
