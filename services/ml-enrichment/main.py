@@ -34,6 +34,8 @@ logger = get_logger()
 _skills_extractor = None
 _embeddings_generator = None
 _job_clusterer = None
+_brand_analyzer = None
+_content_generator = None
 
 def get_skills_extractor():
     """Get unified skills extractor that automatically handles enhanced/original fallback."""
@@ -66,6 +68,26 @@ def get_job_clusterer():
     if _job_clusterer is None:
         _job_clusterer = JobClusterer()
     return _job_clusterer
+
+
+def get_brand_analyzer():
+    """Lazy load brand analyzer for professional brand analysis."""
+    global _brand_analyzer
+    if _brand_analyzer is None:
+        from lib.brand_analyzer import BrandAnalyzer
+        _brand_analyzer = BrandAnalyzer()
+        logger.log_text("BrandAnalyzer initialized for professional brand analysis", severity="INFO")
+    return _brand_analyzer
+
+
+def get_content_generator():
+    """Lazy load content generator for cross-surface professional content generation."""
+    global _content_generator
+    if _content_generator is None:
+        from lib.content_generator import ContentGenerator
+        _content_generator = ContentGenerator()
+        logger.log_text("ContentGenerator initialized for cross-surface content generation", severity="INFO")
+    return _content_generator
 
 
 @functions_framework.http
