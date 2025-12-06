@@ -294,7 +294,11 @@ def main(request):
         bucket_name = os.environ.get('GCS_BUCKET', 'brightdata-linkedin-job-postings-raw')
         
         # Check if there's a specific request_id to force reprocess
-        request_data = request.get_json() if request.get_json() else {}
+        try:
+            request_data = request.get_json(silent=True) or {}
+        except Exception as e:
+            print(f"Warning: Could not parse request JSON: {e}")
+            request_data = {}
         force_request_id = request_data.get('force_request_id')
         
         if force_request_id:

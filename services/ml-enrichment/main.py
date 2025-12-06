@@ -218,7 +218,7 @@ def main(request):
             if jobs:
                 embeddings_stats = process_embeddings(
                     jobs=jobs,
-                    generator=generator
+                    embeddings_generator=generator
                 )
                 # Add generator version to response
                 embeddings_stats['generator_version'] = generator.get_version()
