@@ -293,15 +293,30 @@ def main(request):
         project_id = os.environ.get('GCP_PROJECT', 'sylvan-replica-478802-p4')
         bucket_name = os.environ.get('GCS_BUCKET', 'brightdata-linkedin-job-postings-raw')
         
-        # Get unprocessed requests with gcs_prefix
-        query = f"""
-        SELECT request_id, gcs_prefix
-        FROM `{project_id}.brightdata_jobs.scraper_execution_logs`
-        WHERE status = '200'
-          AND gcs_prefix IS NOT NULL
-          AND (processed IS NULL OR CAST(processed AS STRING) = 'false')
-        ORDER BY timestamp ASC
-        """
+        # Check if there's a specific request_id to force reprocess
+        request_data = request.get_json() if request.get_json() else {}
+        force_request_id = request_data.get('force_request_id')
+        
+        if force_request_id:
+            # Force reprocess specific request regardless of processed status
+            query = f"""
+            SELECT request_id, gcs_prefix
+            FROM `{project_id}.brightdata_jobs.scraper_execution_logs`
+            WHERE request_id = '{force_request_id}'
+              AND status = '200'
+              AND gcs_prefix IS NOT NULL
+            """
+            print(f"Force reprocessing request: {force_request_id}")
+        else:
+            # Get unprocessed requests with gcs_prefix
+            query = f"""
+            SELECT request_id, gcs_prefix
+            FROM `{project_id}.brightdata_jobs.scraper_execution_logs`
+            WHERE status = '200'
+              AND gcs_prefix IS NOT NULL
+              AND (processed IS NULL OR CAST(processed AS STRING) = 'false')
+            ORDER BY timestamp ASC
+            """
         
         print("Fetching unprocessed scrape requests...")
         query_job = bigquery_client.query(query)
