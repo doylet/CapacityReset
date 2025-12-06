@@ -41,6 +41,17 @@ def load_json_from_gcs(bucket_name, gcs_prefix):
                 all_jobs.extend(jobs)
             else:
                 all_jobs.append(jobs)
+        elif blob.name.endswith('.jsonl'):
+            # Handle JSONL files - one JSON object per line
+            content = blob.download_as_text()
+            for line in content.strip().split('\n'):
+                if line.strip():  # Skip empty lines
+                    try:
+                        job = json.loads(line.strip())
+                        all_jobs.append(job)
+                    except json.JSONDecodeError as e:
+                        logging.warning(f"Failed to parse JSONL line: {line[:100]}... Error: {e}")
+                        continue
     
     return all_jobs
 
