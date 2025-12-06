@@ -153,3 +153,59 @@ class TextNormalizer:
                 result.append(word.capitalize())
         
         return ' '.join(result)
+
+    def normalize_skill(self, skill_text: str) -> str:
+        """
+        Simple skill normalization for basic string inputs.
+        
+        This is a simpler version of normalize_skill_text for cases where
+        we don't have a spaCy span object.
+        
+        Args:
+            skill_text: Raw skill text string
+            
+        Returns:
+            Normalized skill text
+        """
+        if not skill_text or not isinstance(skill_text, str):
+            return ""
+            
+        # Basic cleaning
+        skill_text = skill_text.strip()
+        if len(skill_text) < 2:
+            return ""
+            
+        # Fix common concatenation issues (add space before capitals)
+        skill_text = re.sub(r'([a-z])([A-Z])', r'\1 \2', skill_text)
+        
+        # Remove leading/trailing punctuation and whitespace
+        skill_text = skill_text.strip().strip('/:,.-')
+        
+        # Process with spaCy
+        doc = self.nlp(skill_text)
+        
+        # Lemmatize and filter tokens
+        cleaned_tokens = []
+        for token in doc:
+            # Skip stop words, punctuation, spaces
+            if token.is_stop or token.is_punct or token.is_space:
+                continue
+            
+            # Skip determiners (a, an, the)
+            if token.pos_ == 'DET':
+                continue
+            
+            # Use lemma for nouns and verbs, original for others (preserves acronyms)
+            if token.pos_ in ['NOUN', 'VERB']:
+                cleaned_tokens.append(token.lemma_)
+            else:
+                cleaned_tokens.append(token.text)
+        
+        if not cleaned_tokens:
+            return skill_text.strip()  # Return original if no tokens left
+        
+        # Join and title case
+        normalized = ' '.join(cleaned_tokens)
+        result = self.smart_title_case(normalized)
+        
+        return result
