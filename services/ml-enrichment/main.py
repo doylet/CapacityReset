@@ -15,6 +15,9 @@ Architecture:
 
 import functions_framework
 import json
+import gc
+import psutil
+import os
 from datetime import datetime
 from lib.enrichment.skills import UnifiedSkillsExtractor, UnifiedSkillsConfig
 
@@ -29,6 +32,21 @@ from lib.processors.enrichment_processors import (
 
 # Get logger
 logger = get_logger()
+
+def log_memory_usage(stage):
+    """Log current memory usage for monitoring."""
+    try:
+        process = psutil.Process(os.getpid())
+        memory_mb = process.memory_info().rss / 1024 / 1024
+        logger.log_text(f"Memory usage at {stage}: {memory_mb:.1f} MB", severity="INFO")
+    except Exception:
+        # Skip memory logging if psutil unavailable
+        pass
+
+def force_garbage_collection():
+    """Force garbage collection to free memory."""
+    gc.collect()
+    log_memory_usage("after garbage collection")
 
 # Lazy-load enrichment modules to speed up cold start
 _skills_extractor = None
@@ -98,7 +116,7 @@ def main(request):
     Request body (optional):
         {
             "enrichment_types": ["skills_extraction", "embeddings", "clustering"],  # defaults to all except clustering
-            "batch_size": 50,  # for skills and embeddings
+            "batch_size": 25,  # for skills and embeddings (reduced for memory efficiency)
             "n_clusters": 10,  # for clustering only
             "clustering_method": "kmeans"  # 'kmeans' or 'dbscan'
         }
@@ -118,7 +136,7 @@ def main(request):
         # Parse request
         request_json = request.get_json(silent=True) or {}
         enrichment_types = request_json.get('enrichment_types', ['skills_extraction', 'embeddings'])
-        batch_size = request_json.get('batch_size', 50)
+        batch_size = request_json.get('batch_size', 25)
         n_clusters = request_json.get('n_clusters', 10)
         clustering_method = request_json.get('clustering_method', 'kmeans')
         
@@ -127,10 +145,14 @@ def main(request):
             severity="INFO"
         )
         
+        log_memory_usage("enrichment start")
+        
         results = {}
         
         # Process skills extraction
         if 'skills_extraction' in enrichment_types:
+            log_memory_usage("before skills extraction")
+            
             extractor = get_skills_extractor()
             jobs = get_jobs_needing_enrichment(
                 'skills_extraction', 
@@ -165,6 +187,9 @@ def main(request):
                 
                 results['skills_extraction'] = skills_stats
                 logger.log_text(f"Skills extraction complete: {skills_stats}", severity="INFO")
+                
+                # Force garbage collection after skills extraction
+                force_garbage_collection()
             else:
                 results['skills_extraction'] = {
                     'processed': 0, 
@@ -179,6 +204,8 @@ def main(request):
         
         # Process embeddings
         if 'embeddings' in enrichment_types:
+            log_memory_usage("before embeddings generation")
+            
             generator = get_embeddings_generator()
             jobs = get_jobs_needing_enrichment(
                 'embeddings', 
@@ -196,6 +223,9 @@ def main(request):
                 embeddings_stats['generator_version'] = generator.get_version()
                 results['embeddings'] = embeddings_stats
                 logger.log_text(f"Embeddings generation complete: {embeddings_stats}", severity="INFO")
+                
+                # Force garbage collection after embeddings
+                force_garbage_collection()
             else:
                 results['embeddings'] = {
                     'processed': 0, 

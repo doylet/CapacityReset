@@ -29,7 +29,7 @@ steps:
       - 'managed'
       - '--allow-unauthenticated'
       - '--memory'
-      - '1Gi'
+      - '2Gi'
       - '--cpu'
       - '1'
       - '--set-env-vars'
