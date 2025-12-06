@@ -209,3 +209,30 @@ class TextNormalizer:
         result = self.smart_title_case(normalized)
         
         return result
+
+    def normalize_text(self, text: str) -> str:
+        """
+        Normalize text by handling encoding, removing extra whitespace,
+        and basic cleanup for large text blocks.
+        
+        Args:
+            text (str): Text to normalize
+            
+        Returns:
+            str: Normalized text
+        """
+        if not text:
+            return ""
+            
+        # Basic text cleaning
+        # Handle encoding issues
+        if isinstance(text, bytes):
+            text = text.decode('utf-8', errors='ignore')
+        
+        # Remove extra whitespace and normalize line breaks
+        text = ' '.join(text.split())
+        
+        # Remove any remaining problematic characters
+        text = text.encode('utf-8', errors='ignore').decode('utf-8')
+        
+        return text.strip()
