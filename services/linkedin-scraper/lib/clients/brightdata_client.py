@@ -18,27 +18,39 @@ class JobSearchQuery:
     """Parameters for a single job search query."""
     location: str
     keyword: str
-    country: str = "AU"
-    time_range: str = "Any time"
-    job_type: str = "Full-time"
-    remote: str = "Remote"
+    country: str = ""  # Empty by default, let BrightData infer
+    time_range: str = ""  # Empty by default
+    job_type: str = ""  # Empty by default  
+    remote: str = ""  # Empty by default
     experience_level: str = ""
     company: str = ""
     location_radius: str = ""
     
     def to_dict(self) -> Dict[str, str]:
         """Convert to dictionary for API payload."""
-        return {
+        # Only include non-empty values to avoid BrightData API errors
+        result = {
             "location": self.location,
             "keyword": self.keyword,
-            "country": self.country,
-            "time_range": self.time_range,
-            "job_type": self.job_type,
-            "remote": self.remote,
-            "experience_level": self.experience_level,
-            "company": self.company,
-            "location_radius": self.location_radius,
         }
+        
+        # Add optional fields only if they have meaningful values
+        if self.country and self.country.strip():
+            result["country"] = self.country
+        if self.time_range and self.time_range.strip() and self.time_range != "Any time":
+            result["time_range"] = self.time_range
+        if self.job_type and self.job_type.strip() and self.job_type != "Full-time":
+            result["job_type"] = self.job_type
+        if self.remote and self.remote.strip() and self.remote != "Remote":
+            result["remote"] = self.remote
+        if self.experience_level and self.experience_level.strip():
+            result["experience_level"] = self.experience_level
+        if self.company and self.company.strip():
+            result["company"] = self.company
+        if self.location_radius and self.location_radius.strip():
+            result["location_radius"] = self.location_radius
+        
+        return result
 
 
 @dataclass
@@ -47,18 +59,20 @@ class BrightDataConfig:
     queries: List[JobSearchQuery] = field(default_factory=list)
     notify: bool = False
     include_errors: bool = True
-    request_type: str = "discover_new"
-    discover_by: str = "keyword"
-    gcs_filename_extension: str = "json"
+    request_type: str = "discover_new"  # or "discover_new_and_existing"
+    discover_by: str = "keyword"  # BrightData discovery method
+    gcs_filename_extension: str = "jsonl"  # Use JSONL for structured data
     gcs_filename_template: str = "{[datetime]}"
     
     @staticmethod
     def default_product_management_queries() -> List[JobSearchQuery]:
         """Default queries for product management roles in AU."""
         return [
-            JobSearchQuery(location="brisbane", keyword='"product management"'),
-            JobSearchQuery(location="sydney", keyword='"product management"'),
-            JobSearchQuery(location="melbourne", keyword='"product management"'),
+            JobSearchQuery(location="brisbane", keyword="product management"),
+            JobSearchQuery(location="sydney", keyword="product management"), 
+            JobSearchQuery(location="melbourne", keyword="product management"),
+            JobSearchQuery(location="perth", keyword="product management"),
+            JobSearchQuery(location="adelaide", keyword="product management"),
         ]
 
 
@@ -147,19 +161,34 @@ def call_brightdata(
     
     # Convert queries to dict list for logging
     queries_dict = [query.to_dict() for query in queries]
+    
+    # Log the payload being sent for debugging
+    print(f"Request ID: {request_id}")
+    print(f"Sending {len(queries)} queries to BrightData:")
+    for i, q in enumerate(queries_dict, 1):
+        print(f"  {i}. {q}")
+    
     try:
         with urllib.request.urlopen(request, timeout=60) as response:
             body = response.read().decode("utf-8")
             # Log parsed JSON for debugging
             try:
                 parsed = json.loads(body)
-                print(parsed)
+                print("BrightData Response:", parsed)
             except json.JSONDecodeError:
                 print("Non-JSON response:", body)
             return body, 200, request_id, queries_dict
     except urllib.error.HTTPError as e:
         error_body = e.read().decode("utf-8")
         print(f"Bright Data HTTPError {e.code}: {error_body}")
+        
+        # Try to parse error response for more details
+        try:
+            error_json = json.loads(error_body)
+            print("Error details:", error_json)
+        except json.JSONDecodeError:
+            pass
+            
         return json.dumps({"error": error_body, "status": e.code}), 500, request_id, queries_dict
     except Exception as e:
         print(f"Unexpected error: {e}")
