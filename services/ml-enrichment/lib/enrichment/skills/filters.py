@@ -192,3 +192,31 @@ class SectionFilter:
             relevant_sections = sections if sections else [{'type': 'full_text', 'content': text, 'relevant': True}]
         
         return relevant_sections
+
+    def extract_relevant_sections(self, text: str) -> str:
+        """
+        Extract and combine skill-relevant sections from job description text.
+        
+        This method filters out non-relevant sections and returns the combined
+        relevant text for skills extraction.
+        
+        Args:
+            text: Job description text to filter
+            
+        Returns:
+            Combined text from relevant sections
+        """
+        if not text:
+            return ""
+        
+        # Get skill-relevant sections
+        sections = self.identify_skill_relevant_sections(text)
+        
+        # Extract content from relevant sections
+        relevant_texts = []
+        for section in sections:
+            if section.get('relevant', True):  # Include relevant sections and fallbacks
+                relevant_texts.append(section['content'])
+        
+        # Combine relevant text sections
+        return ' '.join(relevant_texts).strip()
