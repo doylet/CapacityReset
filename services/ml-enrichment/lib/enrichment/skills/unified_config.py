@@ -328,6 +328,12 @@ class UnifiedSkillsConfig:
         'minimum requirements'
     ])
     
+    # Alias for backwards compatibility  
+    @property
+    def skill_relevant_sections(self) -> List[str]:
+        """Alias for relevant_sections for backwards compatibility."""
+        return self.relevant_sections
+    
     excluded_sections: List[str] = field(default_factory=lambda: [
         'benefits', 'compensation', 'salary', 'perks', 'about us',
         'company culture', 'our mission', 'equal opportunity', 'diversity',
