@@ -61,6 +61,48 @@ class SkillFilter:
         
         return True
     
+    def is_valid_skill(self, text: str) -> bool:
+        """
+        Comprehensive validation for whether text represents a valid skill.
+        
+        This method combines multiple validation checks to determine if the given
+        text is a legitimate skill, technology, or tool.
+        
+        Args:
+            text: Text to validate
+            
+        Returns:
+            True if text is a valid skill, False otherwise
+        """
+        if not text or not isinstance(text, str):
+            return False
+        
+        # Use the existing is_likely_skill method as base validation
+        if not self.is_likely_skill(text):
+            return False
+        
+        text_clean = text.strip().lower()
+        
+        # Additional validation checks
+        # Must not be just numbers or symbols
+        if not any(c.isalpha() for c in text_clean):
+            return False
+        
+        # Must not be common stopwords
+        if text_clean in {'and', 'or', 'the', 'with', 'for', 'to', 'of', 'in', 'at', 'on', 'by'}:
+            return False
+        
+        # Must not be too generic
+        generic_terms = {'experience', 'knowledge', 'background', 'understanding', 'familiarity'}
+        if text_clean in generic_terms:
+            return False
+        
+        # Must not be location-based
+        if any(loc in text_clean for loc in ['new york', 'california', 'london', 'remote', 'onsite']):
+            return False
+        
+        return True
+
     def is_skill_chunk(self, chunk) -> bool:
         """
         Check if noun chunk looks like a skill.
