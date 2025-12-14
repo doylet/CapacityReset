@@ -180,16 +180,22 @@ def process_clustering(job_clusterer, n_clusters: int = 10, method: str = "kmean
         method: Clustering method ('kmeans' or 'dbscan')
         
     Returns:
-        Statistics: total_jobs, clusters_created, keywords_extracted
+        Statistics: total_jobs, clusters_created, keywords_extracted, cluster_run_id, stability
     """
     try:
-        # Perform clustering
+        # Perform clustering with version tracking
         cluster_results = job_clusterer.cluster_jobs(
             method=method,
-            n_clusters=n_clusters
+            n_clusters=n_clusters,
+            track_version=True
         )
         
         if cluster_results:
+            # Extract run metadata from first result
+            run_metadata = cluster_results[0].get('run_metadata', {})
+            cluster_run_id = cluster_results[0].get('cluster_run_id', '')
+            cluster_version = cluster_results[0].get('cluster_version', 1)
+            
             # Log successful enrichment
             enrichment_id = log_enrichment(
                 job_posting_id="ALL",  # Clustering applies to all jobs
@@ -199,7 +205,10 @@ def process_clustering(job_clusterer, n_clusters: int = 10, method: str = "kmean
                 metadata={
                     'n_clusters': n_clusters,
                     'method': method,
-                    'jobs_clustered': len(cluster_results)
+                    'jobs_clustered': len(cluster_results),
+                    'cluster_run_id': cluster_run_id,
+                    'cluster_version': cluster_version,
+                    'stability': run_metadata.get('stability')
                 }
             )
             
@@ -215,13 +224,19 @@ def process_clustering(job_clusterer, n_clusters: int = 10, method: str = "kmean
             return {
                 'total_jobs': len(cluster_results),
                 'clusters_created': unique_clusters,
-                'method': method
+                'method': method,
+                'cluster_run_id': cluster_run_id,
+                'cluster_version': cluster_version,
+                'stability': run_metadata.get('stability')
             }
         else:
             return {
                 'total_jobs': 0,
                 'clusters_created': 0,
-                'method': method
+                'method': method,
+                'cluster_run_id': None,
+                'cluster_version': None,
+                'stability': None
             }
             
     except Exception as e:

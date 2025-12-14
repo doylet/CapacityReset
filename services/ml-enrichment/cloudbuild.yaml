@@ -14,6 +14,23 @@ steps:
       - 'push'
       - 'australia-southeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/ml-enrichment:$COMMIT_SHA'
 
+  # Optional: Run evaluation before deployment
+  # Uncomment to enable CI/CD evaluation checks
+  # - name: 'python:3.11-slim'
+  #   entrypoint: 'bash'
+  #   args:
+  #     - '-c'
+  #     - |
+  #       pip install -q -r services/ml-enrichment/requirements.txt
+  #       cd services/ml-enrichment
+  #       python -m lib.evaluation.evaluator \
+  #         --dataset gs://$PROJECT_ID-ml-data/evaluation/skills_test_v1.jsonl \
+  #         --threshold 0.75 \
+  #         --limit 50 \
+  #         --ci-build-id $BUILD_ID
+  #   env:
+  #     - 'GOOGLE_CLOUD_PROJECT=$PROJECT_ID'
+
   # Deploy to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud

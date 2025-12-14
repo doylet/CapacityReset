@@ -201,6 +201,7 @@ class AliasResolver:
     Resolves skill aliases to canonical names.
     
     Uses O(1) hash lookup after initial index build at startup.
+    Tracks resolution statistics for monitoring and debugging.
     """
     
     _instance = None
@@ -221,6 +222,16 @@ class AliasResolver:
         self._alias_index: Dict[str, Dict[str, Any]] = {}
         self._config = load_alias_config()
         self._build_index()
+        self._reset_stats()
+    
+    def _reset_stats(self):
+        """Reset resolution statistics."""
+        self._stats = {
+            'total_lookups': 0,
+            'successful_resolutions': 0,
+            'failed_resolutions': 0,
+            'resolutions_by_category': {}
+        }
     
     def _build_index(self):
         """Build alias lookup index for O(1) access."""
@@ -257,11 +268,21 @@ class AliasResolver:
         if not skill_text:
             return None
         
+        self._stats['total_lookups'] += 1
+        
         case_sensitive = self._config.get("case_sensitive", False)
         key = skill_text if case_sensitive else skill_text.lower()
         
         entry = self._alias_index.get(key)
-        return entry.get("canonical") if entry else None
+        if entry:
+            self._stats['successful_resolutions'] += 1
+            category = entry.get('category', 'unknown')
+            self._stats['resolutions_by_category'][category] = \
+                self._stats['resolutions_by_category'].get(category, 0) + 1
+            return entry.get("canonical")
+        
+        self._stats['failed_resolutions'] += 1
+        return None
     
     def get_alias_info(self, skill_text: str) -> Optional[Dict[str, Any]]:
         """
@@ -298,11 +319,33 @@ class AliasResolver:
             for alias, info in self._alias_index.items()
         }
     
+    def get_stats(self) -> Dict[str, Any]:
+        """
+        Get resolution statistics.
+        
+        Returns:
+            Dictionary with resolution statistics
+        """
+        stats = self._stats.copy()
+        stats['total_aliases_loaded'] = len(self._alias_index)
+        if stats['total_lookups'] > 0:
+            stats['resolution_rate'] = round(
+                stats['successful_resolutions'] / stats['total_lookups'], 4
+            )
+        else:
+            stats['resolution_rate'] = 0.0
+        return stats
+    
+    def reset_stats(self):
+        """Reset resolution statistics (for testing or batch processing)."""
+        self._reset_stats()
+    
     def reload(self):
         """Reload aliases from YAML (for runtime updates)."""
         self._alias_index = {}
         self._config = load_alias_config()
         self._build_index()
+        self._reset_stats()
         logger.info("Reloaded alias index")
 
 
